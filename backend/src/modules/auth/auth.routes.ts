@@ -7,4 +7,9 @@ const controller = new AuthController();
 router.post("/signup", controller.signup.bind(controller));
 router.post("/login", controller.login.bind(controller));
 
+router.post("/verify-otp", controller.verifyOtp.bind(controller));
+router.post("/forgot-password", controller.forgotPassword.bind(controller));
+router.post("/reset-password", controller.resetPassword.bind(controller));
+
+router.post("/refresh-token", controller.refreshToken.bind(controller));
 export default router;

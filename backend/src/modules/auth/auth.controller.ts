@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import { AuthService } from "./auth.service";
 import { AuthRepository } from "./auth.repository";
 import { signupSchema, loginSchema } from "./auth.types";
+import { z } from "zod";
 
 const service = new AuthService(new AuthRepository());
 
@@ -29,6 +30,62 @@ export class AuthController {
       res.json({
         success: true,
         message: "Login successful",
+        data: result,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async verifyOtp(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { email, otp } = req.body;
+      const result = await service.verifyOtp(email, otp);
+
+      res.json({
+        success: true,
+        ...result,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async forgotPassword(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { email } = req.body;
+      const result = await service.forgotPassword(email);
+
+      res.json({
+        success: true,
+        ...result,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async resetPassword(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { email, otp, newPassword } = req.body;
+      const result = await service.resetPassword(email, otp, newPassword);
+
+      res.json({
+        success: true,
+        ...result,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async refreshToken(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { token } = req.body;
+      const result = await service.refreshToken(token);
+
+      res.json({
+        success: true,
         data: result,
       });
     } catch (error) {
