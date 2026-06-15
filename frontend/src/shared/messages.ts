@@ -1,0 +1,163 @@
+/**
+ * Frontend UI messages — mirrors backend Messages constants for consistent copy.
+ * Use these instead of raw string literals for all user-facing text.
+ */
+export const UI_MESSAGES = {
+  // Generic
+  SOMETHING_WENT_WRONG: "Something went wrong. Please try again.",
+  NETWORK_ERROR: "Network error. Please check your connection.",
+  SESSION_EXPIRED: "Your session has expired. Please log in again.",
+  UNEXPECTED_ERROR: "An unexpected error occurred.",
+  LOADING: "Loading...",
+
+  // Auth
+  LOGIN_SUCCESS: "Logged in successfully.",
+  LOGOUT_SUCCESS: "Logged out successfully.",
+  SIGNUP_SUCCESS: "Account created. Please verify your email.",
+  INVALID_CREDENTIALS: "Invalid email or password.",
+  EMAIL_NOT_VERIFIED: "Please verify your email before logging in.",
+  EMAIL_REQUIRED: "Please enter your email address.",
+  EMAIL_INVALID: "Enter a valid email address.",
+  PASSWORD_REQUIRED: "Please enter your password.",
+  OAUTH_AUTH_FAILED: "Authentication failed. Please try again.",
+  CROSS_PLATFORM_LOGIN_BLOCKED: "Invalid credentials. Please use the correct platform to log in.",
+
+  // Signup
+  NAME_REQUIRED: "Please enter your full name.",
+  NAME_TOO_SHORT: "Name must be at least 2 characters.",
+  NAME_MIN_3: "Name must be at least 3 characters.",
+  PHONE_REQUIRED: "Phone number is required.",
+  PHONE_INVALID: "Phone must be a valid 10-digit number.",
+  CONFIRM_PASSWORD_REQUIRED: "Please confirm your password.",
+  PASSWORDS_MATCH: "Passwords match.",
+  PROVIDER_SIGNUP_SUCCESS: "Account created! Please verify your email.",
+  PROVIDER_LOGIN_SUCCESS: "Welcome to Provider Portal!",
+  PROVIDER_LOGIN_FAILED: "Login failed. Please check your credentials.",
+
+  // OTP
+  OTP_SENT: "OTP sent successfully.",
+  OTP_SENT_EMAIL: "OTP sent to your email.",
+  OTP_RESENT: "OTP resent successfully.",
+  OTP_RESENT_EMAIL: "A new verification code has been sent to your email.",
+  OTP_INVALID: "Invalid or expired OTP. Please try again.",
+  OTP_REQUIRED: "Please enter the OTP code.",
+  OTP_INCOMPLETE: "Please enter the complete 6-digit code.",
+  VERIFY_SUCCESS: "Verified successfully.",
+  VERIFY_SUCCESS_REDIRECT: "Verified successfully! Redirecting...",
+
+  // Password
+  PASSWORD_UPDATED: "Password updated successfully.",
+  PASSWORD_RESET_SUCCESS: "Password reset successfully.",
+  PASSWORDS_DO_NOT_MATCH: "Passwords do not match.",
+  PASSWORD_TOO_WEAK: "Password must be at least 8 characters.",
+
+  // Profile
+  PROFILE_UPDATED: "Profile updated successfully.",
+  PROFILE_FETCH_ERROR: "Failed to load profile.",
+  PROFILE_NAME_REQUIRED: "Please enter your full name.",
+  PROFILE_NAME_TOO_SHORT: "Name must be at least 2 characters.",
+  PROFILE_PHONE_REQUIRED: "Phone number is required.",
+  PROFILE_PHONE_INVALID: "Please enter a valid 10-digit phone number.",
+  PROFILE_CURRENT_PASSWORD_REQUIRED: "Please enter your current password.",
+  PROFILE_NEW_PASSWORD_REQUIRED: "Please enter a new password.",
+  PROFILE_CONFIRM_PASSWORD_REQUIRED: "Please confirm your new password.",
+  PROFILE_PASSWORD_TOO_WEAK: "New password is too weak. Please choose a stronger password.",
+  PROFILE_PASSWORDS_DO_NOT_MATCH: "Passwords do not match.",
+  PROFILE_PASSWORD_SAME_AS_OLD: "New password must be different from current password.",
+
+  // Address
+  ADDRESS_ADDED: "Address added successfully.",
+  ADDRESS_UPDATED: "Address updated successfully.",
+  ADDRESS_DELETED: "Address deleted.",
+  CANNOT_DELETE_DEFAULT_ADDRESS: "Cannot delete default address. Set another as default first.",
+  ADDRESS_STREET_REQUIRED: "Please enter street address.",
+  ADDRESS_CITY_REQUIRED: "Please enter city.",
+  ADDRESS_STATE_REQUIRED: "Please enter state.",
+  ADDRESS_ZIP_REQUIRED: "Please enter zip code.",
+  ADDRESS_ZIP_INVALID: "Enter a valid 5 or 6 digit zip code.",
+  ADDRESS_COUNTRY_REQUIRED: "Please enter country.",
+  ADDRESS_COUNTRY_TOO_SHORT: "Country must be at least 2 characters.",
+
+  // Provider
+  APPLICATION_SUBMITTED: "Application submitted successfully.",
+  APPLICATION_RESUBMITTED: "Application resubmitted.",
+  APPLICATION_PENDING: "Your application is pending review.",
+  APPLICATION_APPROVED: "Your application has been approved!",
+  APPLICATION_REJECTED: "Your application was rejected.",
+  PROVIDER_NOT_FOUND: "Provider not found.",
+  PROVIDER_PROFILE_UPDATED: "Profile updated successfully.",
+  PROVIDER_PROFILE_FETCH_ERROR: "Failed to fetch profile.",
+  PROVIDER_NAME_REQUIRED: "Please enter your full name.",
+  PROVIDER_NAME_TOO_SHORT: "Name must be at least 2 characters.",
+  PROVIDER_NAME_TOO_LONG: "Name must be at most 50 characters.",
+  PROVIDER_DESCRIPTION_TOO_SHORT: "Description must be at least 10 characters.",
+  PROVIDER_DESCRIPTION_TOO_LONG: "Description must be at most 500 characters.",
+  PROVIDER_EXPERIENCE_REQUIRED: "Please enter your experience.",
+  PROVIDER_EXPERIENCE_INVALID: "Experience must be a valid number (0–50).",
+  PROVIDER_SERVICE_AREAS_REQUIRED: "Please enter at least one service area.",
+  PROVIDER_EMAIL_INVALID: "Please enter a valid email address.",
+  PROVIDER_PHONE_INVALID: "Please enter a valid 10-digit phone number.",
+  PROVIDER_PASSWORD_TOO_WEAK: "Password must be at least 8 characters with uppercase, number, and special character.",
+  PROVIDER_FORGOT_OTP_SENT: "Reset code sent to your email.",
+  PROVIDER_PASSWORD_RESET_SUCCESS: "Password reset successfully. Redirecting to login...",
+
+  // Provider Application
+  APPLICATION_CATEGORY_REQUIRED: "Category is required.",
+  APPLICATION_DESCRIPTION_REQUIRED: "Description is required.",
+  APPLICATION_DESCRIPTION_TOO_SHORT: "Description must be at least 50 characters.",
+  APPLICATION_HEADSHOT_REQUIRED: "Headshot is required.",
+  APPLICATION_ID_FRONT_REQUIRED: "ID front image is required.",
+  APPLICATION_ID_BACK_REQUIRED: "ID back image is required.",
+  APPLICATION_STREET_REQUIRED: "Street address is required.",
+  APPLICATION_CITY_REQUIRED: "City is required.",
+  APPLICATION_ZIP_REQUIRED: "ZIP/PIN code is required.",
+  APPLICATION_VALIDATION_ERROR: "Please fix all validation errors before submitting.",
+  APPLICATION_SUBMIT_FAILED: "Failed to submit application.",
+
+  // Service Form
+  SERVICE_NAME_MIN: "Service name must be at least 2 characters.",
+  SERVICE_NAME_MAX: "Service name must be at most 100 characters.",
+  SERVICE_DESCRIPTION_MIN: "Description must be at least 10 characters.",
+  SERVICE_DESCRIPTION_MAX: "Description must be at most 2000 characters.",
+  SERVICE_PRICE_REQUIRED: "Price is required.",
+  SERVICE_PRICE_NEGATIVE: "Price cannot be negative.",
+  SERVICE_DURATION_REQUIRED: "Duration is required.",
+  SERVICE_DURATION_INTEGER: "Duration must be a whole number.",
+  SERVICE_DURATION_MIN: "Duration must be at least 1 minute.",
+  SERVICE_DURATION_MAX: "Duration cannot exceed 1440 minutes.",
+  SERVICE_IMAGES_MAX: "At most 10 images allowed.",
+  SERVICE_TAGS_MAX: "At most 20 tags allowed.",
+  SERVICE_TAG_MAX_LENGTH: "Tag must be 30 characters or fewer.",
+  SERVICE_IMAGE_READ_FAILED: "Failed to read one or more images.",
+  SERVICE_CREATED: "Service created.",
+  SERVICE_UPDATED: "Service updated.",
+  SERVICE_DELETED: "Service deleted.",
+
+  // Booking
+  BOOKING_ADDRESS_INCOMPLETE: "Please fill all address fields.",
+  BOOKING_LOGIN_REQUIRED: "Please log in to book.",
+  BOOKING_SELECT_ADDRESS: "Please select an address.",
+  BOOKING_FAILED: "Booking failed.",
+  BOOKING_ADDRESS_ADD_FAILED: "Failed to add address.",
+  SERVICE_LOAD_FAILED: "Failed to load service.",
+
+  // Geolocation
+  GEOLOCATION_NOT_SUPPORTED: "Geolocation is not supported by your browser.",
+  GEOLOCATION_FETCH_FAILED: "Failed to fetch address from GPS.",
+  GEOLOCATION_ACCESS_DENIED: "Unable to access location. Please enable location services.",
+
+  // Admin
+  ADMIN_EMAIL_REQUIRED: "Please enter your admin email.",
+  ADMIN_PASSWORD_REQUIRED: "Please enter your password.",
+  ADMIN_INVALID_CREDENTIALS: "Invalid admin credentials.",
+
+  USER_BLOCKED: "User blocked successfully.",
+  USER_UNBLOCKED: "User unblocked.",
+  PROVIDER_APPROVED: "Provider approved.",
+  PROVIDER_REJECTED: "Provider rejected.",
+  CATEGORY_CREATED: "Category created.",
+  CATEGORY_UPDATED: "Category updated.",
+  CATEGORY_DELETED: "Category deleted.",
+} as const;
+
+export type UiMessage = (typeof UI_MESSAGES)[keyof typeof UI_MESSAGES];
