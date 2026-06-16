@@ -1,6 +1,7 @@
 import { Response, NextFunction } from "express";
 import { IUserService } from "../../interfaces/user/IUserService";
 import { sendSuccess } from "../../shared/utils/response";
+import { Messages } from "../../shared/constants/messages";
 import { AuthRequest } from "../../shared/interfaces/AuthRequest";
 import { updateProfileSchema, addressSchema, changePasswordSchema } from "../../dto/user/user.dto";
 import { uploadImageToCloudinary } from "../../shared/cloudinary";
@@ -11,7 +12,7 @@ export class UserController {
   async   getProfile(req: AuthRequest, res: Response, next: NextFunction) {
     try {
       const user = await this.service.getProfile(req.user!.id);
-      sendSuccess(res, user, "Profile fetched successfully");
+      sendSuccess(res, user, Messages.PROFILE_FETCHED);
     } catch (err) { next(err); }
   }
 
@@ -19,7 +20,7 @@ export class UserController {
     try {
       const dto = updateProfileSchema.parse(req.body);
       const user = await this.service.updateProfile(req.user!.id, dto);
-      sendSuccess(res, user, "Profile updated successfully");
+      sendSuccess(res, user, Messages.PROFILE_UPDATED);
     } catch (err) { next(err); }
   }
 
@@ -27,7 +28,7 @@ export class UserController {
     try {
       const dto = addressSchema.parse(req.body);
       const addresses = await this.service.addAddress(req.user!.id, dto);
-      sendSuccess(res, addresses, "Address added successfully");
+      sendSuccess(res, addresses, Messages.ADDRESS_ADDED);
     } catch (err) { next(err); }
   }
 
@@ -35,21 +36,21 @@ export class UserController {
     try {
       const dto = addressSchema.parse(req.body);
       const addresses = await this.service.updateAddress(req.user!.id, req.params.id as string, dto);
-      sendSuccess(res, addresses, "Address updated successfully");
+      sendSuccess(res, addresses, Messages.ADDRESS_UPDATED);
     } catch (err) { next(err); }
   }
 
   async deleteAddress(req: AuthRequest, res: Response, next: NextFunction) {
     try {
       const addresses = await this.service.deleteAddress(req.user!.id, req.params.id as string);
-      sendSuccess(res, addresses, "Address deleted successfully");
+      sendSuccess(res, addresses, Messages.ADDRESS_DELETED);
     } catch (err) { next(err); }
   }
 
   async setDefaultAddress(req: AuthRequest, res: Response, next: NextFunction) {
     try {
       const addresses = await this.service.setDefaultAddress(req.user!.id, req.params.id as string);
-      sendSuccess(res, addresses, "Default address updated");
+      sendSuccess(res, addresses, Messages.DEFAULT_ADDRESS_UPDATED);
     } catch (err) { next(err); }
   }
 
@@ -73,7 +74,7 @@ export class UserController {
     try {
       const { phone, otp } = req.body;
       const user = await this.service.verifyPhoneOtp(req.user!.id, phone, otp);
-      sendSuccess(res, user, "Phone verified and updated successfully");
+      sendSuccess(res, user, Messages.PHONE_VERIFIED_UPDATED);
     } catch (err) { next(err); }
   }
 
@@ -104,7 +105,7 @@ export class UserController {
     try {
       const { email, otp } = req.body;
       const user = await this.service.verifyEmailOtp(req.user!.id, email, otp);
-      sendSuccess(res, user, "Email verified and updated successfully");
+      sendSuccess(res, user, Messages.EMAIL_VERIFIED_UPDATED);
     } catch (err) { next(err); }
   }
 
@@ -112,12 +113,12 @@ export class UserController {
     try {
       const file = req.file;
       if (!file) {
-        return sendSuccess(res, null, "No image file provided", 400);
+        return sendSuccess(res, null, Messages.NO_IMAGE_PROVIDED, 400);
       }
 
       const result = await uploadImageToCloudinary(file, "allserve/profile-images");
       const user = await this.service.updateProfile(req.user!.id, { profileImage: result.secure_url });
-      sendSuccess(res, user, "Profile image uploaded successfully");
+      sendSuccess(res, user, Messages.PROFILE_UPDATED);
     } catch (err) { next(err); }
   }
 }

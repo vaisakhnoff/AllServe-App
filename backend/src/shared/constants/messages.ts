@@ -95,7 +95,7 @@ export const Messages = {
 
   AUTH_FAILED: "auth_failed",
   WRONG_PLATFORM: "wrong_platform",
-  
+
 
   // ── Provider Auth (independent platform) ──
   PROVIDER_ACCOUNT_EXISTS: "A provider account with this email already exists",
@@ -105,4 +105,55 @@ export const Messages = {
   CROSS_PLATFORM_LOGIN_BLOCKED: "Invalid credentials. Please use the correct platform to log in.",
   PENDING_APPLICATION_EXISTS: "You already have a pending application",
   APPLICATION_ALREADY_SUBMITTED: "Application already submitted",
+
+  // ── Home ──
+  HOME_DATA_FETCHED: "Home data fetched successfully",
+
+  // ── Messaging ──
+  CONVERSATION_READY: "Conversation ready",
+  CONVERSATIONS_FETCHED: "Conversations fetched",
+  MESSAGES_FETCHED: "Messages fetched",
+  MESSAGE_SENT: "Message sent",
+  MESSAGE_MARKED_READ: "Marked as read",
+  UNREAD_COUNT_FETCHED: "Unread count",
+
+  // ── Slots ──
+  SLOT_CREATED: "Slot created successfully",
+  BULK_SLOTS_CREATED: "Bulk slots created",
+  RECURRING_SLOTS_CREATED: "Recurring slots created",
+  DATE_RANGE_BLOCKED: "Date range blocked",
+  STATS_FETCHED: "Stats fetched",
+  SLOTS_FETCHED: "Slots fetched successfully",
+  SLOT_UPDATED: "Slot updated successfully",
+  SLOT_DELETED: "Slot deleted successfully",
+  AVAILABLE_SLOTS_FETCHED: "Available slots fetched successfully",
+  SLOT_LOCKED: "Slot locked successfully",
+  SLOT_UNLOCKED: "Slot unlocked successfully",
+  SLOT_BOOKED: "Slot booked successfully",
+
+  // ── Admin ──
+  DASHBOARD_STATS_FETCHED: "Dashboard stats fetched successfully",
+  APPLICATIONS_FETCHED: "Applications fetched successfully",
+  USERS_FETCHED: "Users fetched successfully",
+
+  // ── Bookings ──
+  BOOKING_CREATED: "Booking created successfully",
+  BOOKINGS_FETCHED: "Bookings fetched",
+  BOOKING_FETCHED: "Booking fetched",
+  BOOKING_RESCHEDULED: "Booking rescheduled",
+  BOOKING_STATUS_UPDATED: "Booking status updated",
+  BOOKING_CANCELLED: "Booking cancelled",
+
+  // ── User Additions ──
+  PHONE_VERIFIED_UPDATED: "Phone verified and updated successfully",
+  EMAIL_VERIFIED_UPDATED: "Email verified and updated successfully",
+  NO_IMAGE_PROVIDED: "No image file provided",
+
+  // ── Provider Quotes & Service Requests ──
+  QUOTE_SUBMITTED: "Quote submitted",
+  QUOTE_UPDATED: "Quote updated",
+  QUOTE_ACCEPTED: "Quote accepted, booking created",
+  SERVICE_REQUEST_CREATED: "Service request created",
+  REQUEST_CANCELLED: "Request cancelled",
+  LOCATION_SUGGESTIONS: "Location suggestions",
 } as const;

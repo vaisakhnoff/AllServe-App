@@ -1,6 +1,7 @@
 import { Response, NextFunction } from "express";
 import { AuthRequest } from "../../shared/interfaces/AuthRequest";
 import { sendSuccess } from "../../shared/utils/response";
+import { Messages } from "../../shared/constants/messages";
 import { IProviderQuoteService } from "../../interfaces/provider-quote/IProviderQuoteService";
 import { createProviderQuoteSchema, updateProviderQuoteSchema } from "../../dto/provider-quote/providerQuote.dto";
 import { StatusCodes } from "../../shared/constants/statusCodes";
@@ -12,7 +13,7 @@ export class ProviderQuoteController {
     try {
       const dto = createProviderQuoteSchema.parse(req.body);
       const data = await this.service.submitQuote(req.user!.id, dto);
-      sendSuccess(res, data, "Quote submitted", StatusCodes.CREATED);
+      sendSuccess(res, data, Messages.QUOTE_SUBMITTED, StatusCodes.CREATED);
     } catch (err) { next(err); }
   }
 
@@ -20,7 +21,7 @@ export class ProviderQuoteController {
     try {
       const dto = updateProviderQuoteSchema.parse(req.body);
       const data = await this.service.updateQuote(req.params.id as string, req.user!.id, dto);
-      sendSuccess(res, data, "Quote updated");
+      sendSuccess(res, data, Messages.QUOTE_UPDATED);
     } catch (err) { next(err); }
   }
 
@@ -49,7 +50,7 @@ export class ProviderQuoteController {
   async accept(req: AuthRequest, res: Response, next: NextFunction) {
     try {
       const data = await this.service.acceptQuote(req.params.id as string, req.user!.id);
-      sendSuccess(res, data, "Quote accepted, booking created");
+      sendSuccess(res, data, Messages.QUOTE_ACCEPTED);
     } catch (err) { next(err); }
   }
 

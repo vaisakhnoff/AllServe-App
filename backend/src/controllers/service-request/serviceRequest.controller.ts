@@ -1,6 +1,7 @@
 import { Response, NextFunction } from "express";
 import { AuthRequest } from "../../shared/interfaces/AuthRequest";
 import { sendSuccess } from "../../shared/utils/response";
+import { Messages } from "../../shared/constants/messages";
 import { IServiceRequestService } from "../../interfaces/service-request/IServiceRequestService";
 import { createServiceRequestSchema } from "../../dto/service-request/serviceRequest.dto";
 import { StatusCodes } from "../../shared/constants/statusCodes";
@@ -12,7 +13,7 @@ export class ServiceRequestController {
     try {
       const dto = createServiceRequestSchema.parse(req.body);
       const data = await this.service.create(req.user!.id, dto);
-      sendSuccess(res, data, "Service request created", StatusCodes.CREATED);
+      sendSuccess(res, data, Messages.SERVICE_REQUEST_CREATED, StatusCodes.CREATED);
     } catch (err) { next(err); }
   }
 
@@ -39,7 +40,7 @@ export class ServiceRequestController {
   async cancel(req: AuthRequest, res: Response, next: NextFunction) {
     try {
       const data = await this.service.cancel(req.params.id as string, req.user!.id);
-      sendSuccess(res, data, "Request cancelled");
+      sendSuccess(res, data, Messages.REQUEST_CANCELLED);
     } catch (err) { next(err); }
   }
 
