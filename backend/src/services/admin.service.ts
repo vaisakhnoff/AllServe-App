@@ -38,17 +38,17 @@ export class AdminService implements IAdminService {
   }
 
   async blockUser(userId: string) {
-    const user = await this.repo.findUserById(userId);
+    const user = await this.repo.findById(userId);
     if (!user) throw new NotFoundError(Messages.USER_NOT_FOUND);
     if (user.role === Role.ADMIN) throw new ForbiddenError(Messages.CANNOT_BLOCK_ADMIN);
-    return this.repo.updateUserById(userId, { status: Status.BLOCKED });
+    return this.repo.update(userId, { status: Status.BLOCKED });
   }
 
   async unblockUser(userId: string) {
-    const user = await this.repo.findUserById(userId);
+    const user = await this.repo.findById(userId);
     if (!user) throw new NotFoundError(Messages.USER_NOT_FOUND);
     if (user.role === Role.ADMIN) throw new ForbiddenError(Messages.CANNOT_MODIFY_ADMIN);
-    return this.repo.updateUserById(userId, { status: Status.ACTIVE });
+    return this.repo.update(userId, { status: Status.ACTIVE });
   }
 
   async approveProvider(appId: string) {

@@ -8,7 +8,7 @@ import { uploadImageToCloudinary } from "../../shared/cloudinary";
 export class UserController {
   constructor(private readonly service: IUserService) {}
 
-  async getProfile(req: AuthRequest, res: Response, next: NextFunction) {
+  async   getProfile(req: AuthRequest, res: Response, next: NextFunction) {
     try {
       const user = await this.service.getProfile(req.user!.id);
       sendSuccess(res, user, "Profile fetched successfully");

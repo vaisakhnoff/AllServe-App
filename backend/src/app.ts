@@ -7,7 +7,6 @@ import { env } from "./config/env";
 import { requestLogger } from "./shared/middleware/requestLogger";
 import { errorMiddleware } from "./shared/errors/errorMiddleware";
 
-// ── DI: controllers ───────────────────────────────────────────────────────────
 import {
   authController,
   providerAuthController,
@@ -24,7 +23,7 @@ import {
   providerQuoteController,
 } from "./di";
 
-// ── Route factories ───────────────────────────────────────────────────────────
+
 import { createAuthRouter }           from "./routes/auth/auth.routes";
 import { createProviderAuthRouter }   from "./routes/auth/providerAuth.routes";
 import { createUserRouter }           from "./routes/user/user.routes";
@@ -41,9 +40,6 @@ import { createProviderQuoteRouter }  from "./routes/provider-quote/providerQuot
 
 const app = express();
 
-// =============================================================================
-// Middleware
-// =============================================================================
 
 const allowedOrigins = [
   env.FRONTEND_URL,
@@ -75,9 +71,7 @@ app.use(passport.initialize());
 app.use("/api", limiter);
 app.use(requestLogger);
 
-// =============================================================================
-// Routes
-// =============================================================================
+
 
 app.use("/api/v1/auth",             createAuthRouter(authController));
 app.use("/api/v1/provider-auth",    createProviderAuthRouter(providerAuthController));
@@ -95,14 +89,11 @@ app.use("/api/v1/messaging",        createMessagingRouter(messagingController));
 app.use("/api/v1/service-requests", createServiceRequestRouter(serviceRequestController));
 app.use("/api/v1/provider-quotes",  createProviderQuoteRouter(providerQuoteController));
 
-// ── Health check ──────────────────────────────────────────────────────────────
 app.get("/", (_req, res) => {
   res.json({ message: "API running" });
 });
 
-// =============================================================================
-// Error Handler (MUST be last)
-// =============================================================================
+
 
 app.use(errorMiddleware);
 
