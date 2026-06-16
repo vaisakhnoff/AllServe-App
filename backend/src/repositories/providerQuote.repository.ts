@@ -13,10 +13,6 @@ export class ProviderQuoteRepository
     super(ProviderQuoteModel);
   }
 
-  async create(data: Partial<IProviderQuote>): Promise<IProviderQuote> {
-    return ProviderQuoteModel.create(data) as Promise<IProviderQuote>;
-  }
-
   async findById(id: string): Promise<IProviderQuote | null> {
     return this.model
       .findById(id)

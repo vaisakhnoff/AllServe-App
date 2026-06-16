@@ -2,6 +2,7 @@ import { IUser } from "../../models/user.model";
 import { IProviderAccount } from "../../models/providerAccount.model";
 import { ApplicationStatus } from "../../shared/enums/application-status.enum";
 import { RejectionReasonCode } from "../../shared/enums/rejection-reason.enum";
+import { IBaseRepository } from "../IBaseRepository";
 
 export interface DashboardStats {
   totalUsers: number;
@@ -9,12 +10,10 @@ export interface DashboardStats {
   pendingApplications: number;
 }
 
-export interface IAdminRepository {
+export interface IAdminRepository extends IBaseRepository<IUser> {
   // User management
   countUsers(): Promise<number>;
   findUsers(filter: Record<string, unknown>): Promise<IUser[]>;
-  findUserById(id: string): Promise<IUser | null>;
-  updateUserById(id: string, data: Partial<IUser>): Promise<IUser | null>;
 
   // Provider management
   countProviderAccounts(filter: Record<string, unknown>): Promise<number>;

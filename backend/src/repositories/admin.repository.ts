@@ -24,14 +24,6 @@ export class AdminRepository
     return UserModel.find(filter, { password: 0 }).exec();
   }
 
-  async findUserById(id: string): Promise<IUser | null> {
-    return UserModel.findById(id).exec();
-  }
-
-  async updateUserById(id: string, data: Partial<IUser>): Promise<IUser | null> {
-    return UserModel.findByIdAndUpdate(id, data, { returnDocument: 'after' }).exec();
-  }
-
   // ── Provider management ──────────────────────────────────────────
 
   async countProviderAccounts(filter: Record<string, unknown>): Promise<number> {
