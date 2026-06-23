@@ -3,6 +3,24 @@ import mongoose, { Schema, Document } from "mongoose";
 export type ServiceStatus = "active" | "inactive";
 export type AvailabilityStatus = "available" | "unavailable";
 
+/**
+ * Service Type Classification:
+ * - instant: Fixed duration, price known upfront, immediate booking (e.g., haircut, basic plumbing)
+ * - visit_first: Provider must visit/inspect before final pricing (e.g., house painting, renovation)
+ * - custom: Fully negotiated scope via bidding (e.g., PC build, interior design)
+ */
+export type ServiceType = "instant" | "visit_first" | "custom";
+
+/**
+ * Pricing Model:
+ * - fixed: Single fixed price (e.g., ₹500 for haircut)
+ * - per_unit: Price per unit with unit specification (e.g., ₹15/sq.ft for painting)
+ * - hourly: Price per hour (e.g., ₹300/hour for consultation)
+ * - starting_from: Minimum price, actual price determined after inspection
+ * - quote_based: No upfront price, determined through bidding
+ */
+export type PricingModel = "fixed" | "per_unit" | "hourly" | "starting_from" | "quote_based";
+
 export interface IServiceLocation {
   city?: string;
   state?: string;
@@ -19,9 +37,53 @@ export interface IService extends Document {
   subCategory?: string;
   name: string;
   description: string;
+  
+  /** Service type determines the booking flow */
+  serviceType: ServiceType;
+  
+  /** 
+   * Pricing model determines how price is calculated and displayed 
+   * - For 'instant': typically 'fixed' or 'hourly'
+   * - For 'visit_first': typically 'per_unit' or 'starting_from'
+   * - For 'custom': typically 'quote_based'
+   */
+  pricingModel: PricingModel;
+  
+  /** 
+   * Base price - interpretation depends on pricingModel:
+   * - fixed: total price
+   * - per_unit/hourly: price per unit/hour
+   * - starting_from: minimum price
+   * - quote_based: can be 0 or estimated range
+   */
   price: number;
-  /** Duration in minutes (1 – 1440). */
+  
+  /** For per_unit pricing (e.g., "sq.ft", "sq.m", "item") */
+  priceUnit?: string;
+  
+  /** 
+   * Duration in minutes (1 – 1440).
+   * - For 'instant': exact duration for slot booking
+   * - For 'visit_first': duration of inspection visit (if applicable)
+   * - For 'custom': estimated duration (informational only)
+   */
   duration: number;
+  
+  /** 
+   * For 'visit_first' services - whether inspection visit is free
+   * Default: true (inspection is usually free, charge comes after estimate)
+   */
+  freeInspection?: boolean;
+  
+  /** For 'visit_first' services - inspection visit fee if not free */
+  inspectionFee?: number;
+  
+  /** 
+   * For 'visit_first' and 'custom' services - estimated project duration in days
+   * Helps users understand time commitment
+   */
+  estimatedProjectDays?: number;
+  
   images: string[];
   serviceArea?: string;
   location?: IServiceLocation;
@@ -55,8 +117,25 @@ const serviceSchema = new Schema<IService>(
     subCategory: { type: String, trim: true, index: true },
     name: { type: String, required: true, trim: true },
     description: { type: String, required: true, trim: true },
+    serviceType: {
+      type: String,
+      enum: ["instant", "visit_first", "custom"],
+      required: true,
+      default: "instant",
+      index: true,
+    },
+    pricingModel: {
+      type: String,
+      enum: ["fixed", "per_unit", "hourly", "starting_from", "quote_based"],
+      required: true,
+      default: "fixed",
+    },
     price: { type: Number, required: true, min: 0 },
+    priceUnit: { type: String, trim: true },
     duration: { type: Number, required: true, min: 1, max: 1440 },
+    freeInspection: { type: Boolean, default: true },
+    inspectionFee: { type: Number, min: 0 },
+    estimatedProjectDays: { type: Number, min: 1 },
     images: { type: [String], default: [] },
     serviceArea: { type: String, trim: true },
     location: {
@@ -86,6 +165,8 @@ const serviceSchema = new Schema<IService>(
 serviceSchema.index({ providerId: 1, isDeleted: 1, createdAt: -1 });
 // Public browse: category + status + availability + not-blocked + not-deleted.
 serviceSchema.index({ categoryId: 1, status: 1, availabilityStatus: 1, isBlocked: 1, isDeleted: 1, createdAt: -1 });
+// Service type filtering for different booking flows
+serviceSchema.index({ categoryId: 1, serviceType: 1, isDeleted: 1 });
 // Location-based filtering.
 serviceSchema.index({ "location.city": 1 });
 
