@@ -1,37 +1,38 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Loader2, X, Plus, ImagePlus, Trash2, Lock } from "lucide-react";
+import { Loader2, X, Plus, ImagePlus, Trash2, Lock, Info } from "lucide-react";
 import {
   AvailabilityStatus,
   CreateServiceDto,
+  PricingModel,
   Service,
   ServiceStatus,
+  ServiceType,
 } from "@/types/service.types";
 import { UI_MESSAGES } from "@/shared/messages";
+import {
+  getPricingModelsForServiceType,
+  getServiceTypeEmoji,
+} from "@/utils/serviceType.utils";
 
 interface LockedCategory {
   id: string;
   name: string;
-  /** All subcategories defined under the parent category. */
   subcategories: string[];
+  defaultServiceType?: ServiceType;
 }
 
 interface ServiceFormModalProps {
   open: boolean;
   initial?: Service | null;
-  /**
-   * The provider's approved category. Services are locked to this category;
-   * the modal renders it as a read-only field so the provider cannot pick a
-   * different category. The server stamps it again on submit regardless.
-   */
   lockedCategory: LockedCategory | null;
   saving?: boolean;
   onSubmit: (dto: CreateServiceDto) => Promise<void> | void;
   onClose: () => void;
 }
 
-const MAX_IMAGE_SIZE_BYTES = 5 * 1024 * 1024; // 5 MB
+const MAX_IMAGE_SIZE_BYTES = 5 * 1024 * 1024;
 const MAX_IMAGES = 10;
 const MAX_TAGS = 20;
 
@@ -43,6 +44,27 @@ const fileToBase64 = (file: File) =>
     reader.readAsDataURL(file);
   });
 
+const SERVICE_TYPE_OPTIONS: { value: ServiceType; label: string; desc: string; emoji: string }[] = [
+  {
+    value: "instant",
+    emoji: "⚡",
+    label: "Instant Booking",
+    desc: "Fixed price — customers pick a slot and book immediately",
+  },
+  {
+    value: "visit_first",
+    emoji: "🏠",
+    label: "Inspection Required",
+    desc: "You visit first, inspect the job, then provide a quote",
+  },
+  {
+    value: "custom",
+    emoji: "🎨",
+    label: "Custom / Bidding",
+    desc: "Customers post a request and you send a competitive quote",
+  },
+];
+
 export function ServiceFormModal({
   open,
   initial,
@@ -53,8 +75,14 @@ export function ServiceFormModal({
 }: ServiceFormModalProps) {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
+  const [serviceType, setServiceType] = useState<ServiceType>("instant");
+  const [pricingModel, setPricingModel] = useState<PricingModel>("fixed");
   const [price, setPrice] = useState("");
+  const [priceUnit, setPriceUnit] = useState("");
   const [duration, setDuration] = useState("");
+  const [freeInspection, setFreeInspection] = useState(true);
+  const [inspectionFee, setInspectionFee] = useState("");
+  const [estimatedProjectDays, setEstimatedProjectDays] = useState("");
   const [subCategory, setSubCategory] = useState("");
   const [availabilityStatus, setAvailabilityStatus] = useState<AvailabilityStatus>("available");
   const [status, setStatus] = useState<ServiceStatus>("active");
@@ -64,43 +92,88 @@ export function ServiceFormModal({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitError, setSubmitError] = useState<string | null>(null);
 
-  // Reset form when (re)opened
+  // When service type changes, reset pricing model to first valid option
+  const handleServiceTypeChange = (t: ServiceType) => {
+    setServiceType(t);
+    const opts = getPricingModelsForServiceType(t);
+    setPricingModel(opts[0].value);
+    // Reset inspection-only fields when switching away
+    if (t !== "visit_first") {
+      setFreeInspection(true);
+      setInspectionFee("");
+      setEstimatedProjectDays("");
+    }
+    if (t !== "custom") {
+      setEstimatedProjectDays("");
+    }
+  };
+
   useEffect(() => {
     if (!open) return;
     setSubmitError(null);
     setErrors({});
+    const defaultType = initial?.serviceType ?? lockedCategory?.defaultServiceType ?? "instant";
     setName(initial?.name ?? "");
     setDescription(initial?.description ?? "");
+    setServiceType(defaultType);
+    setPricingModel(initial?.pricingModel ?? getPricingModelsForServiceType(defaultType)[0].value);
     setPrice(initial?.price != null ? String(initial.price) : "");
+    setPriceUnit(initial?.priceUnit ?? "");
     setDuration(initial?.duration != null ? String(initial.duration) : "");
+    setFreeInspection(initial?.freeInspection ?? true);
+    setInspectionFee(initial?.inspectionFee != null ? String(initial.inspectionFee) : "");
+    setEstimatedProjectDays(
+      initial?.estimatedProjectDays != null ? String(initial.estimatedProjectDays) : ""
+    );
     setSubCategory(initial?.subCategory ?? "");
     setAvailabilityStatus(initial?.availabilityStatus ?? "available");
     setStatus(initial?.status ?? "active");
     setTags(initial?.tags ?? []);
     setTagInput("");
     setImages(initial?.images ?? []);
-  }, [open, initial]);
+  }, [open, initial, lockedCategory]);
 
   const isEdit = Boolean(initial);
-  const title = isEdit ? "Edit Service" : "Add new service";
+  const pricingOptions = getPricingModelsForServiceType(serviceType);
 
   const validate = (): boolean => {
     const next: Record<string, string> = {};
     if (!name.trim() || name.trim().length < 2) next.name = UI_MESSAGES.SERVICE_NAME_MIN;
     else if (name.trim().length > 100) next.name = UI_MESSAGES.SERVICE_NAME_MAX;
 
-    if (!description.trim() || description.trim().length < 10) next.description = UI_MESSAGES.SERVICE_DESCRIPTION_MIN;
-    else if (description.trim().length > 2000) next.description = UI_MESSAGES.SERVICE_DESCRIPTION_MAX;
+    if (!description.trim() || description.trim().length < 10)
+      next.description = UI_MESSAGES.SERVICE_DESCRIPTION_MIN;
+    else if (description.trim().length > 2000)
+      next.description = UI_MESSAGES.SERVICE_DESCRIPTION_MAX;
 
     const priceNum = Number(price);
     if (price === "" || Number.isNaN(priceNum)) next.price = UI_MESSAGES.SERVICE_PRICE_REQUIRED;
     else if (priceNum < 0) next.price = UI_MESSAGES.SERVICE_PRICE_NEGATIVE;
 
     const durationNum = Number(duration);
-    if (duration === "" || Number.isNaN(durationNum)) next.duration = UI_MESSAGES.SERVICE_DURATION_REQUIRED;
+    if (duration === "" || Number.isNaN(durationNum))
+      next.duration = UI_MESSAGES.SERVICE_DURATION_REQUIRED;
     else if (!Number.isInteger(durationNum)) next.duration = UI_MESSAGES.SERVICE_DURATION_INTEGER;
     else if (durationNum < 1) next.duration = UI_MESSAGES.SERVICE_DURATION_MIN;
     else if (durationNum > 1440) next.duration = UI_MESSAGES.SERVICE_DURATION_MAX;
+
+    if (pricingModel === "per_unit" && !priceUnit.trim())
+      next.priceUnit = "Price unit is required (e.g. sq.ft, item)";
+
+    if (serviceType === "visit_first" && !freeInspection) {
+      const fee = Number(inspectionFee);
+      if (!inspectionFee || Number.isNaN(fee) || fee <= 0)
+        next.inspectionFee = "Inspection fee must be greater than ₹0";
+    }
+
+    if (
+      (serviceType === "visit_first" || serviceType === "custom") &&
+      estimatedProjectDays !== ""
+    ) {
+      const days = Number(estimatedProjectDays);
+      if (!Number.isInteger(days) || days < 1)
+        next.estimatedProjectDays = "Must be a whole number of days ≥ 1";
+    }
 
     if (images.length > MAX_IMAGES) next.images = UI_MESSAGES.SERVICE_IMAGES_MAX;
     if (tags.length > MAX_TAGS) next.tags = UI_MESSAGES.SERVICE_TAGS_MAX;
@@ -117,8 +190,20 @@ export function ServiceFormModal({
     const dto: CreateServiceDto = {
       name: name.trim(),
       description: description.trim(),
+      serviceType,
+      pricingModel,
       price: Number(price),
+      priceUnit: pricingModel === "per_unit" ? priceUnit.trim() : undefined,
       duration: Number(duration),
+      freeInspection: serviceType === "visit_first" ? freeInspection : undefined,
+      inspectionFee:
+        serviceType === "visit_first" && !freeInspection && inspectionFee
+          ? Number(inspectionFee)
+          : undefined,
+      estimatedProjectDays:
+        (serviceType === "visit_first" || serviceType === "custom") && estimatedProjectDays
+          ? Number(estimatedProjectDays)
+          : undefined,
       images,
       subCategory: subCategory.trim() || undefined,
       availabilityStatus,
@@ -137,64 +222,53 @@ export function ServiceFormModal({
   const handleAddTag = () => {
     const value = tagInput.trim();
     if (!value) return;
-    if (tags.includes(value)) {
-      setTagInput("");
-      return;
-    }
+    if (tags.includes(value)) { setTagInput(""); return; }
     if (tags.length >= MAX_TAGS) {
-      setErrors((prev) => ({ ...prev, tags: UI_MESSAGES.SERVICE_TAGS_MAX }));
+      setErrors((p) => ({ ...p, tags: UI_MESSAGES.SERVICE_TAGS_MAX }));
       return;
     }
     if (value.length > 30) {
-      setErrors((prev) => ({ ...prev, tags: UI_MESSAGES.SERVICE_TAG_MAX_LENGTH }));
+      setErrors((p) => ({ ...p, tags: UI_MESSAGES.SERVICE_TAG_MAX_LENGTH }));
       return;
     }
     setTags([...tags, value]);
     setTagInput("");
-    setErrors((prev) => ({ ...prev, tags: "" }));
+    setErrors((p) => ({ ...p, tags: "" }));
   };
 
   const handleTagKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter" || e.key === ",") {
-      e.preventDefault();
-      handleAddTag();
-    }
+    if (e.key === "Enter" || e.key === ",") { e.preventDefault(); handleAddTag(); }
   };
 
   const handleImagesPicked = async (files: FileList | null) => {
     if (!files || files.length === 0) return;
     const remaining = MAX_IMAGES - images.length;
     if (remaining <= 0) {
-      setErrors((prev) => ({ ...prev, images: UI_MESSAGES.SERVICE_IMAGES_MAX }));
+      setErrors((p) => ({ ...p, images: UI_MESSAGES.SERVICE_IMAGES_MAX }));
       return;
     }
-    const picked = Array.from(files).slice(0, remaining);
-    const valid = picked.filter((f) => {
+    const picked = Array.from(files).slice(0, remaining).filter((f) => {
       if (f.size > MAX_IMAGE_SIZE_BYTES) {
-        setErrors((prev) => ({ ...prev, images: `${f.name} is larger than 5MB` }));
+        setErrors((p) => ({ ...p, images: `${f.name} exceeds 5 MB` }));
         return false;
       }
       if (!f.type.startsWith("image/")) {
-        setErrors((prev) => ({ ...prev, images: `${f.name} is not an image` }));
+        setErrors((p) => ({ ...p, images: `${f.name} is not an image` }));
         return false;
       }
       return true;
     });
-    if (valid.length === 0) return;
+    if (!picked.length) return;
     try {
-      const base64Images = await Promise.all(valid.map(fileToBase64));
-      setImages((prev) => [...prev, ...base64Images]);
-      setErrors((prev) => ({ ...prev, images: "" }));
+      const b64 = await Promise.all(picked.map(fileToBase64));
+      setImages((prev) => [...prev, ...b64]);
+      setErrors((p) => ({ ...p, images: "" }));
     } catch {
-      setErrors((prev) => ({ ...prev, images: UI_MESSAGES.SERVICE_IMAGE_READ_FAILED }));
+      setErrors((p) => ({ ...p, images: UI_MESSAGES.SERVICE_IMAGE_READ_FAILED }));
     }
   };
 
-  const removeImage = (idx: number) => {
-    setImages((prev) => prev.filter((_, i) => i !== idx));
-  };
-
-  const fieldClass = (key: string) =>
+  const fc = (key: string) =>
     `w-full rounded-lg border px-3 py-2 text-sm outline-none transition focus:border-indigo-400 ${
       errors[key] ? "border-red-300 bg-red-50" : "border-slate-200"
     }`;
@@ -210,8 +284,11 @@ export function ServiceFormModal({
         className="w-full max-w-2xl max-h-[92vh] overflow-y-auto rounded-2xl bg-white p-6 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
+        {/* Header */}
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-xl font-black text-slate-950">{title}</h2>
+          <h2 className="text-xl font-black text-slate-950">
+            {isEdit ? "Edit Service" : "Add new service"}
+          </h2>
           <button
             onClick={onClose}
             className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
@@ -227,8 +304,33 @@ export function ServiceFormModal({
           </div>
         )}
 
-        <form onSubmit={submit} className="space-y-4">
-          {/* Name + Category */}
+        <form onSubmit={submit} className="space-y-5">
+          {/* ── Service Type ──────────────────────────────────────────── */}
+          <div>
+            <label className="mb-2 block text-xs font-bold text-slate-600">
+              Service Type *
+            </label>
+            <div className="grid gap-2 sm:grid-cols-3">
+              {SERVICE_TYPE_OPTIONS.map((opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => handleServiceTypeChange(opt.value)}
+                  className={`rounded-xl border-2 p-3 text-left transition-all ${
+                    serviceType === opt.value
+                      ? "border-indigo-500 bg-indigo-50"
+                      : "border-slate-200 hover:border-slate-300"
+                  }`}
+                >
+                  <span className="text-lg">{opt.emoji}</span>
+                  <p className="mt-1 text-xs font-black text-slate-900">{opt.label}</p>
+                  <p className="mt-0.5 text-[11px] text-slate-500 leading-tight">{opt.desc}</p>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* ── Name + Category ──────────────────────────────────────── */}
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <label className="mb-1 block text-xs font-bold text-slate-600">Service name *</label>
@@ -236,20 +338,15 @@ export function ServiceFormModal({
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className={fieldClass("name")}
-                placeholder="e.g. Premium AC Installation"
+                className={fc("name")}
+                placeholder="e.g. Interior House Painting"
               />
               {errors.name && <p className="mt-1 text-xs text-red-500">{errors.name}</p>}
             </div>
             <div>
               <label className="mb-1 block text-xs font-bold text-slate-600">Category</label>
-              <div
-                className="flex items-center justify-between gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-700"
-                aria-readonly="true"
-              >
-                <span className="truncate">
-                  {lockedCategory?.name ?? "Approved category not set"}
-                </span>
+              <div className="flex items-center justify-between gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-700">
+                <span className="truncate">{lockedCategory?.name ?? "Approved category not set"}</span>
                 <span className="inline-flex items-center gap-1 rounded-full bg-white px-2 py-0.5 text-[10px] font-bold uppercase text-slate-500">
                   <Lock size={10} /> Locked
                 </span>
@@ -260,35 +357,23 @@ export function ServiceFormModal({
             </div>
           </div>
 
-          {/* Sub-category */}
+          {/* ── Sub-category ─────────────────────────────────────────── */}
           {lockedCategory && lockedCategory.subcategories.length > 0 && (
             <div>
-              <label className="mb-1 block text-xs font-bold text-slate-600">
-                Sub-category
-              </label>
-              <select
-                value={subCategory}
-                onChange={(e) => setSubCategory(e.target.value)}
-                className={fieldClass("subCategory")}
-              >
+              <label className="mb-1 block text-xs font-bold text-slate-600">Sub-category</label>
+              <select value={subCategory} onChange={(e) => setSubCategory(e.target.value)} className={fc("subCategory")}>
                 <option value="">— None —</option>
-                {lockedCategory.subcategories.map((sub) => (
-                  <option key={sub} value={sub}>
-                    {sub}
-                  </option>
+                {lockedCategory.subcategories.map((s) => (
+                  <option key={s} value={s}>{s}</option>
                 ))}
-                {/* Allow legacy/custom subcategories that aren't in the list anymore. */}
                 {subCategory && !lockedCategory.subcategories.includes(subCategory) && (
                   <option value={subCategory}>{subCategory} (existing)</option>
                 )}
               </select>
-              <p className="mt-1 text-[11px] text-slate-400">
-                Helps customers find this service when they drill down from the category.
-              </p>
             </div>
           )}
 
-          {/* Description */}
+          {/* ── Description ──────────────────────────────────────────── */}
           <div>
             <label className="mb-1 block text-xs font-bold text-slate-600">Description *</label>
             <textarea
@@ -296,8 +381,8 @@ export function ServiceFormModal({
               onChange={(e) => setDescription(e.target.value)}
               rows={4}
               maxLength={2000}
-              className={`${fieldClass("description")} resize-none`}
-              placeholder="Describe what's included, materials used, and what makes this offering stand out (min 10 characters)."
+              className={`${fc("description")} resize-none`}
+              placeholder="Describe what's included, materials used, and what makes this service stand out."
             />
             <div className="mt-1 flex items-center justify-between">
               {errors.description ? (
@@ -305,27 +390,72 @@ export function ServiceFormModal({
               ) : (
                 <span className="text-xs text-slate-400">Min 10, max 2000 characters</span>
               )}
-              <span className="text-xs text-slate-400">{description.length} / 2000</span>
+              <span className="text-xs text-slate-400">{description.length}/2000</span>
             </div>
           </div>
 
-          {/* Price + Duration */}
+          {/* ── Pricing Model + Price ─────────────────────────────────── */}
+          <div>
+            <label className="mb-1 block text-xs font-bold text-slate-600">Pricing Model *</label>
+            <div className="grid gap-2 sm:grid-cols-2">
+              {pricingOptions.map((opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => setPricingModel(opt.value)}
+                  className={`rounded-xl border-2 p-3 text-left transition-all ${
+                    pricingModel === opt.value
+                      ? "border-indigo-500 bg-indigo-50"
+                      : "border-slate-200 hover:border-slate-300"
+                  }`}
+                >
+                  <p className="text-xs font-black text-slate-900">{opt.label}</p>
+                  <p className="mt-0.5 text-[11px] text-slate-500">{opt.hint}</p>
+                </button>
+              ))}
+            </div>
+          </div>
+
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
-              <label className="mb-1 block text-xs font-bold text-slate-600">Price (₹) *</label>
+              <label className="mb-1 block text-xs font-bold text-slate-600">
+                {pricingModel === "per_unit" ? "Price per unit (₹) *" :
+                 pricingModel === "hourly"   ? "Price per hour (₹) *" :
+                 pricingModel === "starting_from" ? "Starting price (₹) *" :
+                 pricingModel === "quote_based" ? "Base estimate (₹)" :
+                 "Price (₹) *"}
+              </label>
               <input
                 type="number"
                 min={0}
                 step="0.01"
                 value={price}
                 onChange={(e) => setPrice(e.target.value)}
-                className={fieldClass("price")}
-                placeholder="e.g. 1499"
+                className={fc("price")}
+                placeholder={pricingModel === "quote_based" ? "Optional estimate" : "e.g. 500"}
               />
               {errors.price && <p className="mt-1 text-xs text-red-500">{errors.price}</p>}
             </div>
+
+            {/* Price unit – only for per_unit */}
+            {pricingModel === "per_unit" && (
+              <div>
+                <label className="mb-1 block text-xs font-bold text-slate-600">Price unit *</label>
+                <input
+                  type="text"
+                  value={priceUnit}
+                  onChange={(e) => setPriceUnit(e.target.value)}
+                  className={fc("priceUnit")}
+                  placeholder="e.g. sq.ft, sq.m, item"
+                />
+                {errors.priceUnit && <p className="mt-1 text-xs text-red-500">{errors.priceUnit}</p>}
+              </div>
+            )}
+
             <div>
-              <label className="mb-1 block text-xs font-bold text-slate-600">Duration (minutes) *</label>
+              <label className="mb-1 block text-xs font-bold text-slate-600">
+                {serviceType === "visit_first" ? "Inspection duration (min) *" : "Duration (minutes) *"}
+              </label>
               <input
                 type="number"
                 min={1}
@@ -333,40 +463,126 @@ export function ServiceFormModal({
                 step="1"
                 value={duration}
                 onChange={(e) => setDuration(e.target.value)}
-                className={fieldClass("duration")}
+                className={fc("duration")}
                 placeholder="e.g. 60"
               />
               {errors.duration && <p className="mt-1 text-xs text-red-500">{errors.duration}</p>}
+              {serviceType === "visit_first" && (
+                <p className="mt-1 text-[11px] text-slate-400">Duration of the initial inspection visit.</p>
+              )}
             </div>
           </div>
 
-          {/* Status + Availability */}
+          {/* ── visit_first extra fields ─────────────────────────────── */}
+          {serviceType === "visit_first" && (
+            <div className="rounded-xl border border-blue-100 bg-blue-50/60 p-4 space-y-3">
+              <div className="flex items-center gap-2">
+                <span className="text-lg">🏠</span>
+                <p className="text-xs font-bold text-blue-700">Inspection Visit Settings</p>
+              </div>
+
+              {/* Free inspection toggle */}
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={freeInspection}
+                  onChange={(e) => {
+                    setFreeInspection(e.target.checked);
+                    if (e.target.checked) setInspectionFee("");
+                  }}
+                  className="h-4 w-4 rounded border-slate-300 accent-indigo-600"
+                />
+                <div>
+                  <p className="text-xs font-bold text-slate-700">Free inspection visit</p>
+                  <p className="text-[11px] text-slate-500">Offer the initial assessment visit at no cost</p>
+                </div>
+              </label>
+
+              {/* Inspection fee – only when not free */}
+              {!freeInspection && (
+                <div>
+                  <label className="mb-1 block text-xs font-bold text-slate-600">Inspection fee (₹) *</label>
+                  <input
+                    type="number"
+                    min={1}
+                    step="0.01"
+                    value={inspectionFee}
+                    onChange={(e) => setInspectionFee(e.target.value)}
+                    className={fc("inspectionFee")}
+                    placeholder="e.g. 200"
+                  />
+                  {errors.inspectionFee && <p className="mt-1 text-xs text-red-500">{errors.inspectionFee}</p>}
+                </div>
+              )}
+
+              {/* Estimated project days */}
+              <div>
+                <label className="mb-1 block text-xs font-bold text-slate-600">Estimated project duration (days)</label>
+                <input
+                  type="number"
+                  min={1}
+                  max={365}
+                  step="1"
+                  value={estimatedProjectDays}
+                  onChange={(e) => setEstimatedProjectDays(e.target.value)}
+                  className={fc("estimatedProjectDays")}
+                  placeholder="e.g. 3"
+                />
+                {errors.estimatedProjectDays && (
+                  <p className="mt-1 text-xs text-red-500">{errors.estimatedProjectDays}</p>
+                )}
+                <p className="mt-1 text-[11px] text-slate-500">
+                  Helps customers understand the typical project timeline.
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* ── custom estimated project days ───────────────────────── */}
+          {serviceType === "custom" && (
+            <div className="rounded-xl border border-purple-100 bg-purple-50/60 p-4 space-y-3">
+              <div className="flex items-center gap-2">
+                <span className="text-lg">🎨</span>
+                <p className="text-xs font-bold text-purple-700">Project Estimate</p>
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-bold text-slate-600">Estimated project duration (days)</label>
+                <input
+                  type="number"
+                  min={1}
+                  max={365}
+                  step="1"
+                  value={estimatedProjectDays}
+                  onChange={(e) => setEstimatedProjectDays(e.target.value)}
+                  className={fc("estimatedProjectDays")}
+                  placeholder="e.g. 5"
+                />
+                {errors.estimatedProjectDays && (
+                  <p className="mt-1 text-xs text-red-500">{errors.estimatedProjectDays}</p>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* ── Status + Availability ────────────────────────────────── */}
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <label className="mb-1 block text-xs font-bold text-slate-600">Listing status</label>
-              <select
-                value={status}
-                onChange={(e) => setStatus(e.target.value as ServiceStatus)}
-                className={fieldClass("status")}
-              >
+              <select value={status} onChange={(e) => setStatus(e.target.value as ServiceStatus)} className={fc("status")}>
                 <option value="active">Active</option>
                 <option value="inactive">Inactive</option>
               </select>
             </div>
             <div>
               <label className="mb-1 block text-xs font-bold text-slate-600">Availability</label>
-              <select
-                value={availabilityStatus}
-                onChange={(e) => setAvailabilityStatus(e.target.value as AvailabilityStatus)}
-                className={fieldClass("availabilityStatus")}
-              >
+              <select value={availabilityStatus} onChange={(e) => setAvailabilityStatus(e.target.value as AvailabilityStatus)} className={fc("availabilityStatus")}>
                 <option value="available">Available</option>
                 <option value="unavailable">Unavailable</option>
               </select>
             </div>
           </div>
 
-          {/* Tags */}
+          {/* ── Tags ─────────────────────────────────────────────────── */}
           <div>
             <label className="mb-1 block text-xs font-bold text-slate-600">
               Tags <span className="font-normal text-slate-400">({tags.length}/{MAX_TAGS})</span>
@@ -377,7 +593,7 @@ export function ServiceFormModal({
                 value={tagInput}
                 onChange={(e) => setTagInput(e.target.value)}
                 onKeyDown={handleTagKeyDown}
-                className={fieldClass("tags")}
+                className={fc("tags")}
                 placeholder="Type and press Enter to add"
               />
               <button
@@ -392,17 +608,9 @@ export function ServiceFormModal({
             {tags.length > 0 && (
               <div className="mt-2 flex flex-wrap gap-2">
                 {tags.map((t) => (
-                  <span
-                    key={t}
-                    className="inline-flex items-center gap-1 rounded-full bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-700"
-                  >
+                  <span key={t} className="inline-flex items-center gap-1 rounded-full bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-700">
                     {t}
-                    <button
-                      type="button"
-                      onClick={() => setTags(tags.filter((tag) => tag !== t))}
-                      className="text-indigo-500 hover:text-indigo-700"
-                      aria-label={`Remove ${t}`}
-                    >
+                    <button type="button" onClick={() => setTags(tags.filter((tag) => tag !== t))} className="text-indigo-500 hover:text-indigo-700" aria-label={`Remove ${t}`}>
                       <X size={12} />
                     </button>
                   </span>
@@ -411,7 +619,7 @@ export function ServiceFormModal({
             )}
           </div>
 
-          {/* Images */}
+          {/* ── Images ───────────────────────────────────────────────── */}
           <div>
             <label className="mb-1 block text-xs font-bold text-slate-600">
               Images <span className="font-normal text-slate-400">({images.length}/{MAX_IMAGES})</span>
@@ -419,33 +627,16 @@ export function ServiceFormModal({
             <label className="flex cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed border-indigo-200 bg-indigo-50 px-4 py-6 text-center text-xs font-semibold text-indigo-700 hover:bg-indigo-100">
               <ImagePlus size={20} className="mb-1" />
               Upload images (JPG/PNG, up to 5 MB each)
-              <input
-                type="file"
-                accept="image/*"
-                multiple
-                className="hidden"
-                onChange={(e) => {
-                  void handleImagesPicked(e.target.files);
-                  e.target.value = "";
-                }}
-              />
+              <input type="file" accept="image/*" multiple className="hidden" onChange={(e) => { void handleImagesPicked(e.target.files); e.target.value = ""; }} />
             </label>
             {errors.images && <p className="mt-1 text-xs text-red-500">{errors.images}</p>}
             {images.length > 0 && (
               <div className="mt-3 grid grid-cols-3 gap-2 sm:grid-cols-4">
                 {images.map((img, idx) => (
-                  <div
-                    key={`${idx}-${img.slice(0, 16)}`}
-                    className="group relative aspect-square overflow-hidden rounded-lg border border-slate-200 bg-slate-50"
-                  >
+                  <div key={`${idx}-${img.slice(0, 16)}`} className="group relative aspect-square overflow-hidden rounded-lg border border-slate-200 bg-slate-50">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={img} alt={`Service image ${idx + 1}`} className="h-full w-full object-cover" />
-                    <button
-                      type="button"
-                      onClick={() => removeImage(idx)}
-                      className="absolute right-1 top-1 hidden rounded-full bg-white/90 p-1 text-red-600 shadow-sm group-hover:block"
-                      aria-label="Remove image"
-                    >
+                    <button type="button" onClick={() => setImages((prev) => prev.filter((_, i) => i !== idx))} className="absolute right-1 top-1 hidden rounded-full bg-white/90 p-1 text-red-600 shadow-sm group-hover:block" aria-label="Remove image">
                       <Trash2 size={12} />
                     </button>
                   </div>
@@ -454,20 +645,27 @@ export function ServiceFormModal({
             )}
           </div>
 
-          {/* Footer */}
+          {/* ── Booking-flow info banner ──────────────────────────────── */}
+          <div className="rounded-xl border border-slate-100 bg-slate-50 p-3 flex items-start gap-2">
+            <Info size={14} className="mt-0.5 shrink-0 text-slate-400" />
+            <div>
+              <p className="text-[11px] font-bold text-slate-600">
+                {getServiceTypeEmoji(serviceType)}{" "}
+                {serviceType === "instant"
+                  ? "Customers can book an available slot immediately"
+                  : serviceType === "visit_first"
+                  ? "Customers will book a free inspection visit — you send the final quote after assessing the work"
+                  : "Customers will post a service request — you submit a competitive quote"}
+              </p>
+            </div>
+          </div>
+
+          {/* ── Footer ───────────────────────────────────────────────── */}
           <div className="flex justify-end gap-2 border-t border-slate-100 pt-4">
-            <button
-              type="button"
-              onClick={onClose}
-              className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50"
-            >
+            <button type="button" onClick={onClose} className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50">
               Cancel
             </button>
-            <button
-              type="submit"
-              disabled={saving}
-              className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-5 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700 disabled:opacity-60"
-            >
+            <button type="submit" disabled={saving} className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-5 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700 disabled:opacity-60">
               {saving ? <Loader2 size={14} className="animate-spin" /> : null}
               {isEdit ? "Save changes" : "Create service"}
             </button>
