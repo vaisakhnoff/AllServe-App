@@ -38,19 +38,22 @@ export function ChatWindow({ conversation, currentUserId, role }: ChatWindowProp
     emit("conversation:join", conversation._id);
     emit("message:read", conversation._id);
 
-    const offNew = on("message:new", (msg: Message) => {
+    const offNew = on("message:new", (msg: unknown) => {
+      const m = msg as Message;
       setMessages((prev) => {
-        if (prev.some((m) => m._id === msg._id)) return prev;
-        return [...prev, msg];
+        if (prev.some((p) => p._id === m._id)) return prev;
+        return [...prev, m];
       });
-      if (msg.senderId !== currentUserId) emit("message:read", conversation._id);
+      if (m.senderId !== currentUserId) emit("message:read", conversation._id);
     });
 
-    const offTypingStart = on("typing:start", (data: { userId: string }) => {
-      if (data.userId !== currentUserId) setTyping(true);
+    const offTypingStart = on("typing:start", (data: unknown) => {
+      const d = data as { userId: string };
+      if (d.userId !== currentUserId) setTyping(true);
     });
-    const offTypingStop = on("typing:stop", (data: { userId: string }) => {
-      if (data.userId !== currentUserId) setTyping(false);
+    const offTypingStop = on("typing:stop", (data: unknown) => {
+      const d = data as { userId: string };
+      if (d.userId !== currentUserId) setTyping(false);
     });
     const offRead = on("message:read", () => {
       setMessages((prev) => prev.map((m) => ({ ...m, isRead: true })));

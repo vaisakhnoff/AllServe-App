@@ -6,3 +6,8 @@ backend/dist
 backend/.env
 ALLSERVE 
  DETAILED MODULE DOCUMENTATION.pdf
+IMPLEMENTATION_SUMMARY.md
+SOLUTION_2.1_QUICK_START.md
+allserve_flow_analysis.md
+backend/SERVICE_TYPE_IMPLEMENTATION.md
+.vscode/

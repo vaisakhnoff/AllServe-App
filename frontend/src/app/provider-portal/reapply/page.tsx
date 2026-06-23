@@ -107,7 +107,7 @@ export default function ProviderReapplyPage() {
         ]);
 
         const catData = catRes.data.data || catRes.data;
-        const cats = (catData.items || (Array.isArray(catData) ? catData : [])).map((c) => ({
+        const cats = ((catData as { items?: { _id: string; name: string; subcategories?: { name: string }[] }[] }).items || (Array.isArray(catData) ? catData as { _id: string; name: string; subcategories?: { name: string }[] }[] : [])).map((c) => ({
           id: c._id,
           name: c.name,
           subcategories: (c.subcategories || []).map((s) => s.name),

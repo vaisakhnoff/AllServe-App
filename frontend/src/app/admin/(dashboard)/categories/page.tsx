@@ -28,7 +28,8 @@ export default function AdminCategoriesPage() {
     try {
       setLoading(true);
       const res = await categoryService.getAll();
-      setCategories(res.data?.data?.items ?? []);
+      const data = res.data?.data;
+      setCategories((data as { items?: Category[] } | null)?.items ?? (Array.isArray(data) ? data as Category[] : []));
     } catch (err) {
       setErrorMsg(getErrorMessage(err) || "Failed to load categories");
     } finally {

@@ -121,7 +121,7 @@ export default function ProviderApplicationPage() {
   useEffect(() => {
     categoryService.getAll().then((res) => {
       const data = res.data.data || res.data;
-      const categories = data.items || (Array.isArray(data) ? data : []);
+      const categories = (data as { items?: { _id: string; name: string; subcategories?: { name: string }[] }[] }).items || (Array.isArray(data) ? data as { _id: string; name: string; subcategories?: { name: string }[] }[] : []);
       setCategories(categories.map((c) => ({ id: c._id, name: c.name, subcategories: (c.subcategories || []).map((s) => s.name) })));
     }).catch(() => toast.error("Failed to load categories"));
   }, []);

@@ -6,11 +6,11 @@ import { API_ENDPOINTS } from "@/shared/routes";
 import { ApiResponse, AuthTokens } from "@/types/auth.types";
 import api from "./axiosInstance";
 
-// ── Route prefix constants
+// ── Route prefix 
 const PROVIDER_PORTAL_PREFIX = "/provider-portal";
 const ADMIN_PREFIX = "/admin";
 
-// ── Role detection helpers ────────────────────────────────────────────────────
+// ── Role detection helpers
 
 const getRouteRole = (pathname: string): AuthRole => {
   if (pathname.startsWith(ADMIN_PREFIX)) return "admin";
@@ -18,17 +18,17 @@ const getRouteRole = (pathname: string): AuthRole => {
   return "user";
 };
 
-/** Determine the auth role for a given API URL or current browser route */
+// Determine the auth role for a given API URL
+ 
 const getRequestRole = (url?: string): AuthRole | null => {
   if (typeof window === "undefined") return null;
 
   const pathname = window.location.pathname;
 
-  // The route prefix determines the role for the request's token
+
   const pathRole = getRouteRole(pathname);
   if (pathRole !== "user") return pathRole;
 
-  // Fall back to URL-based detection for ambiguous routes (API endpoints)
   const normalizedUrl = url ?? "";
   if (normalizedUrl.startsWith("/admin")) return "admin";
   if (normalizedUrl.startsWith("/provider-auth") || normalizedUrl.startsWith("/provider/")) return "provider";
@@ -42,12 +42,7 @@ const getLoginRedirectPath = (role: AuthRole | null): string => {
   return "/login";
 };
 
-/**
- * True if the failed request was a login attempt for ANY role.
- * Substring matching against `/auth/login` is unsafe — `/provider-auth/login`
- * doesn't include `/auth/login` (a `-` separates them, not a `/`). Use the
- * explicit endpoint constants instead.
- */
+
 const isLoginRequest = (url?: string): boolean => {
   if (!url) return false;
   return (
@@ -57,10 +52,10 @@ const isLoginRequest = (url?: string): boolean => {
   );
 };
 
-/** Pick the right refresh-token endpoint for the failed request's role. */
+// Pick the right refresh-token endpoint
 const getRefreshEndpoint = (role: AuthRole | null): string => {
   if (role === "provider") return API_ENDPOINTS.PROVIDER_REFRESH_TOKEN;
-  // Admin currently shares the user refresh endpoint; treat the same way.
+  
   return API_ENDPOINTS.REFRESH_TOKEN;
 };
 
@@ -93,8 +88,7 @@ api.interceptors.response.use(
     }
 
     if (error.response?.status === 401 && !originalRequest._retry) {
-      // Never refresh on a login request — let the wrong-credentials error
-      // surface to the caller so the form can show it.
+      
       if (isLoginRequest(originalRequest.url)) {
         return Promise.reject(error);
       }

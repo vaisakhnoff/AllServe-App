@@ -31,7 +31,7 @@ export default function ProvidersListPage() {
       .getAll()
       .then((res) => {
         const data = res.data.data || res.data;
-        const categories = data.items || (Array.isArray(data) ? data : []);
+        const categories = (data as { items?: Category[] }).items || (Array.isArray(data) ? data as Category[] : []);
         setCategories(categories);
       })
       .catch(() => {});
