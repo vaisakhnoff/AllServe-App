@@ -11,8 +11,14 @@ import { ServiceFormModal } from "@/components/provider/ServiceFormModal";
 import { serviceService } from "@/services/service";
 import { providerService } from "@/services/provider";
 import { categoryService } from "@/services/category";
-import { Service, CreateServiceDto, ServiceStatus } from "@/types/service.types";
+import { Service, CreateServiceDto, ServiceStatus, ServiceType } from "@/types/service.types";
+import { Category } from "@/types/category.types";
 import { getErrorMessage } from "@/utils/errorHandler";
+import {
+  getServiceTypeBadgeClass,
+  getServiceTypeLabel,
+  getServiceTypeEmoji,
+  getDisplayPrice,} from "@/utils/serviceType.utils";
 
 const STATUS_BADGE: Record<ServiceStatus, string> = {
   active: "bg-emerald-50 text-emerald-700",
@@ -23,6 +29,7 @@ interface LockedCategory {
   id: string;
   name: string;
   subcategories: string[];
+  defaultServiceType?: ServiceType;
 }
 
 export default function ProviderServicesPage() {
@@ -78,13 +85,14 @@ export default function ProviderServicesPage() {
         const cat = statusRes.data.data?.category;
         if (!cat || typeof cat !== "object" || !("_id" in cat) || !cat._id) return;
         const catData = catsRes.data.data || catsRes.data;
-        const cats = catData.items || (Array.isArray(catData) ? catData : []);
+        const cats: Category[] = (catData as { items?: Category[] }).items || (Array.isArray(catData) ? catData as Category[] : []);
         const id = String(cat._id);
         const full = cats.find((c) => c._id === id);
         setLockedCategory({
           id,
           name: full?.name ?? cat.name ?? "Your category",
           subcategories: full?.subcategories?.map((s) => s.name) ?? [],
+          defaultServiceType: full?.defaultServiceType,
         });
       } catch {
         // Non-fatal: form will show "Approved category not set" hint and the
@@ -260,6 +268,13 @@ export default function ProviderServicesPage() {
                     </span>
                   )}
                 </div>
+                {/* Service-type badge – bottom-right corner */}
+                <div className="absolute right-3 bottom-3">
+                  <span className={`rounded-full px-2.5 py-1 text-[11px] font-bold shadow-sm ${getServiceTypeBadgeClass(svc.serviceType ?? "instant")}`}>
+                    {getServiceTypeEmoji(svc.serviceType ?? "instant")}{" "}
+                    {getServiceTypeLabel(svc.serviceType ?? "instant")}
+                  </span>
+                </div>
               </div>
 
               {/* Body */}
@@ -271,14 +286,29 @@ export default function ProviderServicesPage() {
                       <p className="mt-0.5 text-xs font-semibold text-indigo-600">{svc.category.name}</p>
                     )}
                   </div>
-                  <p className="shrink-0 text-2xl font-black text-slate-900">₹{svc.price.toFixed(0)}</p>
+                  <div className="shrink-0 text-right">
+                    <p className="text-2xl font-black text-slate-900">
+                      {getDisplayPrice(svc.price, svc.pricingModel ?? "fixed", svc.priceUnit)}
+                    </p>
+                    {svc.estimatedProjectDays && (
+                      <p className="text-[11px] text-slate-400 mt-0.5">
+                        ~{svc.estimatedProjectDays}d project
+                      </p>
+                    )}
+                  </div>
                 </div>
                 <p className="mt-2 line-clamp-2 text-sm text-slate-500">{svc.description}</p>
 
                 <div className="mt-3 flex flex-wrap items-center gap-3 text-xs font-semibold text-slate-500">
                   <span className="inline-flex items-center gap-1">
-                    <Clock size={12} /> {svc.duration} min
+                    <Clock size={12} />
+                    {svc.serviceType === "visit_first" ? `${svc.duration} min inspection` : `${svc.duration} min`}
                   </span>
+                  {svc.serviceType === "visit_first" && (
+                    <span className="inline-flex items-center gap-1 text-blue-600">
+                      {svc.freeInspection ? "Free inspection" : `₹${svc.inspectionFee} inspection fee`}
+                    </span>
+                  )}
                   {svc.serviceArea && (
                     <span className="inline-flex items-center gap-1 truncate max-w-[60%]">
                       <MapPin size={12} /> {svc.serviceArea}
