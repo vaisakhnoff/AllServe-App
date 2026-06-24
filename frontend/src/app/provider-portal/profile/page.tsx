@@ -34,6 +34,10 @@ export default function ProviderProfilePage() {
   // Photo
   const [cropperSrc, setCropperSrc] = useState<string | null>(null);
 
+  // Success message
+  const [successMsg, setSuccessMsg] = useState<string | null>(null);
+  const showSuccess = (msg: string) => { setSuccessMsg(msg); setTimeout(() => setSuccessMsg(null), 5000); };
+
   const fetchProfile = useCallback(async () => {
     try {
       const res = await providerService.getProfile();
@@ -57,6 +61,7 @@ export default function ProviderProfilePage() {
       const res = await providerService.updateProfile({ description, experience });
       setProfile(res.data.data);
       setEditMode(false);
+      showSuccess(UI_MESSAGES.PROFILE_UPDATED);
       toast.success(UI_MESSAGES.PROFILE_UPDATED);
     } catch { toast.error("Failed to update profile"); }
     finally { setSaving(false); }
@@ -73,7 +78,8 @@ export default function ProviderProfilePage() {
       await providerService.changePassword({ oldPassword, newPassword });
       setOldPassword(""); setNewPassword(""); setConfirmPwd("");
       setShowOldPwd(false); setShowNewPwd(false); setShowConfirmPwd(false);
-      toast.success("Password updated successfully");
+      showSuccess(UI_MESSAGES.PASSWORD_UPDATED);
+      toast.success(UI_MESSAGES.PASSWORD_UPDATED);
     } catch (err: any) {
       toast.error(err?.response?.data?.message || "Failed to update password");
     }
@@ -119,6 +125,18 @@ export default function ProviderProfilePage() {
 
   return (
     <ProviderPortalShell>
+      {/* Success banner */}
+      {successMsg && (
+        <div className="fixed top-6 right-6 z-[99999]">
+          <div className="bg-emerald-50 border border-emerald-200 rounded-2xl px-6 py-4 flex items-center gap-3 text-emerald-700 font-semibold shadow-xl shadow-emerald-500/10 min-w-[280px]">
+            <div className="flex-shrink-0 w-9 h-9 rounded-full bg-emerald-100 flex items-center justify-center">
+              <CheckCircle2 size={20} />
+            </div>
+            <p className="text-sm font-bold">{successMsg}</p>
+          </div>
+        </div>
+      )}
+
       {/* Top bar */}
       <div className="flex justify-between items-center mb-6">
         <div>

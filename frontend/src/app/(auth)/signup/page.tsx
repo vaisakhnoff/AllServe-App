@@ -15,7 +15,7 @@ import { getErrorMessage } from "@/utils/errorHandler";
 import { logger } from "@/utils/logger";
 import { ROUTES } from "@/shared/routes";
 import { SignupDto } from "@/types/auth.types";
-import { Globe, Eye, EyeOff, Check, X, CheckCircle2 } from "lucide-react";
+import { Globe, Eye, EyeOff, Check, X, CheckCircle2, Loader2 as Loader } from "lucide-react";
 import { UI_MESSAGES } from "@/shared/messages";
 
 const StrengthBar = ({ score }: { score: number }) => {
@@ -56,6 +56,7 @@ export default function SignupPage() {
   // Custom Toast States
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [signupSuccess, setSignupSuccess] = useState(false);
 
   const showSuccessToast = (msg: string) => {
     setSuccessMsg(msg);
@@ -126,8 +127,9 @@ export default function SignupPage() {
       await authService.signup(signupPayload);
       localStorage.setItem("pending_email", signupPayload.email);
       logger.info("Signup successful, redirecting to OTP", { email: signupPayload.email });
+      setSignupSuccess(true);
       showSuccessToast(UI_MESSAGES.SIGNUP_SUCCESS);
-      router.push(ROUTES.VERIFY_OTP);
+      setTimeout(() => router.push(ROUTES.VERIFY_OTP), 2000);
     } catch (err) {
       const msg = getErrorMessage(err);
       showErrorToast(msg);
@@ -159,6 +161,25 @@ export default function SignupPage() {
         )}
       </div>
 
+      {/* Success state — show after signup, before redirect */}
+      {signupSuccess ? (
+        <div className="fade-up" style={{ textAlign: "center", padding: "2rem 1rem" }}>
+          <div style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 64, height: 64, borderRadius: "50%", background: "#dcfce7", marginBottom: "1rem" }}>
+            <CheckCircle2 size={32} style={{ color: "#16a34a" }} />
+          </div>
+          <h2 style={{ fontSize: "1.375rem", fontWeight: 800, color: "#0f172a", marginBottom: "0.5rem" }}>
+            Account Created Successfully!
+          </h2>
+          <p style={{ fontSize: "0.9375rem", color: "#64748b", lineHeight: 1.6 }}>
+            We&apos;ve sent a verification code to <strong style={{ color: "#334155" }}>{form.email}</strong>.<br />
+            Redirecting you to verify your email...
+          </p>
+          <div style={{ marginTop: "1.5rem", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem", color: "#6366f1", fontSize: "0.875rem", fontWeight: 600 }}>
+            <Loader size={16} className="animate-spin" /> Redirecting...
+          </div>
+        </div>
+      ) : (
+      <>
       <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "1rem" }} noValidate>
         <div>
           <label className="input-label" htmlFor="name">Full Name</label>
@@ -277,6 +298,8 @@ export default function SignupPage() {
         Already have an account?{" "}
         <Link href={ROUTES.LOGIN} style={{ color: "#4f46e5", fontWeight: 600, textDecoration: "none" }}>Sign in</Link>
       </p>
+      </>
+      )}
     </div>
   );
 }

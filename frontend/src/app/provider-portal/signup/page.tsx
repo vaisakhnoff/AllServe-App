@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, CheckCircle2, Loader2 } from "lucide-react";
 import { Input } from "@/components/common/Input";
 import { Button } from "@/components/common/Button";
 import { PasswordStrength } from "@/components/common/PasswordStrength";
@@ -48,6 +48,7 @@ export default function ProviderSignupPage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [signupSuccess, setSignupSuccess] = useState(false);
   const [touched, setTouched] = useState<Record<string, boolean>>({});
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -89,8 +90,9 @@ export default function ProviderSignupPage() {
       sessionStorage.setItem("provider_signup_email", form.email.trim());
       sessionStorage.setItem("provider_signup_password", form.password);
 
+      setSignupSuccess(true);
       toast.success(UI_MESSAGES.PROVIDER_SIGNUP_SUCCESS);
-      router.push(`/provider-portal/verify-otp?email=${encodeURIComponent(form.email.trim())}`);
+      setTimeout(() => router.push(`/provider-portal/verify-otp?email=${encodeURIComponent(form.email.trim())}`), 2000);
     } catch (err) {
       setError(getErrorMessage(err));
     } finally {
@@ -104,6 +106,24 @@ export default function ProviderSignupPage() {
         <h2 className="text-2xl font-bold text-white mb-2">Become a Provider</h2>
         <p className="text-sm text-gray-400">Create an account to start offering your services.</p>
       </div>
+
+      {/* Success state */}
+      {signupSuccess ? (
+        <div className="text-center py-6">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-emerald-500/20 mb-4">
+            <CheckCircle2 size={32} className="text-emerald-400" />
+          </div>
+          <h3 className="text-xl font-bold text-white mb-2">Account Created Successfully!</h3>
+          <p className="text-sm text-gray-400 leading-relaxed">
+            We&apos;ve sent a verification code to <strong className="text-white">{form.email}</strong>.<br />
+            Redirecting you to verify your email...
+          </p>
+          <div className="mt-5 flex items-center justify-center gap-2 text-indigo-400 text-sm font-semibold">
+            <Loader2 size={16} className="animate-spin" /> Redirecting...
+          </div>
+        </div>
+      ) : (
+      <>
 
       {error && (
         <div className="bg-red-900/30 border border-red-700/50 text-red-400 text-sm rounded-xl px-4 py-3 mb-5">
@@ -198,6 +218,8 @@ export default function ProviderSignupPage() {
           Sign in
         </Link>
       </p>
+      </>
+      )}
     </div>
   );
 }

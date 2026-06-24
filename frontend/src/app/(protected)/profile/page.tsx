@@ -51,7 +51,7 @@ export default function ProfilePage() {
   const [apiError, setApiError] = useState<string | null>(null);
   const [otpError, setOtpError] = useState<string | null>(null);
 
-  const showSuccess = (msg: string) => { setSuccessMsg(msg); setTimeout(() => setSuccessMsg(null), 3000); };
+  const showSuccess = (msg: string) => { setSuccessMsg(msg); setTimeout(() => setSuccessMsg(null), 5000); };
 
   const fetchProfile = useCallback(async () => {
     try {
@@ -167,9 +167,14 @@ export default function ProfilePage() {
     <div className="max-w-[1040px] mx-auto space-y-6 fade-up">
       {/* Success toast */}
       {successMsg && (
-        <div className="fixed top-6 right-6 z-[99999]">
-          <div className="fade-up bg-emerald-50 border border-emerald-200 rounded-2xl px-5 py-3.5 flex items-center gap-3 text-emerald-700 font-semibold shadow-lg shadow-emerald-500/10">
-            <CheckCircle2 size={18} /> {successMsg}
+        <div className="fixed top-6 right-6 z-[99999] animate-in fade-in slide-in-from-top-2 duration-300">
+          <div className="bg-emerald-50 border border-emerald-200 rounded-2xl px-6 py-4 flex items-center gap-3 text-emerald-700 font-semibold shadow-xl shadow-emerald-500/10 min-w-[280px]">
+            <div className="flex-shrink-0 w-9 h-9 rounded-full bg-emerald-100 flex items-center justify-center">
+              <CheckCircle2 size={20} />
+            </div>
+            <div>
+              <p className="text-sm font-bold">{successMsg}</p>
+            </div>
           </div>
         </div>
       )}
