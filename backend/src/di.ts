@@ -14,6 +14,9 @@ import { ServiceRequestRepository }  from "./repositories/serviceRequest.reposit
 import { ProviderQuoteRepository }   from "./repositories/providerQuote.repository";
 import { ProviderScheduleRepository } from "./repositories/providerSchedule.repository";
 import { ProviderLeaveRepository }    from "./repositories/providerLeave.repository";
+import { ServiceOrderRepository }     from "./repositories/serviceOrder.repository";
+import { QuotationRepository }        from "./repositories/quotation.repository";
+import { InvoiceRepository }          from "./repositories/invoice.repository";
 
 // ── Services ──────────────────────────────────────────────────────────────────
 import { AuthService }               from "./services/auth.service";
@@ -32,6 +35,13 @@ import { ProviderQuoteService }      from "./services/providerQuote.service";
 import { ProviderStatusService }     from "./services/providerStatus.service";
 import { ProviderScheduleService }   from "./services/providerSchedule.service";
 import { ProviderLeaveService }      from "./services/providerLeave.service";
+import { DirectRequestService }      from "./services/directRequest.service";
+import { InspectionRequestService }  from "./services/inspectionRequest.service";
+import { CustomRequestService }      from "./services/customRequest.service";
+import { ServiceOrderQueryService }  from "./services/serviceOrderQuery.service";
+import { QuotationService }          from "./services/quotation.service";
+import { InvoiceService }            from "./services/invoice.service";
+import { OrderTimerService }         from "./services/orderTimer.service";
 
 // ── Controllers ───────────────────────────────────────────────────────────────
 import { AuthController }            from "./controllers/auth/auth.controller";
@@ -50,6 +60,9 @@ import { ProviderQuoteController }   from "./controllers/provider-quote/provider
 import { ProviderStatusController }  from "./controllers/provider-status/providerStatus.controller";
 import { ProviderScheduleController } from "./controllers/provider-schedule/providerSchedule.controller";
 import { ProviderLeaveController }   from "./controllers/provider-leave/providerLeave.controller";
+import { ServiceOrderController }    from "./controllers/service-order/serviceOrder.controller";
+import { QuotationController }       from "./controllers/quotation/quotation.controller";
+import { InvoiceController }         from "./controllers/invoice/invoice.controller";
 
 // =============================================================================
 // 1. Repositories 
@@ -69,6 +82,9 @@ const serviceRequestRepository  = new ServiceRequestRepository();
 const providerQuoteRepository   = new ProviderQuoteRepository();
 const providerScheduleRepository = new ProviderScheduleRepository();
 const providerLeaveRepository    = new ProviderLeaveRepository();
+const serviceOrderRepository     = new ServiceOrderRepository();
+const quotationRepository        = new QuotationRepository();
+const invoiceRepository          = new InvoiceRepository();
 
 // =============================================================================
 // 2. Services - inject repository interfaces 
@@ -88,6 +104,13 @@ export const providerQuoteService   = new ProviderQuoteService(providerQuoteRepo
 export const providerStatusService  = new ProviderStatusService(providerRepository);
 export const providerScheduleService = new ProviderScheduleService(providerScheduleRepository, providerLeaveRepository);
 export const providerLeaveService   = new ProviderLeaveService(providerLeaveRepository);
+export const directRequestService   = new DirectRequestService(serviceOrderRepository, providerRepository);
+export const inspectionRequestService = new InspectionRequestService(serviceOrderRepository);
+export const customRequestService   = new CustomRequestService(serviceOrderRepository);
+export const serviceOrderQueryService = new ServiceOrderQueryService(serviceOrderRepository);
+export const quotationNewService    = new QuotationService(quotationRepository, serviceOrderRepository);
+export const invoiceNewService      = new InvoiceService(invoiceRepository, serviceOrderRepository);
+export const orderTimerService      = new OrderTimerService(serviceOrderRepository);
 
 // Services with cross-service dependencies
 export const providerService = new ProviderService(providerRepository, serviceRepository);
@@ -113,6 +136,9 @@ export const providerQuoteController   = new ProviderQuoteController(providerQuo
 export const providerStatusController  = new ProviderStatusController(providerStatusService);
 export const providerScheduleController = new ProviderScheduleController(providerScheduleService);
 export const providerLeaveController   = new ProviderLeaveController(providerLeaveService);
+export const serviceOrderController2   = new ServiceOrderController(directRequestService, inspectionRequestService, customRequestService, serviceOrderQueryService);
+export const quotationNewController    = new QuotationController(quotationNewService);
+export const invoiceNewController      = new InvoiceController(invoiceNewService);
 
 // Exported for socket.ts which needs direct repo access
 export { conversationRepository };

@@ -24,6 +24,9 @@ import {
   providerStatusController,
   providerScheduleController,
   providerLeaveController,
+  serviceOrderController2,
+  quotationNewController,
+  invoiceNewController,
 } from "./di";
 
 
@@ -43,6 +46,9 @@ import { createProviderQuoteRouter }  from "./routes/provider-quote/providerQuot
 import { createProviderStatusRouter } from "./routes/provider-status/providerStatus.routes";
 import { createProviderScheduleRouter } from "./routes/provider-schedule/providerSchedule.routes";
 import { createProviderLeaveRouter }  from "./routes/provider-leave/providerLeave.routes";
+import { createServiceOrderRouter }   from "./routes/service-order/serviceOrder.routes";
+import { createQuotationRouter }      from "./routes/quotation/quotation.routes";
+import { createInvoiceRouter }        from "./routes/invoice/invoice.routes";
 
 const app = express();
 
@@ -97,6 +103,9 @@ app.use("/api/v1/provider-quotes",  createProviderQuoteRouter(providerQuoteContr
 app.use("/api/v1/provider-status",  createProviderStatusRouter(providerStatusController));
 app.use("/api/v1/provider-schedule", createProviderScheduleRouter(providerScheduleController));
 app.use("/api/v1/provider-leave",   createProviderLeaveRouter(providerLeaveController));
+app.use("/api/v1/orders",           createServiceOrderRouter(serviceOrderController2));
+app.use("/api/v1/quotations",       createQuotationRouter(quotationNewController));
+app.use("/api/v1/invoices",         createInvoiceRouter(invoiceNewController));
 
 app.get("/", (_req, res) => {
   res.json({ message: "API running" });
