@@ -6,3 +6,4 @@ backend/dist
 backend/.env
 ALLSERVE 
 .vscode/
+.kiro/
