@@ -32,7 +32,7 @@ export default function HomePage() {
         ]);
         const catData = catRes.data.data || catRes.data;
         const provData = provRes.data.data || provRes.data;
-        setCategories(catData.items || (Array.isArray(catData) ? catData : []));
+        setCategories((catData as { items?: Category[] }).items || (Array.isArray(catData) ? catData as Category[] : []));
         setProviders(Array.isArray(provData) ? provData : []);
       } catch {
         // silently fail — show empty state

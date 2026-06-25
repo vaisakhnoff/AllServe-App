@@ -76,7 +76,7 @@ export default function DashboardPage() {
         ]);
         if (!active) return;
         const catData = categoryRes.data.data || categoryRes.data;
-        const categories = catData.items || (Array.isArray(catData) ? catData : []);
+        const categories = (catData as { items?: Category[] }).items || (Array.isArray(catData) ? catData as Category[] : []);
         const provData = providerRes.data.data || providerRes.data;
         setCategories(categories);
         setProviders(Array.isArray(provData) ? provData : []);

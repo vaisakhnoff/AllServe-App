@@ -11,14 +11,14 @@ export interface DashboardStats {
 }
 
 export interface IAdminRepository extends IBaseRepository<IUser> {
-  // User management
+
   countUsers(): Promise<number>;
   findUsers(filter: Record<string, unknown>): Promise<IUser[]>;
 
-  // Provider management
   countProviderAccounts(filter: Record<string, unknown>): Promise<number>;
   findProviderAccounts(filter: Record<string, unknown>): Promise<IProviderAccount[]>;
   findProviderAccountById(id: string): Promise<IProviderAccount | null>;
+  
   updateProviderAccountStatus(
     id: string,
     status: ApplicationStatus,

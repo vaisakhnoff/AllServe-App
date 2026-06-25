@@ -4,7 +4,7 @@ import { IConversation, IMessage } from "../models/messaging.model";
 import { SenderRole } from "../dto/messaging/messaging.dto";
 import { NotFoundError, ForbiddenError } from "../shared/errors/HttpErrors";
 
-export interface PaginatedConversationResponse {
+export interface PaginatedConversationResponse { 
   items: IConversation[];
   total: number;
   page: number;

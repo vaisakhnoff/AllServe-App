@@ -12,49 +12,10 @@ import { IProviderAccount } from "../models/providerAccount.model";
 import { ApplicationStatus } from "../shared/enums/application-status.enum";
 import { escapeRegex } from "../shared/utils/search";
 import { Messages } from "../shared/constants/messages";
-import { geocodeAddress, reverseGeocode } from "../shared/utils/geocoding";
-import { mapProviderListItem, mapProviderDetails, mapApplication, mapProviderProfile } from "../mappers/provider.mapper";
+import { mapProviderListItem, mapProviderDetails, mapApplication, mapProviderProfile, resolveLocation } from "../mappers/provider.mapper";
 import { NotFoundError, BadRequestError } from "../shared/errors/HttpErrors";
 
 
-// ── Location resolver ─────────────────────────────────────────────────────────
-
-async function resolveLocation(data: ProviderApplicationDto | UpdateProviderProfileDto) {
-  const fields: Record<string, unknown> = {};
-  if (data.latitude && data.longitude) {
-    fields.location = { type: "Point", coordinates: [data.longitude, data.latitude] };
-    if (!data.state || !data.city) {
-      const geo = await reverseGeocode(data.latitude, data.longitude);
-      if (geo) {
-        fields.state = data.state || geo.state;
-        fields.district = data.district || geo.district;
-        fields.city = data.city || geo.city;
-        fields.pincode = data.pincode || geo.pincode;
-        fields.fullAddress = data.fullAddress || geo.fullAddress;
-      }
-    }
-    if (data.state) fields.state = data.state;
-    if (data.district) fields.district = data.district;
-    if (data.city) fields.city = data.city;
-    if (data.pincode) fields.pincode = data.pincode;
-    if (data.fullAddress) fields.fullAddress = data.fullAddress;
-  } else if (data.pincode || data.city || data.fullAddress) {
-    const query = data.fullAddress || data.pincode || data.city || "";
-    const geo = await geocodeAddress(query);
-    if (geo) {
-      fields.location = { type: "Point", coordinates: [geo.longitude, geo.latitude] };
-      fields.state = data.state || geo.state;
-      fields.district = data.district || geo.district;
-      fields.city = data.city || geo.city;
-      fields.pincode = data.pincode || geo.pincode;
-      fields.fullAddress = data.fullAddress || geo.fullAddress;
-    }
-  }
-  if (data.serviceRadius) fields.serviceRadius = data.serviceRadius;
-  return fields;
-}
-
-// ── Service ───────────────────────────────────────────────────────────────────
 
 export class ProviderService implements IProviderService {
   constructor(
@@ -63,6 +24,7 @@ export class ProviderService implements IProviderService {
   ) {}
 
   async applyProvider(providerId: string, data: ProviderApplicationDto) {
+    
     const account = await this.repo.findById(providerId);
     if (!account) throw new NotFoundError(Messages.PROVIDER_ACCOUNT_NOT_FOUND);
     if (account.applicationStatus !== ApplicationStatus.NOT_APPLIED) {

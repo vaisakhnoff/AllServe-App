@@ -7,7 +7,7 @@ import { useSelector } from "react-redux";
 import {
   ArrowLeft, Clock, MapPin, Tag as TagIcon, Loader2, CalendarDays,
   Image as ImageIcon, BadgeCheck, ChevronLeft, ChevronRight, CheckCircle2,
-  MapPinned, ClipboardList, Shield, MessageSquare,
+  MapPinned, ClipboardList, Shield, MessageSquare, Palette,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { RootState } from "@/store";
@@ -23,6 +23,20 @@ import { Role } from "@/enums/role.enum";
 import { getErrorMessage } from "@/utils/errorHandler";
 import { UI_MESSAGES } from "@/shared/messages";
 import { LoginRequiredPrompt } from "@/components/auth/LoginRequiredPrompt";
+import {
+  getDisplayPrice,
+  getPriceSubline,
+  getBookingFlowDescription,
+  getPaymentFlowDescription,
+  getBookingCTA,
+  getSlotSectionTitle,
+  getServiceTypeBadgeClass,
+  getServiceTypeLabel,
+  getServiceTypeEmoji,
+  canBookThroughSlots,
+  requiresServiceRequest,
+  requiresInspection,
+} from "@/utils/serviceType.utils";
 
 function todayIso() {
   return new Date().toISOString().slice(0, 10);
@@ -311,12 +325,23 @@ export default function ServiceDetailPage() {
                         </div>
                       )}
                       <div className="rounded-xl border-2 border-indigo-100 bg-indigo-50 p-4 flex items-center justify-between">
-                        <span className="font-bold text-slate-900">Total</span>
-                        <span className="text-2xl font-black text-indigo-600">₹{service.price}</span>
+                        <span className="font-bold text-slate-900">
+                          {service.serviceType === "visit_first" ? "Inspection fee" : "Total"}
+                        </span>
+                        <span className="text-2xl font-black text-indigo-600">
+                          {service.serviceType === "visit_first"
+                            ? (service.freeInspection ? "Free" : `₹${service.inspectionFee}`)
+                            : getDisplayPrice(service.price, service.pricingModel ?? "fixed", service.priceUnit)}
+                        </span>
                       </div>
                     </div>
 
-                    <p className="mt-3 flex items-center gap-1 text-xs text-slate-500"><Shield size={12} /> Payment collected after service completion</p>
+                    <p className="mt-3 flex items-center gap-1 text-xs text-slate-500">
+                      <Shield size={12} />
+                      {service.serviceType === "visit_first"
+                        ? "Provider will visit and send a detailed quote"
+                        : "Payment collected after service completion"}
+                    </p>
 
                     <button
                       onClick={() => { if (selectedAddress) confirmBooking(); else toast.error(UI_MESSAGES.BOOKING_SELECT_ADDRESS); }}
@@ -324,7 +349,7 @@ export default function ServiceDetailPage() {
                       className="mt-5 w-full rounded-xl bg-indigo-600 py-3 text-sm font-bold text-white hover:bg-indigo-700 disabled:opacity-50 flex items-center justify-center gap-2"
                     >
                       {bookingLoading && <Loader2 size={16} className="animate-spin" />}
-                      Confirm Booking
+                      {service.serviceType === "visit_first" ? "Confirm Inspection Visit" : "Confirm Booking"}
                     </button>
                   </div>
                 </div>
@@ -338,8 +363,14 @@ export default function ServiceDetailPage() {
               <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100">
                 <CheckCircle2 size={32} className="text-emerald-600" />
               </div>
-              <h2 className="text-xl font-black text-slate-900">Booking Confirmed!</h2>
-              <p className="mt-1 text-sm text-slate-500">Your service has been booked successfully</p>
+              <h2 className="text-xl font-black text-slate-900">
+                {service.serviceType === "visit_first" ? "Inspection Scheduled!" : "Booking Confirmed!"}
+              </h2>
+              <p className="mt-1 text-sm text-slate-500">
+                {service.serviceType === "visit_first"
+                  ? "The provider will visit and send you a quote"
+                  : "Your service has been booked successfully"}
+              </p>
 
               <div className="mt-6 rounded-xl bg-slate-50 p-4 text-left space-y-3">
                 <div className="flex justify-between"><span className="text-xs text-slate-500">Booking ID</span><span className="text-xs font-bold text-slate-900">{createdBooking._id.slice(-8).toUpperCase()}</span></div>
@@ -409,15 +440,61 @@ export default function ServiceDetailPage() {
 
             {/* Service info */}
             <header className="mt-5">
-              <p className="text-xs font-bold uppercase tracking-wider text-[var(--primary)]">
-                {service.category?.name}{service.subCategory ? ` · ${service.subCategory}` : ""}
-              </p>
-              <h1 className="mt-1.5 text-2xl sm:text-[2rem] font-extrabold text-slate-950 tracking-tight leading-tight">{service.name}</h1>
+              <div className="flex flex-wrap items-center gap-2 mb-2">
+                <p className="text-xs font-bold uppercase tracking-wider text-[var(--primary)]">
+                  {service.category?.name}{service.subCategory ? ` · ${service.subCategory}` : ""}
+                </p>
+                {/* Service-type badge */}
+                <span className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${getServiceTypeBadgeClass(service.serviceType ?? "instant")}`}>
+                  {getServiceTypeEmoji(service.serviceType ?? "instant")}{" "}
+                  {getServiceTypeLabel(service.serviceType ?? "instant")}
+                </span>
+              </div>
+              <h1 className="mt-1 text-2xl sm:text-[2rem] font-extrabold text-slate-950 tracking-tight leading-tight">{service.name}</h1>
               <div className="mt-3 flex flex-wrap items-center gap-4 text-sm text-slate-600">
-                <span className="inline-flex items-center gap-1.5 font-semibold"><Clock size={15} className="text-[var(--primary)]" /> {service.duration} min</span>
-                {service.serviceArea && <span className="inline-flex items-center gap-1.5 font-semibold"><MapPin size={15} className="text-[var(--primary)]" /> {service.serviceArea}</span>}
+                <span className="inline-flex items-center gap-1.5 font-semibold">
+                  <Clock size={15} className="text-[var(--primary)]" />
+                  {requiresInspection(service.serviceType ?? "instant")
+                    ? `${service.duration} min inspection`
+                    : `${service.duration} min`}
+                </span>
+                {service.serviceArea && (
+                  <span className="inline-flex items-center gap-1.5 font-semibold">
+                    <MapPin size={15} className="text-[var(--primary)]" /> {service.serviceArea}
+                  </span>
+                )}
+                {(service.serviceType === "visit_first") && service.estimatedProjectDays && (
+                  <span className="inline-flex items-center gap-1.5 font-semibold text-blue-600">
+                    ~{service.estimatedProjectDays} day{service.estimatedProjectDays > 1 ? "s" : ""} project
+                  </span>
+                )}
               </div>
             </header>
+
+            {/* Booking-flow info panel */}
+            <div className={`mt-4 rounded-[14px] border p-4 flex items-start gap-3 ${
+              service.serviceType === "visit_first" ? "border-blue-100 bg-blue-50/60" :
+              service.serviceType === "custom"      ? "border-purple-100 bg-purple-50/60" :
+              "border-emerald-100 bg-emerald-50/60"
+            }`}>
+              <div className="mt-0.5 text-xl shrink-0">
+                {service.serviceType === "visit_first" ? "🏠" :
+                 service.serviceType === "custom"      ? "🎨" : "⚡"}
+              </div>
+              <div>
+                <p className="text-xs font-black text-slate-700">How this booking works</p>
+                <p className="mt-0.5 text-xs text-slate-600 leading-relaxed">
+                  {getBookingFlowDescription(service.serviceType ?? "instant")}
+                </p>
+                {service.serviceType === "visit_first" && (
+                  <p className="mt-1.5 text-xs font-semibold text-blue-700">
+                    {service.freeInspection
+                      ? "✓ Free inspection visit included"
+                      : `Inspection visit fee: ₹${service.inspectionFee}`}
+                  </p>
+                )}
+              </div>
+            </div>
 
             {/* Description */}
             <article className="mt-5 rounded-[18px] border border-slate-200/60 bg-white p-5 sm:p-6">
@@ -432,11 +509,18 @@ export default function ServiceDetailPage() {
               )}
             </article>
 
-            {/* Slot picker */}
+            {/* Slot picker — only for instant and visit_first */}
+            {canBookThroughSlots(service.serviceType ?? "instant") ? (
             <section id="available-slots" className="mt-5 rounded-[18px] border border-slate-200/60 bg-white p-5 sm:p-6">
-              <h2 className="flex items-center gap-2.5 text-lg font-extrabold text-slate-900 mb-4">
-                <CalendarDays size={18} className="text-[var(--primary)]" /> Available Slots
+              <h2 className="flex items-center gap-2.5 text-lg font-extrabold text-slate-900 mb-1">
+                <CalendarDays size={18} className="text-[var(--primary)]" />
+                {getSlotSectionTitle(service.serviceType ?? "instant")}
               </h2>
+              {service.serviceType === "visit_first" && (
+                <p className="text-xs text-slate-500 mb-4">
+                  Choose a date and time for the provider to visit and assess the work.
+                </p>
+              )}
 
               {/* Date tabs */}
               <div className="flex gap-2.5 overflow-x-auto pb-3 mb-4">
@@ -459,13 +543,35 @@ export default function ServiceDetailPage() {
               ) : (
                 <div className="flex flex-wrap gap-2.5">
                   {slots.map((slot) => (
-                    <button key={slot._id} onClick={() => startBooking(slot)} className="rounded-xl border border-emerald-200 bg-emerald-50/80 px-5 py-2.5 text-sm font-bold text-emerald-700 hover:bg-emerald-100 hover:border-emerald-300 hover:-translate-y-0.5 hover:shadow-sm transition-all">
+                    <button
+                      key={slot._id}
+                      onClick={() => startBooking(slot)}
+                      className="rounded-xl border border-emerald-200 bg-emerald-50/80 px-5 py-2.5 text-sm font-bold text-emerald-700 hover:bg-emerald-100 hover:border-emerald-300 hover:-translate-y-0.5 hover:shadow-sm transition-all"
+                    >
                       {slot.startTime} – {slot.endTime}
                     </button>
                   ))}
                 </div>
               )}
             </section>
+            ) : (
+            /* custom service — redirect to post-request flow */
+            <section id="available-slots" className="mt-5 rounded-[18px] border border-purple-200/60 bg-purple-50/40 p-5 sm:p-6">
+              <h2 className="flex items-center gap-2.5 text-lg font-extrabold text-slate-900 mb-2">
+                <Palette size={18} className="text-purple-600" /> Custom Service Request
+              </h2>
+              <p className="text-sm text-slate-600 leading-relaxed">
+                This is a custom-scoped service. Describe your exact requirements and receive
+                competitive quotes from multiple providers.
+              </p>
+              <Link
+                href={`/post-request?categoryId=${service.category?.id ?? ""}&serviceId=${service.id}`}
+                className="mt-4 inline-flex items-center gap-2 rounded-[14px] bg-gradient-to-r from-purple-600 to-violet-600 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-purple-500/20 hover:shadow-xl hover:-translate-y-0.5 transition-all"
+              >
+                Post a Service Request
+              </Link>
+            </section>
+            )}
           </section>
 
           {/* Right: Sticky booking card (desktop) */}
@@ -473,16 +579,46 @@ export default function ServiceDetailPage() {
             <div className="sticky top-5 space-y-4 fade-up" style={{ animationDelay: "0.1s" }}>
               <div className="rounded-[18px] border border-slate-200/60 bg-white p-6 shadow-[0_12px_40px_rgba(0,0,0,0.04)]">
                 <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Price</p>
-                <p className="mt-2 text-[2.25rem] font-extrabold text-slate-950 tracking-tight">₹{service.price.toFixed(0)}</p>
-                <p className="text-sm text-slate-500 mt-1">per service · {service.duration} min</p>
-                <div className="mt-4 rounded-2xl bg-gradient-to-br from-purple-50 to-violet-50/50 border border-purple-100/60 p-4">
-                  <p className="text-xs font-bold text-[var(--primary)] flex items-center gap-2"><ClipboardList size={14} /> Select a time slot below to book</p>
+                <p className="mt-2 text-[2.25rem] font-extrabold text-slate-950 tracking-tight">
+                  {getDisplayPrice(service.price, service.pricingModel ?? "fixed", service.priceUnit)}
+                </p>
+                <p className="text-sm text-slate-500 mt-1">
+                  {getPriceSubline(service.pricingModel ?? "fixed", service.duration, service.estimatedProjectDays) ??
+                    `${service.duration} min`}
+                </p>
+
+                {/* Booking flow info box */}
+                <div className={`mt-4 rounded-2xl border p-3 ${
+                  service.serviceType === "visit_first" ? "border-blue-100 bg-blue-50" :
+                  service.serviceType === "custom"      ? "border-purple-100 bg-purple-50" :
+                  "border-purple-100/60 bg-gradient-to-br from-purple-50 to-violet-50/50"
+                }`}>
+                  <p className={`text-xs font-bold flex items-center gap-2 ${
+                    service.serviceType === "visit_first" ? "text-blue-700" :
+                    service.serviceType === "custom"      ? "text-purple-700" :
+                    "text-[var(--primary)]"
+                  }`}>
+                    <ClipboardList size={14} />
+                    {service.serviceType === "instant"
+                      ? "Select a time slot below to book"
+                      : service.serviceType === "visit_first"
+                      ? "Select a slot to schedule an inspection"
+                      : "Post a request to receive quotes"}
+                  </p>
                 </div>
+
                 {/* Trust elements */}
                 <div className="mt-4 space-y-3 border-t border-slate-100 pt-4">
-                  <p className="flex items-center gap-2.5 text-sm font-semibold text-slate-600"><Shield size={14} className="text-emerald-500" /> Secure booking · pay after service</p>
-                  <p className="flex items-center gap-2.5 text-sm font-semibold text-slate-600"><BadgeCheck size={14} className="text-[var(--primary)]" /> Verified professional</p>
-                  <p className="flex items-center gap-2.5 text-sm font-semibold text-slate-600"><Clock size={14} className="text-amber-500" /> Quick response time</p>
+                  <p className="flex items-center gap-2.5 text-sm font-semibold text-slate-600">
+                    <Shield size={14} className="text-emerald-500" />
+                    {getPaymentFlowDescription(service.serviceType ?? "instant")}
+                  </p>
+                  <p className="flex items-center gap-2.5 text-sm font-semibold text-slate-600">
+                    <BadgeCheck size={14} className="text-[var(--primary)]" /> Verified professional
+                  </p>
+                  <p className="flex items-center gap-2.5 text-sm font-semibold text-slate-600">
+                    <Clock size={14} className="text-amber-500" /> Quick response time
+                  </p>
                 </div>
               </div>
 
@@ -526,20 +662,44 @@ export default function ServiceDetailPage() {
       {/* Mobile bottom bar */}
       <div className="fixed bottom-0 inset-x-0 lg:hidden border-t border-slate-200/60 bg-white/95 backdrop-blur-lg px-5 py-4 flex items-center justify-between z-50 shadow-[0_-4px_20px_rgba(0,0,0,0.04)]">
         <div>
-          <p className="text-xl font-extrabold text-slate-950">₹{service.price.toFixed(0)}</p>
-          <p className="text-xs text-slate-500">{service.duration} min</p>
+          <p className="text-xl font-extrabold text-slate-950">
+            {getDisplayPrice(service.price, service.pricingModel ?? "fixed", service.priceUnit)}
+          </p>
+          <p className="text-xs text-slate-500">
+            {requiresInspection(service.serviceType ?? "instant")
+              ? `${service.duration} min inspection`
+              : `${service.duration} min`}
+          </p>
         </div>
-        <a href="#available-slots" className="rounded-[14px] bg-gradient-to-r from-[#6D28FF] to-[#8B5CF6] px-7 py-3 text-sm font-bold text-white shadow-lg shadow-purple-500/20 hover:shadow-xl transition-all">
-          Book Now
-        </a>
+        {requiresServiceRequest(service.serviceType ?? "instant") ? (
+          <Link
+            href={`/post-request?categoryId=${service.category?.id ?? ""}&serviceId=${service.id}`}
+            className="rounded-[14px] bg-gradient-to-r from-purple-600 to-violet-600 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-purple-500/20 hover:shadow-xl transition-all"
+          >
+            Post Request
+          </Link>
+        ) : (
+          <a
+            href="#available-slots"
+            className="rounded-[14px] bg-gradient-to-r from-[#6D28FF] to-[#8B5CF6] px-7 py-3 text-sm font-bold text-white shadow-lg shadow-purple-500/20 hover:shadow-xl transition-all"
+          >
+            {getBookingCTA(service.serviceType ?? "instant")}
+          </a>
+        )}
       </div>
 
       {/* Slot confirmation modal */}
       {showSlotModal && selectedSlot && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4">
           <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl">
-            <h3 className="text-lg font-black text-slate-900 mb-1">Confirm slot</h3>
-            <p className="text-sm text-slate-500 mb-5">You&apos;re about to book this time slot</p>
+            <h3 className="text-lg font-black text-slate-900 mb-1">
+              {service.serviceType === "visit_first" ? "Confirm inspection visit" : "Confirm slot"}
+            </h3>
+            <p className="text-sm text-slate-500 mb-5">
+              {service.serviceType === "visit_first"
+                ? "The provider will visit to assess the work and send you a quote."
+                : "You're about to book this time slot"}
+            </p>
 
             <div className="rounded-xl bg-slate-50 p-4 space-y-2 mb-6">
               <div className="flex justify-between text-sm">
@@ -555,8 +715,14 @@ export default function ServiceDetailPage() {
                 <span className="font-bold text-slate-900">{selectedSlot.startTime} – {selectedSlot.endTime}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-slate-500">Price</span>
-                <span className="font-black text-indigo-600">₹{service?.price}</span>
+                <span className="text-slate-500">
+                  {service.serviceType === "visit_first" ? "Inspection" : "Price"}
+                </span>
+                <span className="font-black text-indigo-600">
+                  {service.serviceType === "visit_first"
+                    ? (service.freeInspection ? "Free" : `₹${service.inspectionFee}`)
+                    : getDisplayPrice(service.price, service.pricingModel ?? "fixed", service.priceUnit)}
+                </span>
               </div>
             </div>
 

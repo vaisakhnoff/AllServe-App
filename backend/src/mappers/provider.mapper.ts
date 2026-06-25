@@ -5,7 +5,10 @@ import {
   ProviderDetailsDto,
   ProviderApplicationResponseDto,
   ProviderProfileResponseDto,
+  ProviderApplicationDto,
+  UpdateProviderProfileDto,
 } from "../dto/provider/provider.dto";
+import { geocodeAddress, reverseGeocode } from "../shared/utils/geocoding";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -23,6 +26,43 @@ export const resolveCategory = (categoryId: IProviderAccount["categoryId"]): Cat
   }
   return { id: categoryId };
 };
+
+// ── Location resolver ─────────────────────────────────────────────────────────
+
+export async function resolveLocation(data: ProviderApplicationDto | UpdateProviderProfileDto) {
+  const fields: Record<string, unknown> = {};
+  if (data.latitude && data.longitude) {
+    fields.location = { type: "Point", coordinates: [data.longitude, data.latitude] };
+    if (!data.state || !data.city) {
+      const geo = await reverseGeocode(data.latitude, data.longitude);
+      if (geo) {
+        fields.state = data.state || geo.state;
+        fields.district = data.district || geo.district;
+        fields.city = data.city || geo.city;
+        fields.pincode = data.pincode || geo.pincode;
+        fields.fullAddress = data.fullAddress || geo.fullAddress;
+      }
+    }
+    if (data.state) fields.state = data.state;
+    if (data.district) fields.district = data.district;
+    if (data.city) fields.city = data.city;
+    if (data.pincode) fields.pincode = data.pincode;
+    if (data.fullAddress) fields.fullAddress = data.fullAddress;
+  } else if (data.pincode || data.city || data.fullAddress) {
+    const query = data.fullAddress || data.pincode || data.city || "";
+    const geo = await geocodeAddress(query);
+    if (geo) {
+      fields.location = { type: "Point", coordinates: [geo.longitude, geo.latitude] };
+      fields.state = data.state || geo.state;
+      fields.district = data.district || geo.district;
+      fields.city = data.city || geo.city;
+      fields.pincode = data.pincode || geo.pincode;
+      fields.fullAddress = data.fullAddress || geo.fullAddress;
+    }
+  }
+  if (data.serviceRadius) fields.serviceRadius = data.serviceRadius;
+  return fields;
+}
 
 // ── Mappers ───────────────────────────────────────────────────────────────────
 

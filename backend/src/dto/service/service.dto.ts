@@ -33,17 +33,31 @@ const locationSchema = z
  *   authenticated provider's approved category. Any value sent by the client
  *   is ignored. This guarantees a provider can only sell services in the
  *   single category their application was approved for.
+ * - `serviceType` determines the booking flow (instant/visit_first/custom)
+ * - `pricingModel` determines how price is calculated and displayed
  * - `price` accepts numeric strings (form inputs send strings) and coerces to number.
  * - `duration` is in minutes (integer, 1 – 1440).
  * - `images` accepts URLs or base64 data strings; max 10 items per service.
  * - `tags` accepts free-form strings; max 20 items, each 1–30 chars.
  */
-export const serviceSchema = z.object({
+/** Base object schema without refinements (needed for .omit()/.partial() in Zod v4) */
+const serviceBaseSchema = z.object({
   name: trimmedString(2, 100, "Service name"),
   categoryId: objectIdField.optional(),
   subCategory: z.string().trim().min(1).max(100).optional(),
   description: trimmedString(10, 2000, "Description"),
+  
+  /** Service type determines the booking flow */
+  serviceType: z.enum(["instant", "visit_first", "custom"]).default("instant"),
+  
+  /** Pricing model determines how price is calculated */
+  pricingModel: z.enum(["fixed", "per_unit", "hourly", "starting_from", "quote_based"]).default("fixed"),
+  
   price: numberFromString(z.number().min(0, "Price cannot be negative")),
+  
+  /** For per_unit pricing (e.g., "sq.ft", "sq.m", "item") */
+  priceUnit: z.string().trim().max(20).optional(),
+  
   duration: numberFromString(
     z
       .number()
@@ -51,6 +65,16 @@ export const serviceSchema = z.object({
       .min(1, "Duration must be at least 1 minute")
       .max(1440, "Duration cannot exceed 24 hours (1440 minutes)")
   ),
+  
+  /** For 'visit_first' services - whether inspection visit is free */
+  freeInspection: z.boolean().default(true).optional(),
+  
+  /** For 'visit_first' services - inspection visit fee if not free */
+  inspectionFee: numberFromString(z.number().min(0)).optional(),
+  
+  /** For 'visit_first' and 'custom' services - estimated project duration in days */
+  estimatedProjectDays: numberFromString(z.number().int().min(1).max(365)).optional(),
+  
   images: z.array(z.string()).max(10, "You can attach at most 10 images").default([]),
   serviceArea: z.string().trim().max(200).optional(),
   location: locationSchema,
@@ -59,12 +83,65 @@ export const serviceSchema = z.object({
   status: z.enum(["active", "inactive"]).default("active"),
 });
 
+/** Cross-field refinements applied on top of the base schema */
+export const serviceSchema = serviceBaseSchema.refine(
+  (data) => {
+    // If pricingModel is per_unit, priceUnit must be provided
+    if (data.pricingModel === "per_unit" && !data.priceUnit) {
+      return false;
+    }
+    return true;
+  },
+  {
+    message: "Price unit is required when pricing model is 'per_unit'",
+    path: ["priceUnit"],
+  }
+).refine(
+  (data) => {
+    // If freeInspection is false, inspectionFee must be provided and > 0
+    if (data.freeInspection === false && (!data.inspectionFee || data.inspectionFee <= 0)) {
+      return false;
+    }
+    return true;
+  },
+  {
+    message: "Inspection fee must be greater than 0 when inspection is not free",
+    path: ["inspectionFee"],
+  }
+);
+
 /**
  * Update payload — `categoryId` is intentionally omitted. Providers cannot
  * change a service's category; it is bound to their approved application
  * category for the lifetime of the service.
+ *
+ * Uses the base schema (pre-refinement) so .omit()/.partial() work in Zod v4.
+ * Refinements are re-applied on the partial shape where applicable.
  */
-export const updateServiceSchema = serviceSchema.omit({ categoryId: true }).partial();
+export const updateServiceSchema = serviceBaseSchema.omit({ categoryId: true }).partial().refine(
+  (data) => {
+    // Only validate if both fields are present in the partial update
+    if (data.pricingModel === "per_unit" && data.pricingModel !== undefined && !data.priceUnit) {
+      return false;
+    }
+    return true;
+  },
+  {
+    message: "Price unit is required when pricing model is 'per_unit'",
+    path: ["priceUnit"],
+  }
+).refine(
+  (data) => {
+    if (data.freeInspection === false && (!data.inspectionFee || data.inspectionFee <= 0)) {
+      return false;
+    }
+    return true;
+  },
+  {
+    message: "Inspection fee must be greater than 0 when inspection is not free",
+    path: ["inspectionFee"],
+  }
+);
 
 /** Provider list filter (own services). */
 export const providerServiceQuerySchema = z.object({
@@ -78,6 +155,8 @@ export const publicServiceQuerySchema = z.object({
   categoryId: objectIdField.optional(),
   subCategory: z.string().trim().max(100).optional(),
   providerId: objectIdField.optional(),
+  /** Filter by service type */
+  serviceType: z.enum(["instant", "visit_first", "custom"]).optional(),
   search: z.string().trim().max(200).optional(),
   /** Filter by city (case-insensitive partial match on location.city). */
   city: z.string().trim().max(100).optional(),

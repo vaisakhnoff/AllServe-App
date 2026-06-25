@@ -1,11 +1,4 @@
-/**
- * src/di.ts — Dependency Injection wiring.
- *
- * This is the ONLY file that uses `new`. Every layer is wired here in order:
- *   Repositories → Services → Controllers
- *
- * No business logic. No middleware. Just construction.
- */
+
 
 // ── Repositories ──────────────────────────────────────────────────────────────
 import { AuthRepository }            from "./repositories/auth.repository";
@@ -51,7 +44,7 @@ import { ServiceRequestController }  from "./controllers/service-request/service
 import { ProviderQuoteController }   from "./controllers/provider-quote/providerQuote.controller";
 
 // =============================================================================
-// 1. Repositories (no dependencies)
+// 1. Repositories 
 // =============================================================================
 
 const authRepository            = new AuthRepository();
@@ -68,7 +61,7 @@ const serviceRequestRepository  = new ServiceRequestRepository();
 const providerQuoteRepository   = new ProviderQuoteRepository();
 
 // =============================================================================
-// 2. Services (inject repository interfaces)
+// 2. Services - inject repository interfaces 
 // =============================================================================
 
 export const authService            = new AuthService(authRepository);
@@ -88,7 +81,7 @@ export const providerService = new ProviderService(providerRepository, serviceRe
 export const homeService     = new HomeService(categoryService, providerService);
 
 // =============================================================================
-// 3. Controllers (inject service interfaces)
+// 3. Controllers - inject service interfaces
 // =============================================================================
 
 export const authController            = new AuthController(authService);

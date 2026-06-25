@@ -25,7 +25,7 @@ export default function ProviderMessagesPage() {
     messagingService.getConversations()
       .then((r) => {
         const data = r.data?.data;
-        setConversations(Array.isArray(data) ? data : data?.items ?? []);
+        setConversations(Array.isArray(data) ? data : (data as { items?: Conversation[] } | null)?.items ?? []);
       })
       .catch(() => {})
       .finally(() => setLoading(false));

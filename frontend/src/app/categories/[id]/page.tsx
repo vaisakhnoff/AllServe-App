@@ -30,7 +30,8 @@ export default function CategoryDetailPage() {
       .getAll()
       .then((res) => {
         if (cancelled) return;
-        const categories = res.data?.data?.items ?? [];
+        const data = res.data?.data;
+        const categories = (data as { items?: Category[] } | null)?.items ?? (Array.isArray(data) ? data as Category[] : []);
         const found = categories.find((c) => c._id === id) ?? null;
         setCategory(found);
       })
