@@ -7,6 +7,9 @@ export interface IProviderLocation {
   coordinates: [number, number]; // [longitude, latitude]
 }
 
+export type OnlineStatus = "online" | "offline";
+export type EngagementStatus = "available" | "busy";
+
 export interface IProviderAccount extends Document {
   name: string;
   email: string;
@@ -40,6 +43,11 @@ export interface IProviderAccount extends Document {
   pincode?: string;
   fullAddress?: string;
   serviceRadius?: number; // km
+  // ── Availability / Status fields ──
+  onlineStatus: OnlineStatus;
+  engagementStatus: EngagementStatus;
+  lastOnlineAt?: Date;
+  lastStatusChangeAt?: Date;
 }
 
 const providerAccountSchema = new Schema<IProviderAccount>(
@@ -79,6 +87,11 @@ const providerAccountSchema = new Schema<IProviderAccount>(
     pincode: { type: String },
     fullAddress: { type: String },
     serviceRadius: { type: Number, default: 10 },
+    // ── Availability / Status fields ──
+    onlineStatus: { type: String, enum: ["online", "offline"], default: "offline" },
+    engagementStatus: { type: String, enum: ["available", "busy"], default: "available" },
+    lastOnlineAt: { type: Date },
+    lastStatusChangeAt: { type: Date },
   },
   { timestamps: true }
 );
