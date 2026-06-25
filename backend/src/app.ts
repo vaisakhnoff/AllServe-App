@@ -21,6 +21,9 @@ import {
   messagingController,
   serviceRequestController,
   providerQuoteController,
+  providerStatusController,
+  providerScheduleController,
+  providerLeaveController,
 } from "./di";
 
 
@@ -37,6 +40,9 @@ import { createBookingRouter }        from "./routes/booking/booking.routes";
 import { createMessagingRouter }      from "./routes/messaging/messaging.routes";
 import { createServiceRequestRouter } from "./routes/service-request/serviceRequest.routes";
 import { createProviderQuoteRouter }  from "./routes/provider-quote/providerQuote.routes";
+import { createProviderStatusRouter } from "./routes/provider-status/providerStatus.routes";
+import { createProviderScheduleRouter } from "./routes/provider-schedule/providerSchedule.routes";
+import { createProviderLeaveRouter }  from "./routes/provider-leave/providerLeave.routes";
 
 const app = express();
 
@@ -88,6 +94,9 @@ app.use("/api/v1/bookings",         createBookingRouter(bookingController));
 app.use("/api/v1/messaging",        createMessagingRouter(messagingController));
 app.use("/api/v1/service-requests", createServiceRequestRouter(serviceRequestController));
 app.use("/api/v1/provider-quotes",  createProviderQuoteRouter(providerQuoteController));
+app.use("/api/v1/provider-status",  createProviderStatusRouter(providerStatusController));
+app.use("/api/v1/provider-schedule", createProviderScheduleRouter(providerScheduleController));
+app.use("/api/v1/provider-leave",   createProviderLeaveRouter(providerLeaveController));
 
 app.get("/", (_req, res) => {
   res.json({ message: "API running" });
