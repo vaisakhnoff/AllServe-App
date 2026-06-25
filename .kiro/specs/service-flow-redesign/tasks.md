@@ -47,15 +47,15 @@
 - [x] Register in DI and router
 
 ## Task 5: Service Model — Rename serviceType to deliveryModel
-- [ ] Rename `serviceType` field to `deliveryModel` in `Service` model
-- [ ] Change enum values: `"instant"→"direct"`, `"visit_first"→"inspection_required"`, `"custom"→"custom"`
-- [ ] Update `service.dto.ts` (both create and update schemas)
-- [ ] Update `service.mapper.ts`
-- [ ] Update `frontend/src/types/service.types.ts` — `ServiceType` → `DeliveryModel`
-- [ ] Update `ServiceFormModal.tsx` dropdown options
-- [ ] Update `publicServiceQuerySchema` filter
-- [ ] Update `Category` model's `defaultServiceType` → `defaultDeliveryModel`
-- [ ] Update all references across controllers, services, repositories
+- [x] Rename `serviceType` field to `deliveryModel` in `Service` model
+- [x] Change enum values: `"instant"→"direct"`, `"visit_first"→"inspection_required"`, `"custom"→"custom"`
+- [x] Update `service.dto.ts` (both create and update schemas)
+- [x] Update `service.mapper.ts`
+- [x] Update `frontend/src/types/service.types.ts` — `ServiceType` → `DeliveryModel`
+- [x] Update `ServiceFormModal.tsx` dropdown options
+- [x] Update `publicServiceQuerySchema` filter
+- [x] Update `Category` model's `defaultServiceType` → `defaultDeliveryModel`
+- [x] Update all references across controllers, services, repositories
 
 ## Task 6: ServiceOrder Model (Unified Order)
 - [ ] Create `ServiceOrder` model (`backend/src/models/serviceOrder.model.ts`)
