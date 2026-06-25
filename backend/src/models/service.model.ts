@@ -4,12 +4,12 @@ export type ServiceStatus = "active" | "inactive";
 export type AvailabilityStatus = "available" | "unavailable";
 
 /**
- * Service Type Classification:
- * - instant: Fixed duration, price known upfront, immediate booking (e.g., haircut, basic plumbing)
- * - visit_first: Provider must visit/inspect before final pricing (e.g., house painting, renovation)
+ * Delivery Model Classification:
+ * - direct: Fixed duration, price known upfront, immediate or scheduled booking (e.g., haircut, basic plumbing)
+ * - inspection_required: Provider must visit/inspect before final pricing (e.g., house painting, renovation)
  * - custom: Fully negotiated scope via bidding (e.g., PC build, interior design)
  */
-export type ServiceType = "instant" | "visit_first" | "custom";
+export type DeliveryModel = "direct" | "inspection_required" | "custom";
 
 /**
  * Pricing Model:
@@ -38,13 +38,13 @@ export interface IService extends Document {
   name: string;
   description: string;
   
-  /** Service type determines the booking flow */
-  serviceType: ServiceType;
+  /** Delivery model determines the booking flow */
+  deliveryModel: DeliveryModel;
   
   /** 
    * Pricing model determines how price is calculated and displayed 
-   * - For 'instant': typically 'fixed' or 'hourly'
-   * - For 'visit_first': typically 'per_unit' or 'starting_from'
+   * - For 'direct': typically 'fixed' or 'hourly'
+   * - For 'inspection_required': typically 'per_unit' or 'starting_from'
    * - For 'custom': typically 'quote_based'
    */
   pricingModel: PricingModel;
@@ -63,23 +63,23 @@ export interface IService extends Document {
   
   /** 
    * Duration in minutes (1 – 1440).
-   * - For 'instant': exact duration for slot booking
-   * - For 'visit_first': duration of inspection visit (if applicable)
+   * - For 'direct': exact duration for scheduling
+   * - For 'inspection_required': duration of inspection visit (if applicable)
    * - For 'custom': estimated duration (informational only)
    */
   duration: number;
   
   /** 
-   * For 'visit_first' services - whether inspection visit is free
+   * For 'inspection_required' services - whether inspection visit is free
    * Default: true (inspection is usually free, charge comes after estimate)
    */
   freeInspection?: boolean;
   
-  /** For 'visit_first' services - inspection visit fee if not free */
+  /** For 'inspection_required' services - inspection visit fee if not free */
   inspectionFee?: number;
   
   /** 
-   * For 'visit_first' and 'custom' services - estimated project duration in days
+   * For 'inspection_required' and 'custom' services - estimated project duration in days
    * Helps users understand time commitment
    */
   estimatedProjectDays?: number;
@@ -117,11 +117,11 @@ const serviceSchema = new Schema<IService>(
     subCategory: { type: String, trim: true, index: true },
     name: { type: String, required: true, trim: true },
     description: { type: String, required: true, trim: true },
-    serviceType: {
+    deliveryModel: {
       type: String,
-      enum: ["instant", "visit_first", "custom"],
+      enum: ["direct", "inspection_required", "custom"],
       required: true,
-      default: "instant",
+      default: "direct",
       index: true,
     },
     pricingModel: {
@@ -166,7 +166,7 @@ serviceSchema.index({ providerId: 1, isDeleted: 1, createdAt: -1 });
 // Public browse: category + status + availability + not-blocked + not-deleted.
 serviceSchema.index({ categoryId: 1, status: 1, availabilityStatus: 1, isBlocked: 1, isDeleted: 1, createdAt: -1 });
 // Service type filtering for different booking flows
-serviceSchema.index({ categoryId: 1, serviceType: 1, isDeleted: 1 });
+serviceSchema.index({ categoryId: 1, deliveryModel: 1, isDeleted: 1 });
 // Location-based filtering.
 serviceSchema.index({ "location.city": 1 });
 

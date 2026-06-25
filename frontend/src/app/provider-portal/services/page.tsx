@@ -29,7 +29,7 @@ interface LockedCategory {
   id: string;
   name: string;
   subcategories: string[];
-  defaultServiceType?: ServiceType;
+  defaultDeliveryModel?: ServiceType;
 }
 
 export default function ProviderServicesPage() {
@@ -92,7 +92,7 @@ export default function ProviderServicesPage() {
           id,
           name: full?.name ?? cat.name ?? "Your category",
           subcategories: full?.subcategories?.map((s) => s.name) ?? [],
-          defaultServiceType: full?.defaultServiceType,
+          defaultDeliveryModel: full?.defaultDeliveryModel,
         });
       } catch {
         // Non-fatal: form will show "Approved category not set" hint and the
@@ -270,9 +270,9 @@ export default function ProviderServicesPage() {
                 </div>
                 {/* Service-type badge – bottom-right corner */}
                 <div className="absolute right-3 bottom-3">
-                  <span className={`rounded-full px-2.5 py-1 text-[11px] font-bold shadow-sm ${getServiceTypeBadgeClass(svc.serviceType ?? "instant")}`}>
-                    {getServiceTypeEmoji(svc.serviceType ?? "instant")}{" "}
-                    {getServiceTypeLabel(svc.serviceType ?? "instant")}
+                  <span className={`rounded-full px-2.5 py-1 text-[11px] font-bold shadow-sm ${getServiceTypeBadgeClass((svc.deliveryModel ?? svc.serviceType) ?? "direct")}`}>
+                    {getServiceTypeEmoji((svc.deliveryModel ?? svc.serviceType) ?? "direct")}{" "}
+                    {getServiceTypeLabel((svc.deliveryModel ?? svc.serviceType) ?? "direct")}
                   </span>
                 </div>
               </div>
@@ -302,9 +302,9 @@ export default function ProviderServicesPage() {
                 <div className="mt-3 flex flex-wrap items-center gap-3 text-xs font-semibold text-slate-500">
                   <span className="inline-flex items-center gap-1">
                     <Clock size={12} />
-                    {svc.serviceType === "visit_first" ? `${svc.duration} min inspection` : `${svc.duration} min`}
+                    {(svc.deliveryModel ?? svc.serviceType) === "inspection_required" ? `${svc.duration} min inspection` : `${svc.duration} min`}
                   </span>
-                  {svc.serviceType === "visit_first" && (
+                  {(svc.deliveryModel ?? svc.serviceType) === "inspection_required" && (
                     <span className="inline-flex items-center gap-1 text-blue-600">
                       {svc.freeInspection ? "Free inspection" : `₹${svc.inspectionFee} inspection fee`}
                     </span>

@@ -3,11 +3,14 @@ export type AvailabilityStatus = "available" | "unavailable";
 
 /**
  * Determines the booking flow:
- * - instant: fixed price, pick slot and pay now
- * - visit_first: provider visits to inspect before quoting
+ * - direct: instant or scheduled request, provider accepts and completes work
+ * - inspection_required: provider visits to inspect before quoting
  * - custom: user posts a request, providers bid
  */
-export type ServiceType = "instant" | "visit_first" | "custom";
+export type DeliveryModel = "direct" | "inspection_required" | "custom";
+
+/** @deprecated Use DeliveryModel instead. Kept as alias for migration. */
+export type ServiceType = DeliveryModel;
 
 /**
  * How the displayed price is interpreted:
@@ -51,18 +54,18 @@ export interface Service {
   name: string;
   description: string;
   /** Booking flow classification */
-  serviceType: ServiceType;
+  deliveryModel: DeliveryModel;
   /** How price is calculated / displayed */
   pricingModel: PricingModel;
   price: number;
   /** Unit label for per_unit pricing (e.g. "sq.ft") */
   priceUnit?: string | null;
   duration: number;
-  /** For visit_first services – whether the inspection visit is free */
+  /** For inspection_required services – whether the inspection visit is free */
   freeInspection?: boolean;
-  /** For visit_first services – fee charged when inspection is not free */
+  /** For inspection_required services – fee charged when inspection is not free */
   inspectionFee?: number | null;
-  /** For visit_first / custom services – estimated project length in days */
+  /** For inspection_required / custom services – estimated project length in days */
   estimatedProjectDays?: number | null;
   images: string[];
   serviceArea?: string | null;
@@ -73,6 +76,8 @@ export interface Service {
   isBlocked: boolean;
   createdAt: string;
   updatedAt: string;
+  /** @deprecated Use deliveryModel. Kept for backward compat during migration. */
+  serviceType?: DeliveryModel;
 }
 
 export interface CreateServiceDto {
@@ -85,18 +90,18 @@ export interface CreateServiceDto {
   subCategory?: string;
   description: string;
   /** Booking flow classification */
-  serviceType: ServiceType;
+  deliveryModel: DeliveryModel;
   /** How price is calculated / displayed */
   pricingModel: PricingModel;
   price: number;
   /** Required when pricingModel is "per_unit" */
   priceUnit?: string;
   duration: number;
-  /** For visit_first services */
+  /** For inspection_required services */
   freeInspection?: boolean;
-  /** For visit_first services when freeInspection is false */
+  /** For inspection_required services when freeInspection is false */
   inspectionFee?: number;
-  /** For visit_first / custom services */
+  /** For inspection_required / custom services */
   estimatedProjectDays?: number;
   images?: string[];
   serviceArea?: string;
@@ -137,7 +142,7 @@ export interface PublicServiceListQuery {
   subCategory?: string;
   providerId?: string;
   /** Filter by booking flow type */
-  serviceType?: ServiceType;
+  deliveryModel?: DeliveryModel;
   search?: string;
   city?: string;
   latitude?: number;

@@ -326,10 +326,10 @@ export default function ServiceDetailPage() {
                       )}
                       <div className="rounded-xl border-2 border-indigo-100 bg-indigo-50 p-4 flex items-center justify-between">
                         <span className="font-bold text-slate-900">
-                          {service.serviceType === "visit_first" ? "Inspection fee" : "Total"}
+                          {(service.deliveryModel ?? service.serviceType) === "inspection_required" ? "Inspection fee" : "Total"}
                         </span>
                         <span className="text-2xl font-black text-indigo-600">
-                          {service.serviceType === "visit_first"
+                          {(service.deliveryModel ?? service.serviceType) === "inspection_required"
                             ? (service.freeInspection ? "Free" : `₹${service.inspectionFee}`)
                             : getDisplayPrice(service.price, service.pricingModel ?? "fixed", service.priceUnit)}
                         </span>
@@ -338,7 +338,7 @@ export default function ServiceDetailPage() {
 
                     <p className="mt-3 flex items-center gap-1 text-xs text-slate-500">
                       <Shield size={12} />
-                      {service.serviceType === "visit_first"
+                      {(service.deliveryModel ?? service.serviceType) === "inspection_required"
                         ? "Provider will visit and send a detailed quote"
                         : "Payment collected after service completion"}
                     </p>
@@ -349,7 +349,7 @@ export default function ServiceDetailPage() {
                       className="mt-5 w-full rounded-xl bg-indigo-600 py-3 text-sm font-bold text-white hover:bg-indigo-700 disabled:opacity-50 flex items-center justify-center gap-2"
                     >
                       {bookingLoading && <Loader2 size={16} className="animate-spin" />}
-                      {service.serviceType === "visit_first" ? "Confirm Inspection Visit" : "Confirm Booking"}
+                      {(service.deliveryModel ?? service.serviceType) === "inspection_required" ? "Confirm Inspection Visit" : "Confirm Booking"}
                     </button>
                   </div>
                 </div>
@@ -364,10 +364,10 @@ export default function ServiceDetailPage() {
                 <CheckCircle2 size={32} className="text-emerald-600" />
               </div>
               <h2 className="text-xl font-black text-slate-900">
-                {service.serviceType === "visit_first" ? "Inspection Scheduled!" : "Booking Confirmed!"}
+                {(service.deliveryModel ?? service.serviceType) === "inspection_required" ? "Inspection Scheduled!" : "Booking Confirmed!"}
               </h2>
               <p className="mt-1 text-sm text-slate-500">
-                {service.serviceType === "visit_first"
+                {(service.deliveryModel ?? service.serviceType) === "inspection_required"
                   ? "The provider will visit and send you a quote"
                   : "Your service has been booked successfully"}
               </p>
@@ -445,16 +445,16 @@ export default function ServiceDetailPage() {
                   {service.category?.name}{service.subCategory ? ` · ${service.subCategory}` : ""}
                 </p>
                 {/* Service-type badge */}
-                <span className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${getServiceTypeBadgeClass(service.serviceType ?? "instant")}`}>
-                  {getServiceTypeEmoji(service.serviceType ?? "instant")}{" "}
-                  {getServiceTypeLabel(service.serviceType ?? "instant")}
+                <span className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${getServiceTypeBadgeClass((service.deliveryModel ?? service.serviceType) ?? "direct")}`}>
+                  {getServiceTypeEmoji((service.deliveryModel ?? service.serviceType) ?? "direct")}{" "}
+                  {getServiceTypeLabel((service.deliveryModel ?? service.serviceType) ?? "direct")}
                 </span>
               </div>
               <h1 className="mt-1 text-2xl sm:text-[2rem] font-extrabold text-slate-950 tracking-tight leading-tight">{service.name}</h1>
               <div className="mt-3 flex flex-wrap items-center gap-4 text-sm text-slate-600">
                 <span className="inline-flex items-center gap-1.5 font-semibold">
                   <Clock size={15} className="text-[var(--primary)]" />
-                  {requiresInspection(service.serviceType ?? "instant")
+                  {requiresInspection((service.deliveryModel ?? service.serviceType) ?? "direct")
                     ? `${service.duration} min inspection`
                     : `${service.duration} min`}
                 </span>
@@ -463,7 +463,7 @@ export default function ServiceDetailPage() {
                     <MapPin size={15} className="text-[var(--primary)]" /> {service.serviceArea}
                   </span>
                 )}
-                {(service.serviceType === "visit_first") && service.estimatedProjectDays && (
+                {((service.deliveryModel ?? service.serviceType) === "inspection_required") && service.estimatedProjectDays && (
                   <span className="inline-flex items-center gap-1.5 font-semibold text-blue-600">
                     ~{service.estimatedProjectDays} day{service.estimatedProjectDays > 1 ? "s" : ""} project
                   </span>
@@ -473,20 +473,20 @@ export default function ServiceDetailPage() {
 
             {/* Booking-flow info panel */}
             <div className={`mt-4 rounded-[14px] border p-4 flex items-start gap-3 ${
-              service.serviceType === "visit_first" ? "border-blue-100 bg-blue-50/60" :
-              service.serviceType === "custom"      ? "border-purple-100 bg-purple-50/60" :
+              (service.deliveryModel ?? service.serviceType) === "inspection_required" ? "border-blue-100 bg-blue-50/60" :
+              (service.deliveryModel ?? service.serviceType) === "custom"      ? "border-purple-100 bg-purple-50/60" :
               "border-emerald-100 bg-emerald-50/60"
             }`}>
               <div className="mt-0.5 text-xl shrink-0">
-                {service.serviceType === "visit_first" ? "🏠" :
-                 service.serviceType === "custom"      ? "🎨" : "⚡"}
+                {(service.deliveryModel ?? service.serviceType) === "inspection_required" ? "🏠" :
+                 (service.deliveryModel ?? service.serviceType) === "custom"      ? "🎨" : "⚡"}
               </div>
               <div>
                 <p className="text-xs font-black text-slate-700">How this booking works</p>
                 <p className="mt-0.5 text-xs text-slate-600 leading-relaxed">
-                  {getBookingFlowDescription(service.serviceType ?? "instant")}
+                  {getBookingFlowDescription((service.deliveryModel ?? service.serviceType) ?? "direct")}
                 </p>
-                {service.serviceType === "visit_first" && (
+                {(service.deliveryModel ?? service.serviceType) === "inspection_required" && (
                   <p className="mt-1.5 text-xs font-semibold text-blue-700">
                     {service.freeInspection
                       ? "✓ Free inspection visit included"
@@ -510,13 +510,13 @@ export default function ServiceDetailPage() {
             </article>
 
             {/* Slot picker — only for instant and visit_first */}
-            {canBookThroughSlots(service.serviceType ?? "instant") ? (
+            {canBookThroughSlots((service.deliveryModel ?? service.serviceType) ?? "direct") ? (
             <section id="available-slots" className="mt-5 rounded-[18px] border border-slate-200/60 bg-white p-5 sm:p-6">
               <h2 className="flex items-center gap-2.5 text-lg font-extrabold text-slate-900 mb-1">
                 <CalendarDays size={18} className="text-[var(--primary)]" />
-                {getSlotSectionTitle(service.serviceType ?? "instant")}
+                {getSlotSectionTitle((service.deliveryModel ?? service.serviceType) ?? "direct")}
               </h2>
-              {service.serviceType === "visit_first" && (
+              {(service.deliveryModel ?? service.serviceType) === "inspection_required" && (
                 <p className="text-xs text-slate-500 mb-4">
                   Choose a date and time for the provider to visit and assess the work.
                 </p>
@@ -589,19 +589,19 @@ export default function ServiceDetailPage() {
 
                 {/* Booking flow info box */}
                 <div className={`mt-4 rounded-2xl border p-3 ${
-                  service.serviceType === "visit_first" ? "border-blue-100 bg-blue-50" :
-                  service.serviceType === "custom"      ? "border-purple-100 bg-purple-50" :
+                  (service.deliveryModel ?? service.serviceType) === "inspection_required" ? "border-blue-100 bg-blue-50" :
+                  (service.deliveryModel ?? service.serviceType) === "custom"      ? "border-purple-100 bg-purple-50" :
                   "border-purple-100/60 bg-gradient-to-br from-purple-50 to-violet-50/50"
                 }`}>
                   <p className={`text-xs font-bold flex items-center gap-2 ${
-                    service.serviceType === "visit_first" ? "text-blue-700" :
-                    service.serviceType === "custom"      ? "text-purple-700" :
+                    (service.deliveryModel ?? service.serviceType) === "inspection_required" ? "text-blue-700" :
+                    (service.deliveryModel ?? service.serviceType) === "custom"      ? "text-purple-700" :
                     "text-[var(--primary)]"
                   }`}>
                     <ClipboardList size={14} />
-                    {service.serviceType === "instant"
+                    {(service.deliveryModel ?? service.serviceType) === "direct"
                       ? "Select a time slot below to book"
-                      : service.serviceType === "visit_first"
+                      : (service.deliveryModel ?? service.serviceType) === "inspection_required"
                       ? "Select a slot to schedule an inspection"
                       : "Post a request to receive quotes"}
                   </p>
@@ -611,7 +611,7 @@ export default function ServiceDetailPage() {
                 <div className="mt-4 space-y-3 border-t border-slate-100 pt-4">
                   <p className="flex items-center gap-2.5 text-sm font-semibold text-slate-600">
                     <Shield size={14} className="text-emerald-500" />
-                    {getPaymentFlowDescription(service.serviceType ?? "instant")}
+                    {getPaymentFlowDescription((service.deliveryModel ?? service.serviceType) ?? "direct")}
                   </p>
                   <p className="flex items-center gap-2.5 text-sm font-semibold text-slate-600">
                     <BadgeCheck size={14} className="text-[var(--primary)]" /> Verified professional
@@ -666,12 +666,12 @@ export default function ServiceDetailPage() {
             {getDisplayPrice(service.price, service.pricingModel ?? "fixed", service.priceUnit)}
           </p>
           <p className="text-xs text-slate-500">
-            {requiresInspection(service.serviceType ?? "instant")
+            {requiresInspection((service.deliveryModel ?? service.serviceType) ?? "direct")
               ? `${service.duration} min inspection`
               : `${service.duration} min`}
           </p>
         </div>
-        {requiresServiceRequest(service.serviceType ?? "instant") ? (
+        {requiresServiceRequest((service.deliveryModel ?? service.serviceType) ?? "direct") ? (
           <Link
             href={`/post-request?categoryId=${service.category?.id ?? ""}&serviceId=${service.id}`}
             className="rounded-[14px] bg-gradient-to-r from-purple-600 to-violet-600 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-purple-500/20 hover:shadow-xl transition-all"
@@ -683,7 +683,7 @@ export default function ServiceDetailPage() {
             href="#available-slots"
             className="rounded-[14px] bg-gradient-to-r from-[#6D28FF] to-[#8B5CF6] px-7 py-3 text-sm font-bold text-white shadow-lg shadow-purple-500/20 hover:shadow-xl transition-all"
           >
-            {getBookingCTA(service.serviceType ?? "instant")}
+            {getBookingCTA((service.deliveryModel ?? service.serviceType) ?? "direct")}
           </a>
         )}
       </div>
@@ -693,10 +693,10 @@ export default function ServiceDetailPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4">
           <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl">
             <h3 className="text-lg font-black text-slate-900 mb-1">
-              {service.serviceType === "visit_first" ? "Confirm inspection visit" : "Confirm slot"}
+              {(service.deliveryModel ?? service.serviceType) === "inspection_required" ? "Confirm inspection visit" : "Confirm slot"}
             </h3>
             <p className="text-sm text-slate-500 mb-5">
-              {service.serviceType === "visit_first"
+              {(service.deliveryModel ?? service.serviceType) === "inspection_required"
                 ? "The provider will visit to assess the work and send you a quote."
                 : "You're about to book this time slot"}
             </p>
@@ -716,10 +716,10 @@ export default function ServiceDetailPage() {
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-slate-500">
-                  {service.serviceType === "visit_first" ? "Inspection" : "Price"}
+                  {(service.deliveryModel ?? service.serviceType) === "inspection_required" ? "Inspection" : "Price"}
                 </span>
                 <span className="font-black text-indigo-600">
-                  {service.serviceType === "visit_first"
+                  {(service.deliveryModel ?? service.serviceType) === "inspection_required"
                     ? (service.freeInspection ? "Free" : `₹${service.inspectionFee}`)
                     : getDisplayPrice(service.price, service.pricingModel ?? "fixed", service.priceUnit)}
                 </span>

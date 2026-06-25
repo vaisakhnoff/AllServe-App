@@ -33,7 +33,7 @@ const locationSchema = z
  *   authenticated provider's approved category. Any value sent by the client
  *   is ignored. This guarantees a provider can only sell services in the
  *   single category their application was approved for.
- * - `serviceType` determines the booking flow (instant/visit_first/custom)
+ * - `deliveryModel` determines the booking flow (direct/inspection_required/custom)
  * - `pricingModel` determines how price is calculated and displayed
  * - `price` accepts numeric strings (form inputs send strings) and coerces to number.
  * - `duration` is in minutes (integer, 1 – 1440).
@@ -47,8 +47,8 @@ const serviceBaseSchema = z.object({
   subCategory: z.string().trim().min(1).max(100).optional(),
   description: trimmedString(10, 2000, "Description"),
   
-  /** Service type determines the booking flow */
-  serviceType: z.enum(["instant", "visit_first", "custom"]).default("instant"),
+  /** Delivery model determines the booking flow */
+  deliveryModel: z.enum(["direct", "inspection_required", "custom"]).default("direct"),
   
   /** Pricing model determines how price is calculated */
   pricingModel: z.enum(["fixed", "per_unit", "hourly", "starting_from", "quote_based"]).default("fixed"),
@@ -155,8 +155,8 @@ export const publicServiceQuerySchema = z.object({
   categoryId: objectIdField.optional(),
   subCategory: z.string().trim().max(100).optional(),
   providerId: objectIdField.optional(),
-  /** Filter by service type */
-  serviceType: z.enum(["instant", "visit_first", "custom"]).optional(),
+  /** Filter by delivery model */
+  deliveryModel: z.enum(["direct", "inspection_required", "custom"]).optional(),
   search: z.string().trim().max(200).optional(),
   /** Filter by city (case-insensitive partial match on location.city). */
   city: z.string().trim().max(100).optional(),

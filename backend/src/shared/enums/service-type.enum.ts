@@ -1,27 +1,27 @@
 /**
- * Service Type Classification Enums
- * These enums define the different types of services and their pricing models
+ * Delivery Model Classification Enums
+ * These enums define the different delivery models for services and their pricing models
  */
 
-export enum ServiceType {
+export enum DeliveryModel {
   /** 
-   * Instant services: Fixed duration, price known upfront, immediate booking
+   * Direct services: Fixed duration, price known upfront, immediate or scheduled booking
    * Examples: Haircut, basic plumbing fix, house cleaning (standard room)
-   * Booking flow: User picks slot → pays → done
+   * Booking flow: User selects provider → instant request or scheduled request → provider accepts
    */
-  INSTANT = "instant",
+  DIRECT = "direct",
   
   /** 
-   * Visit first services: Provider must visit/inspect before final pricing
+   * Inspection required services: Provider must visit/inspect before final pricing
    * Examples: House painting, renovation, deep cleaning (entire house)
-   * Booking flow: User books FREE inspection → provider visits → provider sends quote → user approves → work begins
+   * Booking flow: User requests inspection → provider visits → provider sends quotation → user approves → work begins
    */
-  VISIT_FIRST = "visit_first",
+  INSPECTION_REQUIRED = "inspection_required",
   
   /** 
    * Custom services: Fully negotiated scope via bidding
    * Examples: PC build from scratch, interior design, complex projects
-   * Booking flow: User posts request → providers bid → user picks quote → milestone payments
+   * Booking flow: User posts request → providers bid → user picks quotation → advance payment → work begins
    */
   CUSTOM = "custom",
 }
@@ -44,13 +44,13 @@ export enum PricingModel {
 }
 
 /**
- * Recommended pricing models for each service type:
+ * Recommended pricing models for each delivery model:
  * 
- * INSTANT services:
+ * DIRECT services:
  *   - FIXED: Most common (e.g., ₹500 for haircut)
  *   - HOURLY: For time-based services (e.g., ₹300/hour for tutoring)
  * 
- * VISIT_FIRST services:
+ * INSPECTION_REQUIRED services:
  *   - PER_UNIT: For measurable services (e.g., ₹15/sq.ft for painting)
  *   - STARTING_FROM: When exact pricing needs inspection (e.g., "Starting from ₹5,000")
  * 

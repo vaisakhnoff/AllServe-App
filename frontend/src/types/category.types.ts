@@ -1,10 +1,10 @@
-import type { ServiceType } from "./service.types";
+import type { DeliveryModel } from "./service.types";
 
 export interface Subcategory {
   name: string;
   image?: string;
-  /** Default service type hint for this subcategory */
-  defaultServiceType?: ServiceType;
+  /** Default delivery model hint for this subcategory */
+  defaultDeliveryModel?: DeliveryModel;
   typicallyRequiresInspection?: boolean;
 }
 
@@ -14,8 +14,8 @@ export interface Category {
   description: string;
   icon?: string;
   subcategories?: Subcategory[];
-  /** Default service type for new services in this category */
-  defaultServiceType?: ServiceType;
+  /** Default delivery model for new services in this category */
+  defaultDeliveryModel?: DeliveryModel;
   requiresInspection?: boolean;
   commissionRate?: number;
   defaultBufferMinutes?: number;
@@ -28,7 +28,7 @@ export interface CategoryDto {
   description?: string;
   icon?: string;
   subcategories?: Subcategory[];
-  defaultServiceType?: ServiceType;
+  defaultDeliveryModel?: DeliveryModel;
   requiresInspection?: boolean;
   commissionRate?: number;
   defaultBufferMinutes?: number;

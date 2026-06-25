@@ -3,8 +3,8 @@ import mongoose, { Schema, Document } from "mongoose";
 export interface ISubcategory {
   name: string;
   image?: string;
-  /** Default service type for this subcategory (helps guide providers) */
-  defaultServiceType?: "instant" | "visit_first" | "custom";
+  /** Default delivery model for this subcategory (helps guide providers) */
+  defaultDeliveryModel?: "direct" | "inspection_required" | "custom";
   /** Whether services in this subcategory typically require inspection */
   typicallyRequiresInspection?: boolean;
 }
@@ -16,10 +16,10 @@ export interface ICategory extends Document {
   subcategories?: ISubcategory[];
   
   /** 
-   * Default service type for new services in this category
+   * Default delivery model for new services in this category
    * Helps guide providers during service creation
    */
-  defaultServiceType: "instant" | "visit_first" | "custom";
+  defaultDeliveryModel: "direct" | "inspection_required" | "custom";
   
   /** 
    * Typical duration range in minutes for services in this category
@@ -53,9 +53,9 @@ const subcategorySchema = new Schema(
   {
     name: { type: String, required: true },
     image: { type: String },
-    defaultServiceType: {
+    defaultDeliveryModel: {
       type: String,
-      enum: ["instant", "visit_first", "custom"],
+      enum: ["direct", "inspection_required", "custom"],
     },
     typicallyRequiresInspection: { type: Boolean, default: false },
   },
@@ -68,10 +68,10 @@ const schema = new Schema<ICategory>(
     description: String,
     icon: String,
     subcategories: [subcategorySchema],
-    defaultServiceType: {
+    defaultDeliveryModel: {
       type: String,
-      enum: ["instant", "visit_first", "custom"],
-      default: "instant",
+      enum: ["direct", "inspection_required", "custom"],
+      default: "direct",
       required: true,
     },
     typicalDurationRange: {

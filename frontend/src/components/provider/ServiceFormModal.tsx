@@ -20,7 +20,7 @@ interface LockedCategory {
   id: string;
   name: string;
   subcategories: string[];
-  defaultServiceType?: ServiceType;
+  defaultDeliveryModel?: ServiceType;
 }
 
 interface ServiceFormModalProps {
@@ -46,13 +46,13 @@ const fileToBase64 = (file: File) =>
 
 const SERVICE_TYPE_OPTIONS: { value: ServiceType; label: string; desc: string; emoji: string }[] = [
   {
-    value: "instant",
+    value: "direct",
     emoji: "⚡",
     label: "Instant Booking",
     desc: "Fixed price — customers pick a slot and book immediately",
   },
   {
-    value: "visit_first",
+    value: "inspection_required",
     emoji: "🏠",
     label: "Inspection Required",
     desc: "You visit first, inspect the job, then provide a quote",
@@ -75,7 +75,7 @@ export function ServiceFormModal({
 }: ServiceFormModalProps) {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
-  const [serviceType, setServiceType] = useState<ServiceType>("instant");
+  const [serviceType, setServiceType] = useState<ServiceType>("direct");
   const [pricingModel, setPricingModel] = useState<PricingModel>("fixed");
   const [price, setPrice] = useState("");
   const [priceUnit, setPriceUnit] = useState("");
@@ -98,7 +98,7 @@ export function ServiceFormModal({
     const opts = getPricingModelsForServiceType(t);
     setPricingModel(opts[0].value);
     // Reset inspection-only fields when switching away
-    if (t !== "visit_first") {
+    if (t !== "inspection_required") {
       setFreeInspection(true);
       setInspectionFee("");
       setEstimatedProjectDays("");
@@ -112,7 +112,7 @@ export function ServiceFormModal({
     if (!open) return;
     setSubmitError(null);
     setErrors({});
-    const defaultType = initial?.serviceType ?? lockedCategory?.defaultServiceType ?? "instant";
+    const defaultType = initial?.deliveryModel ?? initial?.serviceType ?? lockedCategory?.defaultDeliveryModel ?? "direct";
     setName(initial?.name ?? "");
     setDescription(initial?.description ?? "");
     setServiceType(defaultType);
@@ -160,14 +160,14 @@ export function ServiceFormModal({
     if (pricingModel === "per_unit" && !priceUnit.trim())
       next.priceUnit = "Price unit is required (e.g. sq.ft, item)";
 
-    if (serviceType === "visit_first" && !freeInspection) {
+    if (serviceType === "inspection_required" && !freeInspection) {
       const fee = Number(inspectionFee);
       if (!inspectionFee || Number.isNaN(fee) || fee <= 0)
         next.inspectionFee = "Inspection fee must be greater than ₹0";
     }
 
     if (
-      (serviceType === "visit_first" || serviceType === "custom") &&
+      (serviceType === "inspection_required" || serviceType === "custom") &&
       estimatedProjectDays !== ""
     ) {
       const days = Number(estimatedProjectDays);
@@ -190,18 +190,18 @@ export function ServiceFormModal({
     const dto: CreateServiceDto = {
       name: name.trim(),
       description: description.trim(),
-      serviceType,
+      deliveryModel: serviceType,
       pricingModel,
       price: Number(price),
       priceUnit: pricingModel === "per_unit" ? priceUnit.trim() : undefined,
       duration: Number(duration),
-      freeInspection: serviceType === "visit_first" ? freeInspection : undefined,
+      freeInspection: serviceType === "inspection_required" ? freeInspection : undefined,
       inspectionFee:
-        serviceType === "visit_first" && !freeInspection && inspectionFee
+        serviceType === "inspection_required" && !freeInspection && inspectionFee
           ? Number(inspectionFee)
           : undefined,
       estimatedProjectDays:
-        (serviceType === "visit_first" || serviceType === "custom") && estimatedProjectDays
+        (serviceType === "inspection_required" || serviceType === "custom") && estimatedProjectDays
           ? Number(estimatedProjectDays)
           : undefined,
       images,
@@ -454,7 +454,7 @@ export function ServiceFormModal({
 
             <div>
               <label className="mb-1 block text-xs font-bold text-slate-600">
-                {serviceType === "visit_first" ? "Inspection duration (min) *" : "Duration (minutes) *"}
+                {serviceType === "inspection_required" ? "Inspection duration (min) *" : "Duration (minutes) *"}
               </label>
               <input
                 type="number"
@@ -467,14 +467,14 @@ export function ServiceFormModal({
                 placeholder="e.g. 60"
               />
               {errors.duration && <p className="mt-1 text-xs text-red-500">{errors.duration}</p>}
-              {serviceType === "visit_first" && (
+              {serviceType === "inspection_required" && (
                 <p className="mt-1 text-[11px] text-slate-400">Duration of the initial inspection visit.</p>
               )}
             </div>
           </div>
 
           {/* ── visit_first extra fields ─────────────────────────────── */}
-          {serviceType === "visit_first" && (
+          {serviceType === "inspection_required" && (
             <div className="rounded-xl border border-blue-100 bg-blue-50/60 p-4 space-y-3">
               <div className="flex items-center gap-2">
                 <span className="text-lg">🏠</span>
@@ -651,9 +651,9 @@ export function ServiceFormModal({
             <div>
               <p className="text-[11px] font-bold text-slate-600">
                 {getServiceTypeEmoji(serviceType)}{" "}
-                {serviceType === "instant"
+                {serviceType === "direct"
                   ? "Customers can book an available slot immediately"
-                  : serviceType === "visit_first"
+                  : serviceType === "inspection_required"
                   ? "Customers will book a free inspection visit — you send the final quote after assessing the work"
                   : "Customers will post a service request — you submit a competitive quote"}
               </p>

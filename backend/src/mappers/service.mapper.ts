@@ -34,10 +34,16 @@ export const mapService = (service: IService) => {
         : categoryId
         ? { id: categoryId }
         : null,
-    name: service.name,
+   name: service.name,
     description: service.description,
+    deliveryModel: service.deliveryModel ?? "direct",
+    pricingModel: service.pricingModel ?? "fixed",
     price: service.price,
+    priceUnit: service.priceUnit ?? null,
     duration: service.duration,
+    freeInspection: service.freeInspection ?? true,
+    inspectionFee: service.inspectionFee ?? null,
+    estimatedProjectDays: service.estimatedProjectDays ?? null,
     images: service.images ?? [],
     serviceArea: service.serviceArea ?? null,
     location: service.location ?? null,

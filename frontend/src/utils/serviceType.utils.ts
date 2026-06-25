@@ -1,49 +1,52 @@
 /**
- * Service Type Utilities (Frontend)
+ * Delivery Model Utilities (Frontend)
  *
- * Mirror of the backend helpers — same logic, no network calls.
- * Import these wherever you need to drive UI differences based on serviceType.
+ * Helper functions for driving UI differences based on a service's deliveryModel.
+ * Function names use "ServiceType" prefix for backward compat with existing components.
  */
 
-import type { ServiceType, PricingModel } from "@/types/service.types";
+import type { DeliveryModel, PricingModel } from "@/types/service.types";
+
+/** @deprecated Use DeliveryModel type directly */
+type ServiceType = DeliveryModel;
 
 // ── Booking-flow guards ──────────────────────────────────────────────────────
 
-/** True for services that can be booked via time-slot selection. */
-export function canBookThroughSlots(serviceType: ServiceType): boolean {
-  return serviceType === "instant" || serviceType === "visit_first";
+/** True for services that can be booked via schedule-based time windows. */
+export function canBookThroughSlots(deliveryModel: ServiceType): boolean {
+  return deliveryModel === "direct" || deliveryModel === "inspection_required";
 }
 
-/** True for services that go through the service-request / bidding flow. */
-export function requiresServiceRequest(serviceType: ServiceType): boolean {
-  return serviceType === "custom";
+/** True for services that go through the custom request / broadcast flow. */
+export function requiresServiceRequest(deliveryModel: ServiceType): boolean {
+  return deliveryModel === "custom";
 }
 
-/** True for services where the provider must visit before pricing. */
-export function requiresInspection(serviceType: ServiceType): boolean {
-  return serviceType === "visit_first";
+/** True for services where the provider must visit/inspect before pricing. */
+export function requiresInspection(deliveryModel: ServiceType): boolean {
+  return deliveryModel === "inspection_required";
 }
 
 // ── User-facing labels ───────────────────────────────────────────────────────
 
-/** Short label shown on service-type badges (e.g. "Instant Booking"). */
-export function getServiceTypeLabel(serviceType: ServiceType): string {
-  switch (serviceType) {
-    case "instant":
-      return "Instant Booking";
-    case "visit_first":
+/** Short label shown on delivery-model badges. */
+export function getServiceTypeLabel(deliveryModel: ServiceType): string {
+  switch (deliveryModel) {
+    case "direct":
+      return "Direct Service";
+    case "inspection_required":
       return "Inspection Required";
     case "custom":
       return "Custom Quote";
   }
 }
 
-/** Emoji prefix for each service type – used in forms and cards. */
-export function getServiceTypeEmoji(serviceType: ServiceType): string {
-  switch (serviceType) {
-    case "instant":
+/** Emoji prefix for each delivery model – used in forms and cards. */
+export function getServiceTypeEmoji(deliveryModel: ServiceType): string {
+  switch (deliveryModel) {
+    case "direct":
       return "⚡";
-    case "visit_first":
+    case "inspection_required":
       return "🏠";
     case "custom":
       return "🎨";
@@ -51,35 +54,35 @@ export function getServiceTypeEmoji(serviceType: ServiceType): string {
 }
 
 /** Full description of the booking flow for the service-detail info panel. */
-export function getBookingFlowDescription(serviceType: ServiceType): string {
-  switch (serviceType) {
-    case "instant":
-      return "Book instantly by selecting an available time slot and confirming your address. Payment is collected after service completion.";
-    case "visit_first":
-      return "Book a free inspection visit. The provider will assess the job and send you a detailed quote. Work begins only after you approve the estimate.";
+export function getBookingFlowDescription(deliveryModel: ServiceType): string {
+  switch (deliveryModel) {
+    case "direct":
+      return "Request this service instantly or schedule for a preferred date and time. The provider accepts, visits, and completes the work. Payment via invoice after completion.";
+    case "inspection_required":
+      return "Book an inspection visit. The provider will assess the job and send you a detailed quotation. Work begins only after you approve the estimate.";
     case "custom":
       return "Post your requirements as a service request. Multiple providers will send you competitive quotes. Choose the best offer and proceed with milestone-based payments.";
   }
 }
 
 /** Short payment-model description for the service-detail sidebar. */
-export function getPaymentFlowDescription(serviceType: ServiceType): string {
-  switch (serviceType) {
-    case "instant":
-      return "Full amount collected after service completion.";
-    case "visit_first":
-      return "Pay after receiving and approving the provider's estimate. A deposit may be required to confirm the booking.";
+export function getPaymentFlowDescription(deliveryModel: ServiceType): string {
+  switch (deliveryModel) {
+    case "direct":
+      return "Provider generates invoice after work completion. Pay online or by cash.";
+    case "inspection_required":
+      return "Pay after receiving and approving the provider's quotation. Advance payment may be required.";
     case "custom":
-      return "Payment terms agreed with the provider. Typically split into milestones (advance, mid-work, completion).";
+      return "Payment terms agreed with the provider. Typically advance + final balance after completion.";
   }
 }
 
 /** CTA button text for the primary booking action. */
-export function getBookingCTA(serviceType: ServiceType): string {
-  switch (serviceType) {
-    case "instant":
-      return "Book Now";
-    case "visit_first":
+export function getBookingCTA(deliveryModel: ServiceType): string {
+  switch (deliveryModel) {
+    case "direct":
+      return "Request Service";
+    case "inspection_required":
       return "Schedule Inspection";
     case "custom":
       return "Request Quote";
@@ -87,11 +90,11 @@ export function getBookingCTA(serviceType: ServiceType): string {
 }
 
 /** Slot-section heading shown on the service-detail page. */
-export function getSlotSectionTitle(serviceType: ServiceType): string {
-  switch (serviceType) {
-    case "instant":
-      return "Available Slots";
-    case "visit_first":
+export function getSlotSectionTitle(deliveryModel: ServiceType): string {
+  switch (deliveryModel) {
+    case "direct":
+      return "Available Time Windows";
+    case "inspection_required":
       return "Schedule Inspection Visit";
     case "custom":
       return "Post a Service Request";
@@ -102,13 +105,6 @@ export function getSlotSectionTitle(serviceType: ServiceType): string {
 
 /**
  * Returns a formatted price string appropriate for the pricing model.
- *
- * Examples:
- *   fixed      → "₹500"
- *   per_unit   → "₹15/sq.ft"
- *   hourly     → "₹300/hr"
- *   starting_from → "From ₹5,000"
- *   quote_based   → "Get quotes" (or "Est. ₹50,000" when price > 0)
  */
 export function getDisplayPrice(
   price: number,
@@ -160,15 +156,13 @@ export function getPriceSubline(
 // ── Tailwind colour helpers ──────────────────────────────────────────────────
 
 /**
- * Returns Tailwind classes for the service-type badge.
- *
- * Usage: <span className={getServiceTypeBadgeClass(service.serviceType)}>...</span>
+ * Returns Tailwind classes for the delivery-model badge.
  */
-export function getServiceTypeBadgeClass(serviceType: ServiceType): string {
-  switch (serviceType) {
-    case "instant":
+export function getServiceTypeBadgeClass(deliveryModel: ServiceType): string {
+  switch (deliveryModel) {
+    case "direct":
       return "bg-emerald-50 text-emerald-700 border border-emerald-200";
-    case "visit_first":
+    case "inspection_required":
       return "bg-blue-50 text-blue-700 border border-blue-200";
     case "custom":
       return "bg-purple-50 text-purple-700 border border-purple-200";
@@ -184,19 +178,19 @@ export interface PricingModelOption {
 }
 
 /**
- * Returns the set of pricing-model options appropriate for a given service type.
+ * Returns the set of pricing-model options appropriate for a given delivery model.
  * Used to populate the dropdown in the service-creation form.
  */
 export function getPricingModelsForServiceType(
-  serviceType: ServiceType
+  deliveryModel: ServiceType
 ): PricingModelOption[] {
-  switch (serviceType) {
-    case "instant":
+  switch (deliveryModel) {
+    case "direct":
       return [
         { value: "fixed", label: "Fixed Price", hint: "e.g. ₹500 flat rate" },
         { value: "hourly", label: "Hourly Rate", hint: "e.g. ₹300 per hour" },
       ];
-    case "visit_first":
+    case "inspection_required":
       return [
         { value: "per_unit", label: "Per Unit", hint: "e.g. ₹15 per sq.ft" },
         { value: "starting_from", label: "Starting From", hint: "e.g. Starting from ₹5,000" },
@@ -213,11 +207,11 @@ export function getPricingModelsForServiceType(
 // ── Minimum advance booking time ─────────────────────────────────────────────
 
 /** Returns minimum hours before a service can be booked. */
-export function getMinAdvanceBookingHours(serviceType: ServiceType): number {
-  switch (serviceType) {
-    case "instant":
+export function getMinAdvanceBookingHours(deliveryModel: ServiceType): number {
+  switch (deliveryModel) {
+    case "direct":
       return 2;
-    case "visit_first":
+    case "inspection_required":
       return 24;
     case "custom":
       return 48;

@@ -1,41 +1,41 @@
 /**
- * Service Type Utilities
- * Helper functions for working with different service types and their booking flows
+ * Delivery Model Utilities
+ * Helper functions for working with different delivery models and their booking flows
  */
 
-import { ServiceType } from "../../models/service.model";
+import { DeliveryModel } from "../../models/service.model";
 
 /**
  * Check if a service requires an inspection visit before final pricing
  */
-export function requiresInspection(serviceType: ServiceType): boolean {
-  return serviceType === "visit_first";
+export function requiresInspection(deliveryModel: DeliveryModel): boolean {
+  return deliveryModel === "inspection_required";
 }
 
 /**
- * Check if a service supports instant booking (with immediate payment)
+ * Check if a service supports direct booking (instant or scheduled)
  */
-export function supportsInstantBooking(serviceType: ServiceType): boolean {
-  return serviceType === "instant";
+export function supportsDirectBooking(deliveryModel: DeliveryModel): boolean {
+  return deliveryModel === "direct";
 }
 
 /**
  * Check if a service uses the bidding/quote flow
  */
-export function usesBiddingFlow(serviceType: ServiceType): boolean {
-  return serviceType === "custom";
+export function usesBiddingFlow(deliveryModel: DeliveryModel): boolean {
+  return deliveryModel === "custom";
 }
 
 /**
- * Get the recommended booking flow description for a service type
+ * Get the recommended booking flow description for a delivery model
  */
-export function getBookingFlowDescription(serviceType: ServiceType): string {
-  switch (serviceType) {
-    case "instant":
-      return "Book instantly by selecting an available time slot and making payment";
+export function getBookingFlowDescription(deliveryModel: DeliveryModel): string {
+  switch (deliveryModel) {
+    case "direct":
+      return "Request service instantly or schedule for a preferred date. Provider accepts and visits to complete the work.";
     
-    case "visit_first":
-      return "Book a free inspection visit. Provider will assess and send you a detailed quote. Work begins after you approve the estimate.";
+    case "inspection_required":
+      return "Book an inspection visit. Provider will assess and send you a detailed quotation. Work begins after you approve the estimate.";
     
     case "custom":
       return "Post your requirements as a service request. Multiple providers will send you quotes. Choose the best offer and proceed.";
@@ -46,18 +46,18 @@ export function getBookingFlowDescription(serviceType: ServiceType): string {
 }
 
 /**
- * Get the payment flow description for a service type
+ * Get the payment flow description for a delivery model
  */
-export function getPaymentFlowDescription(serviceType: ServiceType): string {
-  switch (serviceType) {
-    case "instant":
-      return "Pay the full amount upfront when booking";
+export function getPaymentFlowDescription(deliveryModel: DeliveryModel): string {
+  switch (deliveryModel) {
+    case "direct":
+      return "Provider generates an invoice after completing the work. Pay online or by cash.";
     
-    case "visit_first":
-      return "Pay after receiving and approving the provider's estimate. May include deposit or milestone payments.";
+    case "inspection_required":
+      return "Pay after receiving and approving the provider's quotation. May include advance payment before work begins.";
     
     case "custom":
-      return "Payment terms negotiated with the provider. Typically includes milestone-based payments.";
+      return "Payment terms agreed with the provider. Typically includes advance payment and final balance after completion.";
     
     default:
       return "Payment required";
@@ -65,55 +65,28 @@ export function getPaymentFlowDescription(serviceType: ServiceType): string {
 }
 
 /**
- * Validate if a service's pricing model is appropriate for its service type
+ * Validate if a service's pricing model is appropriate for its delivery model
  */
-export function isValidPricingModelForServiceType(
-  serviceType: ServiceType,
+export function isValidPricingModelForDeliveryModel(
+  deliveryModel: DeliveryModel,
   pricingModel: string
 ): { valid: boolean; message?: string } {
-  const validCombinations: Record<ServiceType, string[]> = {
-    instant: ["fixed", "hourly"],
-    visit_first: ["per_unit", "starting_from", "hourly"],
+  const validCombinations: Record<DeliveryModel, string[]> = {
+    direct: ["fixed", "hourly"],
+    inspection_required: ["per_unit", "starting_from", "hourly"],
     custom: ["quote_based", "starting_from"],
   };
 
-  const validModels = validCombinations[serviceType];
+  const validModels = validCombinations[deliveryModel];
   
   if (!validModels.includes(pricingModel)) {
     return {
       valid: false,
-      message: `Pricing model '${pricingModel}' is not recommended for service type '${serviceType}'. Recommended: ${validModels.join(", ")}`,
+      message: `Pricing model '${pricingModel}' is not recommended for delivery model '${deliveryModel}'. Recommended: ${validModels.join(", ")}`,
     };
   }
 
   return { valid: true };
-}
-
-/**
- * Calculate buffer time based on service type and duration
- * Returns buffer time in minutes
- */
-export function calculateBufferTime(
-  serviceType: ServiceType,
-  duration: number,
-  categoryBufferMinutes: number = 15
-): number {
-  switch (serviceType) {
-    case "instant":
-      // For instant services, use category default or calculate based on duration
-      return Math.max(categoryBufferMinutes, Math.ceil(duration * 0.15)); // 15% of duration or category default
-    
-    case "visit_first":
-      // Inspection visits typically need minimal buffer
-      return 10;
-    
-    case "custom":
-      // Custom services don't use traditional slots, so buffer is not applicable
-      return 0;
-    
-    default:
-      return categoryBufferMinutes;
-  }
 }
 
 /**
@@ -142,28 +115,28 @@ export function getDisplayPrice(price: number, pricingModel: string, priceUnit?:
 }
 
 /**
- * Check if a service can be booked through traditional slot booking
+ * Check if a service can be booked through schedule-based time windows
  */
-export function canBookThroughSlots(serviceType: ServiceType): boolean {
-  return serviceType === "instant" || serviceType === "visit_first";
+export function canBookThroughSchedule(deliveryModel: DeliveryModel): boolean {
+  return deliveryModel === "direct" || deliveryModel === "inspection_required";
 }
 
 /**
- * Check if a service requires the service request flow
+ * Check if a service requires the custom request/broadcast flow
  */
-export function requiresServiceRequest(serviceType: ServiceType): boolean {
-  return serviceType === "custom";
+export function requiresCustomRequest(deliveryModel: DeliveryModel): boolean {
+  return deliveryModel === "custom";
 }
 
 /**
- * Get the minimum advance booking time in hours for a service type
+ * Get the minimum advance booking time in hours for a delivery model
  */
-export function getMinimumAdvanceBookingHours(serviceType: ServiceType): number {
-  switch (serviceType) {
-    case "instant":
+export function getMinimumAdvanceBookingHours(deliveryModel: DeliveryModel): number {
+  switch (deliveryModel) {
+    case "direct":
       return 2; // Can book 2 hours in advance
     
-    case "visit_first":
+    case "inspection_required":
       return 24; // Need at least 24 hours for inspection scheduling
     
     case "custom":
