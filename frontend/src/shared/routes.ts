@@ -97,4 +97,44 @@ export const API_ENDPOINTS = {
   PROVIDER_QUOTE_UPDATE: (id: string) => `/provider-quotes/${id}`,
   PROVIDER_QUOTE_WITHDRAW: (id: string) => `/provider-quotes/${id}/withdraw`,
   PROVIDER_QUOTE_ACCEPT: (id: string) => `/provider-quotes/${id}/accept`,
+
+  // ── Provider Status ──
+  PROVIDER_STATUS: "/provider-status",
+  PROVIDER_STATUS_TOGGLE: "/provider-status/online",
+
+  // ── Provider Schedule ──
+  PROVIDER_SCHEDULE: "/provider-schedule",
+  PROVIDER_AVAILABLE_WINDOWS: (id: string) => `/provider-schedule/${id}/available-windows`,
+
+  // ── Provider Leave ──
+  PROVIDER_LEAVE: "/provider-leave",
+  PROVIDER_LEAVE_CANCEL: (date: string) => `/provider-leave/${date}`,
+
+  // ── Service Orders ──
+  ORDERS_DIRECT_INSTANT: "/orders/direct/instant",
+  ORDERS_DIRECT_SCHEDULED: "/orders/direct/scheduled",
+  ORDERS_INSPECTION: "/orders/inspection",
+  ORDERS_CUSTOM: "/orders/custom",
+  ORDERS_MY: "/orders/my",
+  ORDERS_PROVIDER: "/orders/provider",
+  ORDER_BY_ID: (id: string) => `/orders/${id}`,
+  ORDER_ACCEPT: (id: string) => `/orders/${id}/accept`,
+  ORDER_REJECT: (id: string) => `/orders/${id}/reject`,
+  ORDER_CUSTOMER_CHOICE: (id: string) => `/orders/${id}/customer-choice`,
+  ORDER_CANCEL: (id: string) => `/orders/${id}/cancel`,
+
+  // ── Quotations ──
+  QUOTATIONS: "/quotations",
+  QUOTATIONS_MY: "/quotations/my",
+  QUOTATIONS_FOR_ORDER: (orderId: string) => `/quotations/order/${orderId}`,
+  QUOTATION_ACCEPT: (id: string) => `/quotations/${id}/accept`,
+  QUOTATION_REJECT: (id: string) => `/quotations/${id}/reject`,
+  QUOTATION_MODIFICATION: (id: string) => `/quotations/${id}/request-modification`,
+  QUOTATION_REVISE: (id: string) => `/quotations/${id}/revise`,
+
+  // ── Invoices ──
+  INVOICES: "/invoices",
+  INVOICE_BY_ORDER: (orderId: string) => `/invoices/order/${orderId}`,
+  INVOICE_PAY_ONLINE: (id: string) => `/invoices/${id}/pay-online`,
+  INVOICE_MARK_CASH: (id: string) => `/invoices/${id}/mark-cash`,
 } as const;
