@@ -1,225 +1,224 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
-  Loader2, FileText, Send, IndianRupee, Receipt, CheckCircle2, Banknote,
+  Loader2, Receipt, IndianRupee, Banknote, CheckCircle2,
+  Clock, FileText, Send,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { ProviderPortalShell } from "@/components/provider/ProviderPortalShell";
-import { invoiceService } from "@/services/invoice";
 import { orderService } from "@/services/order";
+import { invoiceService } from "@/services/invoice";
 import { ServiceOrder, Invoice } from "@/types/order.types";
 import { getErrorMessage } from "@/utils/errorHandler";
 
 export default function ProviderInvoicesPage() {
-  const [orderId, setOrderId] = useState("");
-  const [order, setOrder] = useState<ServiceOrder | null>(null);
-  const [existingInvoice, setExistingInvoice] = useState<Invoice | null>(null);
+  const [tab, setTab] = useState<"pending" | "generated">("pending");
 
-  // Form
-  const [labourCharge, setLabourCharge] = useState("");
-  const [materialCost, setMaterialCost] = useState("");
-  const [additionalCharges, setAdditionalCharges] = useState("");
-  const [discount, setDiscount] = useState("");
-  const [labourNote, setLabourNote] = useState("");
-  const [materialNote, setMaterialNote] = useState("");
-  const [remark, setRemark] = useState("");
-  const [submitting, setSubmitting] = useState(false);
-  const [markingCash, setMarkingCash] = useState<string | null>(null);
+  // Orders needing invoice (accepted/in_progress without invoice yet)
+  const [pendingOrders, setPendingOrders] = useState<ServiceOrder[]>([]);
+  const [pendingLoading, setPendingLoading] = useState(true);
 
-  const subtotal = (Number(labourCharge) || 0) + (Number(materialCost) || 0) + (Number(additionalCharges) || 0);
-  const total = subtotal - (Number(discount) || 0);
+  // Orders with invoices (awaiting_payment/awaiting_final_payment/completed)
+  const [invoicedOrders, setInvoicedOrders] = useState<ServiceOrder[]>([]);
+  const [invoicedLoading, setInvoicedLoading] = useState(true);
 
-  const loadOrder = async () => {
-    if (!orderId.trim()) { toast.error("Enter an order ID"); return; }
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [invoiceForm, setInvoiceForm] = useState<{ orderId: string; labour: string; material: string; additional: string; discount: string; remark: string } | null>(null);
+
+  const fetchPending = async () => {
+    setPendingLoading(true);
     try {
-      const res = await orderService.getById(orderId.trim());
-      setOrder(res.data.data);
-      // Check for existing invoice
-      try {
-        const invRes = await invoiceService.getByOrder(orderId.trim());
-        setExistingInvoice(invRes.data.data || null);
-      } catch { setExistingInvoice(null); }
-    } catch {
-      toast.error("Order not found");
+      // Orders in "accepted" or "in_progress" where invoice can be generated
+      const res1 = await orderService.getProviderOrders({ status: "accepted", page: 1, limit: 50 });
+      const res2 = await orderService.getProviderOrders({ status: "in_progress", page: 1, limit: 50 });
+      setPendingOrders([...(res1.data.data.items || []), ...(res2.data.data.items || [])]);
+    } catch (err) {
+      toast.error(getErrorMessage(err) || "Failed to load");
+    } finally {
+      setPendingLoading(false);
     }
   };
 
-  const handleGenerate = async () => {
-    if (!orderId) { toast.error("Load an order first"); return; }
-    if (!labourCharge || Number(labourCharge) <= 0) { toast.error("Labour charge is required"); return; }
-    if (Number(discount) > subtotal) { toast.error("Discount cannot exceed subtotal"); return; }
-
-    setSubmitting(true);
+  const fetchInvoiced = async () => {
+    setInvoicedLoading(true);
     try {
-      const inv = await invoiceService.generate({
-        orderId,
-        labourCharge: Number(labourCharge),
-        materialCost: Number(materialCost) || 0,
-        additionalCharges: Number(additionalCharges) || 0,
-        discount: Number(discount) || 0,
-        lineItemNotes: {
-          labour: labourNote.trim() || undefined,
-          material: materialNote.trim() || undefined,
-        },
-        overallRemark: remark.trim() || undefined,
+      const res1 = await orderService.getProviderOrders({ status: "awaiting_payment", page: 1, limit: 50 });
+      const res2 = await orderService.getProviderOrders({ status: "awaiting_final_payment", page: 1, limit: 50 });
+      const res3 = await orderService.getProviderOrders({ status: "completed", page: 1, limit: 50 });
+      setInvoicedOrders([...(res1.data.data.items || []), ...(res2.data.data.items || []), ...(res3.data.data.items || [])]);
+    } catch (err) {
+      toast.error(getErrorMessage(err) || "Failed to load");
+    } finally {
+      setInvoicedLoading(false);
+    }
+  };
+
+  useEffect(() => { fetchPending(); fetchInvoiced(); }, []);
+
+  const handleGenerateInvoice = async () => {
+    if (!invoiceForm) return;
+    if (!invoiceForm.labour || Number(invoiceForm.labour) <= 0) { toast.error("Labour charge required"); return; }
+    setActionLoading(invoiceForm.orderId);
+    try {
+      await invoiceService.generate({
+        orderId: invoiceForm.orderId,
+        labourCharge: Number(invoiceForm.labour),
+        materialCost: Number(invoiceForm.material) || 0,
+        additionalCharges: Number(invoiceForm.additional) || 0,
+        discount: Number(invoiceForm.discount) || 0,
+        overallRemark: invoiceForm.remark || undefined,
       });
-      setExistingInvoice(inv.data.data);
-      toast.success("Invoice generated and sent to customer!");
-    } catch (err) {
-      toast.error(getErrorMessage(err) || "Failed to generate invoice");
-    } finally {
-      setSubmitting(false);
-    }
+      toast.success("Invoice sent to customer!");
+      setInvoiceForm(null);
+      fetchPending();
+      fetchInvoiced();
+    } catch (err) { toast.error(getErrorMessage(err) || "Failed"); }
+    finally { setActionLoading(null); }
   };
 
-  const handleMarkCash = async (invoiceId: string) => {
-    setMarkingCash(invoiceId);
+  const handleMarkCash = async (orderId: string) => {
+    setActionLoading(orderId);
     try {
-      const res = await invoiceService.markCash(invoiceId);
-      setExistingInvoice(res.data.data);
-      toast.success("Marked as paid by cash");
-    } catch (err) {
-      toast.error(getErrorMessage(err) || "Failed to mark as cash");
-    } finally {
-      setMarkingCash(null);
-    }
+      const invRes = await invoiceService.getByOrder(orderId);
+      if (invRes.data.data) {
+        await invoiceService.markCash(invRes.data.data._id);
+        toast.success("Marked as paid by cash");
+        fetchInvoiced();
+      }
+    } catch (err) { toast.error(getErrorMessage(err) || "Failed"); }
+    finally { setActionLoading(null); }
   };
 
   return (
     <ProviderPortalShell>
-      <div className="mb-8">
+      <div className="mb-6">
         <p className="text-sm font-bold text-indigo-600">Invoices</p>
-        <h1 className="mt-2 text-3xl font-black tracking-tight text-slate-950">Generate Invoice</h1>
-        <p className="mt-1 text-sm text-slate-500">Create and send a detailed invoice after completing work</p>
+        <h1 className="mt-2 text-3xl font-black tracking-tight text-slate-950">Invoice Management</h1>
+        <p className="mt-1 text-sm text-slate-500">Generate invoices for completed work and track payments</p>
       </div>
 
-      {/* ── Order Lookup ──────────────────────────────────────────────── */}
-      <section className="premium-card p-6 mb-6">
-        <h2 className="text-base font-black text-slate-900 mb-3 flex items-center gap-2">
-          <FileText size={16} className="text-indigo-600" /> Load Order
-        </h2>
-        <div className="flex gap-2">
-          <input
-            value={orderId}
-            onChange={(e) => setOrderId(e.target.value)}
-            placeholder="Enter the order ID"
-            className="flex-1 rounded-lg border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-indigo-400"
-          />
-          <button onClick={loadOrder} className="btn btn-ghost px-4 py-2.5 text-sm">Load</button>
-        </div>
+      {/* Tabs */}
+      <div className="mb-5 flex gap-1 rounded-xl bg-slate-100 p-1 w-fit">
+        <button onClick={() => setTab("pending")} className={`rounded-lg px-4 py-2 text-sm font-bold transition ${tab === "pending" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500"}`}>
+          <Clock size={14} className="inline mr-1.5" /> Ready for Invoice ({pendingOrders.length})
+        </button>
+        <button onClick={() => setTab("generated")} className={`rounded-lg px-4 py-2 text-sm font-bold transition ${tab === "generated" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500"}`}>
+          <Receipt size={14} className="inline mr-1.5" /> Invoiced ({invoicedOrders.length})
+        </button>
+      </div>
 
-        {order && (
-          <div className="mt-3 rounded-xl bg-slate-50 border border-slate-200 p-4">
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-xs font-bold text-indigo-600">{order.orderId}</span>
-              <span className="text-xs text-slate-400">{order.deliveryModel} · {order.status}</span>
-            </div>
-            <p className="text-sm font-semibold text-slate-700">{order.title || order.description.slice(0, 80)}</p>
+      {/* ── Pending Tab ────────────────────────────────────────────────── */}
+      {tab === "pending" && (
+        pendingLoading ? (
+          <div className="flex h-48 items-center justify-center"><Loader2 className="animate-spin text-indigo-500" size={28} /></div>
+        ) : pendingOrders.length === 0 ? (
+          <div className="rounded-2xl border border-dashed border-slate-200 bg-white p-12 text-center">
+            <Receipt size={36} className="mx-auto text-slate-300 mb-3" />
+            <p className="font-bold text-slate-600">No bookings ready for invoicing</p>
+            <p className="text-sm text-slate-400 mt-1">Complete work first, then generate an invoice</p>
           </div>
-        )}
-      </section>
+        ) : (
+          <div className="space-y-3">
+            {pendingOrders.map((order) => (
+              <article key={order._id} className="premium-card overflow-hidden">
+                <div className="p-5">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-mono text-slate-400">{order.orderId}</span>
+                      <span className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${order.status === "accepted" ? "bg-emerald-50 text-emerald-700" : "bg-violet-50 text-violet-700"}`}>
+                        {order.status.replace(/_/g, " ")}
+                      </span>
+                    </div>
+                    <span className="text-xs text-slate-400">{order.deliveryModel}</span>
+                  </div>
+                  <h3 className="text-sm font-bold text-slate-900">{order.title || order.description.slice(0, 60)}</h3>
+                  <p className="text-xs text-slate-500 mt-1">{order.address.city} · {new Date(order.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}</p>
 
-      {/* ── Existing Invoice Display ──────────────────────────────────── */}
-      {existingInvoice && (
-        <section className="premium-card p-6 mb-6">
-          <div className="flex items-center gap-2 mb-4">
-            <Receipt size={18} className="text-emerald-600" />
-            <h2 className="text-lg font-black text-slate-900">Invoice Generated</h2>
-            <span className={`ml-auto rounded-full px-3 py-1 text-xs font-bold ${
-              existingInvoice.paymentStatus === "paid_online" ? "bg-emerald-50 text-emerald-700" :
-              existingInvoice.paymentStatus === "paid_cash" ? "bg-emerald-50 text-emerald-700" :
-              "bg-amber-50 text-amber-700"
-            }`}>
-              {existingInvoice.paymentStatus === "pending" ? "Awaiting Payment" :
-               existingInvoice.paymentStatus === "paid_online" ? "Paid Online" : "Paid (Cash)"}
-            </span>
+                  {invoiceForm?.orderId !== order._id ? (
+                    <button onClick={() => setInvoiceForm({ orderId: order._id, labour: "", material: "", additional: "", discount: "", remark: "" })} className="mt-3 inline-flex items-center gap-1.5 rounded-xl bg-indigo-600 px-4 py-2 text-xs font-bold text-white hover:bg-indigo-700">
+                      <Receipt size={12} /> Generate Invoice
+                    </button>
+                  ) : null}
+                </div>
+
+                {invoiceForm?.orderId === order._id && (
+                  <div className="border-t border-indigo-100 bg-indigo-50/40 p-5">
+                    <p className="text-sm font-black text-indigo-800 mb-3">🧾 Create Invoice</p>
+                    <div className="grid gap-3 sm:grid-cols-4 mb-3">
+                      <input type="number" value={invoiceForm.labour} onChange={(e) => setInvoiceForm({ ...invoiceForm, labour: e.target.value })} className="rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="Labour (₹) *" />
+                      <input type="number" value={invoiceForm.material} onChange={(e) => setInvoiceForm({ ...invoiceForm, material: e.target.value })} className="rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="Material (₹)" />
+                      <input type="number" value={invoiceForm.additional} onChange={(e) => setInvoiceForm({ ...invoiceForm, additional: e.target.value })} className="rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="Additional (₹)" />
+                      <input type="number" value={invoiceForm.discount} onChange={(e) => setInvoiceForm({ ...invoiceForm, discount: e.target.value })} className="rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="Discount (₹)" />
+                    </div>
+                    <input value={invoiceForm.remark} onChange={(e) => setInvoiceForm({ ...invoiceForm, remark: e.target.value })} className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm mb-3" placeholder="Remark (optional)" />
+                    {invoiceForm.labour && (
+                      <div className="mb-3 rounded-lg bg-white border border-indigo-200 p-3 flex items-center justify-between">
+                        <span className="text-xs font-bold text-slate-600">Total</span>
+                        <span className="text-lg font-black text-indigo-600">
+                          ₹{Math.max(0, (Number(invoiceForm.labour) || 0) + (Number(invoiceForm.material) || 0) + (Number(invoiceForm.additional) || 0) - (Number(invoiceForm.discount) || 0)).toLocaleString("en-IN")}
+                        </span>
+                      </div>
+                    )}
+                    <div className="flex gap-2">
+                      <button onClick={handleGenerateInvoice} disabled={actionLoading === order._id} className="btn btn-primary px-4 py-2 text-xs">
+                        {actionLoading === order._id ? <Loader2 size={12} className="animate-spin" /> : <Send size={12} />} Send Invoice
+                      </button>
+                      <button onClick={() => setInvoiceForm(null)} className="btn btn-ghost px-3 py-2 text-xs">Cancel</button>
+                    </div>
+                  </div>
+                )}
+              </article>
+            ))}
           </div>
-
-          <div className="grid gap-3 sm:grid-cols-2 mb-4">
-            <div className="rounded-xl bg-slate-50 p-3">
-              <p className="text-xs text-slate-500">Labour</p>
-              <p className="text-lg font-black">₹{existingInvoice.labourCharge.toLocaleString("en-IN")}</p>
-            </div>
-            <div className="rounded-xl bg-slate-50 p-3">
-              <p className="text-xs text-slate-500">Material</p>
-              <p className="text-lg font-black">₹{existingInvoice.materialCost.toLocaleString("en-IN")}</p>
-            </div>
-            <div className="rounded-xl bg-slate-50 p-3">
-              <p className="text-xs text-slate-500">Additional</p>
-              <p className="text-lg font-black">₹{existingInvoice.additionalCharges.toLocaleString("en-IN")}</p>
-            </div>
-            <div className="rounded-xl bg-slate-50 p-3">
-              <p className="text-xs text-slate-500">Discount</p>
-              <p className="text-lg font-black text-red-600">-₹{existingInvoice.discount.toLocaleString("en-IN")}</p>
-            </div>
-          </div>
-
-          <div className="rounded-xl bg-indigo-50 border border-indigo-100 p-4 flex items-center justify-between">
-            <span className="text-base font-bold text-slate-800">Total</span>
-            <span className="text-2xl font-black text-indigo-600">₹{existingInvoice.total.toLocaleString("en-IN")}</span>
-          </div>
-
-          {existingInvoice.paymentStatus === "pending" && (
-            <button
-              onClick={() => handleMarkCash(existingInvoice._id)}
-              disabled={markingCash === existingInvoice._id}
-              className="mt-4 btn btn-ghost px-5 py-2.5 text-sm w-full border-emerald-200 hover:!bg-emerald-50 hover:!text-emerald-700"
-            >
-              {markingCash ? <Loader2 size={14} className="animate-spin" /> : <Banknote size={14} />}
-              Mark as Paid by Cash
-            </button>
-          )}
-        </section>
+        )
       )}
 
-      {/* ── Invoice Form (only if no existing invoice) ─────────────────── */}
-      {order && !existingInvoice && (
-        <section className="premium-card p-6 fade-up">
-          <h2 className="text-lg font-black text-slate-900 mb-4 flex items-center gap-2">
-            <IndianRupee size={18} className="text-indigo-600" /> Invoice Details
-          </h2>
-
-          <div className="grid gap-4 sm:grid-cols-2 mb-4">
-            <div>
-              <label className="mb-1 block text-xs font-bold text-slate-600">Labour charge (₹) *</label>
-              <input type="number" min={0} value={labourCharge} onChange={(e) => setLabourCharge(e.target.value)} className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-indigo-400" placeholder="5000" />
-              <input value={labourNote} onChange={(e) => setLabourNote(e.target.value)} className="mt-1 w-full rounded-lg border border-slate-100 px-3 py-1.5 text-xs outline-none" placeholder="Note (optional)" />
-            </div>
-            <div>
-              <label className="mb-1 block text-xs font-bold text-slate-600">Material cost (₹)</label>
-              <input type="number" min={0} value={materialCost} onChange={(e) => setMaterialCost(e.target.value)} className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-indigo-400" placeholder="2000" />
-              <input value={materialNote} onChange={(e) => setMaterialNote(e.target.value)} className="mt-1 w-full rounded-lg border border-slate-100 px-3 py-1.5 text-xs outline-none" placeholder="Note (optional)" />
-            </div>
-            <div>
-              <label className="mb-1 block text-xs font-bold text-slate-600">Additional charges (₹)</label>
-              <input type="number" min={0} value={additionalCharges} onChange={(e) => setAdditionalCharges(e.target.value)} className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-indigo-400" placeholder="500" />
-            </div>
-            <div>
-              <label className="mb-1 block text-xs font-bold text-slate-600">Discount (₹)</label>
-              <input type="number" min={0} value={discount} onChange={(e) => setDiscount(e.target.value)} className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-indigo-400" placeholder="0" />
-            </div>
+      {/* ── Generated Tab ──────────────────────────────────────────────── */}
+      {tab === "generated" && (
+        invoicedLoading ? (
+          <div className="flex h-48 items-center justify-center"><Loader2 className="animate-spin text-indigo-500" size={28} /></div>
+        ) : invoicedOrders.length === 0 ? (
+          <div className="rounded-2xl border border-dashed border-slate-200 bg-white p-12 text-center">
+            <FileText size={36} className="mx-auto text-slate-300 mb-3" />
+            <p className="font-bold text-slate-600">No invoices yet</p>
           </div>
+        ) : (
+          <div className="space-y-3">
+            {invoicedOrders.map((order) => {
+              const isPending = ["awaiting_payment", "awaiting_final_payment"].includes(order.status);
+              const isCompleted = order.status === "completed";
 
-          <div className="mb-4">
-            <label className="mb-1 block text-xs font-bold text-slate-600">Overall remark</label>
-            <textarea value={remark} onChange={(e) => setRemark(e.target.value)} rows={2} className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none resize-none focus:border-indigo-400" placeholder="Thank you for choosing us!" />
+              return (
+                <article key={order._id} className="premium-card p-5">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-mono text-slate-400">{order.orderId}</span>
+                      <span className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${
+                        isCompleted ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"
+                      }`}>
+                        {isCompleted ? "✓ Paid" : "⏳ Awaiting Payment"}
+                      </span>
+                    </div>
+                  </div>
+                  <h3 className="text-sm font-bold text-slate-900">{order.title || order.description.slice(0, 60)}</h3>
+
+                  {isPending && (
+                    <button onClick={() => handleMarkCash(order._id)} disabled={actionLoading === order._id} className="mt-3 inline-flex items-center gap-1.5 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2 text-xs font-bold text-emerald-700 hover:bg-emerald-100 disabled:opacity-50">
+                      {actionLoading === order._id ? <Loader2 size={12} className="animate-spin" /> : <Banknote size={12} />} Mark as Paid (Cash)
+                    </button>
+                  )}
+
+                  {isCompleted && (
+                    <div className="mt-2 flex items-center gap-1.5 text-xs font-semibold text-emerald-600">
+                      <CheckCircle2 size={12} /> Payment received
+                    </div>
+                  )}
+                </article>
+              );
+            })}
           </div>
-
-          {/* Total preview */}
-          <div className="rounded-xl bg-indigo-50 border border-indigo-100 p-4 flex items-center justify-between mb-5">
-            <div>
-              <p className="text-xs text-slate-500">Subtotal: ₹{subtotal.toLocaleString("en-IN")}</p>
-              <p className="text-base font-bold text-slate-800 mt-0.5">Total after discount</p>
-            </div>
-            <span className="text-3xl font-black text-indigo-600">₹{Math.max(0, total).toLocaleString("en-IN")}</span>
-          </div>
-
-          <button onClick={handleGenerate} disabled={submitting} className="btn btn-primary w-full py-3 text-sm">
-            {submitting ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
-            Generate & Send Invoice
-          </button>
-        </section>
+        )
       )}
     </ProviderPortalShell>
   );
