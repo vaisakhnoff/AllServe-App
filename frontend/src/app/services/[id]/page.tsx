@@ -510,52 +510,41 @@ export default function ServiceDetailPage() {
             </article>
 
             {/* Slot picker — only for instant and visit_first */}
-            {canBookThroughSlots((service.deliveryModel ?? service.serviceType) ?? "direct") ? (
+            {(service.deliveryModel ?? service.serviceType) === "direct" ? (
             <section id="available-slots" className="mt-5 rounded-[18px] border border-slate-200/60 bg-white p-5 sm:p-6">
               <h2 className="flex items-center gap-2.5 text-lg font-extrabold text-slate-900 mb-1">
                 <CalendarDays size={18} className="text-[var(--primary)]" />
-                {getSlotSectionTitle((service.deliveryModel ?? service.serviceType) ?? "direct")}
+                Request this Service
               </h2>
-              {(service.deliveryModel ?? service.serviceType) === "inspection_required" && (
-                <p className="text-xs text-slate-500 mb-4">
-                  Choose a date and time for the provider to visit and assess the work.
-                </p>
-              )}
-
-              {/* Date tabs */}
-              <div className="flex gap-2.5 overflow-x-auto pb-3 mb-4">
-                {dates.map((d) => (
-                  <button key={d} onClick={() => setSelectedDate(d)} className={`shrink-0 rounded-xl px-4 py-2.5 text-center transition-all ${d === selectedDate ? "bg-gradient-to-br from-[#6D28FF] to-[#8B5CF6] text-white shadow-lg shadow-purple-500/20" : "border border-slate-200 bg-white text-slate-600 hover:border-purple-300 hover:shadow-sm"}`}>
-                    <p className="text-[10px] font-bold uppercase">{new Intl.DateTimeFormat("en", { weekday: "short" }).format(new Date(d))}</p>
-                    <p className="text-sm font-extrabold mt-0.5">{new Date(d).getDate()}</p>
-                  </button>
-                ))}
+              <p className="text-sm text-slate-500 mb-4">
+                Choose instant (provider responds within 30 min) or pick a preferred date &amp; time.
+              </p>
+              <div className="flex flex-wrap gap-3">
+                <Link
+                  href={`/request-service?serviceId=${service.id}&providerId=${providerId}`}
+                  className="inline-flex items-center gap-2 rounded-[14px] bg-gradient-to-r from-[#6D28FF] to-[#8B5CF6] px-6 py-3 text-sm font-bold text-white shadow-lg shadow-purple-500/20 hover:shadow-xl hover:-translate-y-0.5 transition-all"
+                >
+                  Request Service
+                </Link>
               </div>
-
-              {/* Slots */}
-              {slotsLoading ? (
-                <div className="py-10 text-center"><Loader2 size={22} className="mx-auto animate-spin text-[var(--primary)]" /></div>
-              ) : slots.length === 0 ? (
-                <div className="rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50/50 p-6 text-center">
-                  <p className="font-bold text-slate-600">No slots available</p>
-                  <p className="mt-1 text-xs text-slate-500">Try another date</p>
-                </div>
-              ) : (
-                <div className="flex flex-wrap gap-2.5">
-                  {slots.map((slot) => (
-                    <button
-                      key={slot._id}
-                      onClick={() => startBooking(slot)}
-                      className="rounded-xl border border-emerald-200 bg-emerald-50/80 px-5 py-2.5 text-sm font-bold text-emerald-700 hover:bg-emerald-100 hover:border-emerald-300 hover:-translate-y-0.5 hover:shadow-sm transition-all"
-                    >
-                      {slot.startTime} – {slot.endTime}
-                    </button>
-                  ))}
-                </div>
-              )}
+            </section>
+            ) : (service.deliveryModel ?? service.serviceType) === "inspection_required" ? (
+            <section id="available-slots" className="mt-5 rounded-[18px] border border-blue-200/60 bg-blue-50/40 p-5 sm:p-6">
+              <h2 className="flex items-center gap-2.5 text-lg font-extrabold text-slate-900 mb-2">
+                🏠 Request Inspection Visit
+              </h2>
+              <p className="text-sm text-slate-600 leading-relaxed mb-4">
+                This service requires an on-site inspection before pricing. The provider will visit, assess the work, and send you a detailed quotation.
+              </p>
+              <Link
+                href={`/request-inspection?serviceId=${service.id}&providerId=${providerId}`}
+                className="inline-flex items-center gap-2 rounded-[14px] bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-blue-500/20 hover:shadow-xl hover:-translate-y-0.5 transition-all"
+              >
+                Request Inspection
+              </Link>
             </section>
             ) : (
-            /* custom service — redirect to post-request flow */
+            /* custom service — redirect to custom request flow */
             <section id="available-slots" className="mt-5 rounded-[18px] border border-purple-200/60 bg-purple-50/40 p-5 sm:p-6">
               <h2 className="flex items-center gap-2.5 text-lg font-extrabold text-slate-900 mb-2">
                 <Palette size={18} className="text-purple-600" /> Custom Service Request
@@ -565,10 +554,10 @@ export default function ServiceDetailPage() {
                 competitive quotes from multiple providers.
               </p>
               <Link
-                href={`/post-request?categoryId=${service.category?.id ?? ""}&serviceId=${service.id}`}
+                href={`/request-custom?categoryId=${service.category?.id ?? ""}`}
                 className="mt-4 inline-flex items-center gap-2 rounded-[14px] bg-gradient-to-r from-purple-600 to-violet-600 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-purple-500/20 hover:shadow-xl hover:-translate-y-0.5 transition-all"
               >
-                Post a Service Request
+                Post a Custom Request
               </Link>
             </section>
             )}
@@ -600,9 +589,9 @@ export default function ServiceDetailPage() {
                   }`}>
                     <ClipboardList size={14} />
                     {(service.deliveryModel ?? service.serviceType) === "direct"
-                      ? "Select a time slot below to book"
+                      ? "Request instantly or schedule a preferred time"
                       : (service.deliveryModel ?? service.serviceType) === "inspection_required"
-                      ? "Select a slot to schedule an inspection"
+                      ? "Request an inspection visit"
                       : "Post a request to receive quotes"}
                   </p>
                 </div>
@@ -673,18 +662,25 @@ export default function ServiceDetailPage() {
         </div>
         {requiresServiceRequest((service.deliveryModel ?? service.serviceType) ?? "direct") ? (
           <Link
-            href={`/post-request?categoryId=${service.category?.id ?? ""}&serviceId=${service.id}`}
+            href={`/request-custom?categoryId=${service.category?.id ?? ""}`}
             className="rounded-[14px] bg-gradient-to-r from-purple-600 to-violet-600 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-purple-500/20 hover:shadow-xl transition-all"
           >
             Post Request
           </Link>
+        ) : requiresInspection((service.deliveryModel ?? service.serviceType) ?? "direct") ? (
+          <Link
+            href={`/request-inspection?serviceId=${service.id}&providerId=${providerId}`}
+            className="rounded-[14px] bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-blue-500/20 hover:shadow-xl transition-all"
+          >
+            Request Inspection
+          </Link>
         ) : (
-          <a
-            href="#available-slots"
+          <Link
+            href={`/request-service?serviceId=${service.id}&providerId=${providerId}`}
             className="rounded-[14px] bg-gradient-to-r from-[#6D28FF] to-[#8B5CF6] px-7 py-3 text-sm font-bold text-white shadow-lg shadow-purple-500/20 hover:shadow-xl transition-all"
           >
             {getBookingCTA((service.deliveryModel ?? service.serviceType) ?? "direct")}
-          </a>
+          </Link>
         )}
       </div>
 
