@@ -118,7 +118,7 @@ export default function RequestCustomPage() {
           </div>
           <div className="mt-6 flex gap-3">
             <button onClick={() => router.push("/dashboard")} className="btn btn-ghost flex-1 py-3 text-sm">Home</button>
-            <button onClick={() => router.push("/my-orders")} className="btn btn-primary flex-1 py-3 text-sm">My Orders</button>
+            <button onClick={() => router.push("/bookings")} className="btn btn-primary flex-1 py-3 text-sm">My Bookings</button>
           </div>
         </div>
       </main>

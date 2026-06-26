@@ -28,11 +28,9 @@ import { useAuth } from "@/hooks/useAuth";
 const navItems = [
   { label: "Dashboard", href: "/provider-portal/dashboard", icon: Home },
   { label: "Availability", href: "/provider-portal/availability", icon: Clock },
-  { label: "Orders", href: "/provider-portal/orders", icon: FileText },
+  { label: "Bookings", href: "/provider-portal/bookings", icon: CalendarCheck },
   { label: "Quotations", href: "/provider-portal/quotations", icon: FileText },
   { label: "Invoices", href: "/provider-portal/invoices", icon: CreditCard },
-  { label: "Requests", href: "/provider-portal/requests", icon: FileText },
-  { label: "Bookings", href: "/provider-portal/bookings", icon: CalendarCheck },
   { label: "Messages", href: "/provider-portal/messages", icon: MessageSquare },
   { label: "Services", href: "/provider-portal/services", icon: Wrench },
   { label: "Earnings", href: "/provider-portal/earnings", icon: CreditCard },

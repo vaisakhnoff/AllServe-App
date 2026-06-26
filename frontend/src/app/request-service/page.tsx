@@ -194,8 +194,8 @@ export default function RequestServicePage() {
             <button onClick={() => router.push("/dashboard")} className="btn btn-ghost flex-1 py-3 text-sm">
               Back to Home
             </button>
-            <button onClick={() => router.push("/my-orders")} className="btn btn-primary flex-1 py-3 text-sm">
-              View Orders
+            <button onClick={() => router.push("/bookings")} className="btn btn-primary flex-1 py-3 text-sm">
+              View Bookings
             </button>
           </div>
         </div>
