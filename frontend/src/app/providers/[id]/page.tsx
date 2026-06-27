@@ -17,6 +17,7 @@ import { PublicProviderDetails } from "@/types/provider.types";
 import { getErrorMessage } from "@/utils/errorHandler";
 import { Role } from "@/enums/role.enum";
 import { LoginRequiredPrompt } from "@/components/auth/LoginRequiredPrompt";
+import { useProviderStatus } from "@/hooks/useProviderStatus";
 
 
 export default function ProviderDetailPage() {
@@ -29,6 +30,12 @@ export default function ProviderDetailPage() {
   const [provider, setProvider] = useState<PublicProviderDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeSubCategory, setActiveSubCategory] = useState<string | null>(null);
+
+  // Real-time provider status via WebSocket
+  const liveStatus = useProviderStatus(
+    provider?.id ?? null,
+    { onlineStatus: provider?.onlineStatus, engagementStatus: provider?.engagementStatus }
+  );
 
 
   useEffect(() => {
@@ -110,18 +117,18 @@ const filteredServices = useMemo(() => {
                 <span className="mt-3 inline-block rounded-full bg-white/10 px-3 py-1 text-[11px] font-bold backdrop-blur-sm">{provider.category.name}</span>
               )}
               {/* Online / Availability status */}
-              {provider.onlineStatus && (
+              {liveStatus.onlineStatus && (
                 <div className="mt-3 flex items-center justify-center">
                   <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-bold backdrop-blur-sm ${
-                    provider.onlineStatus === "online"
+                    liveStatus.onlineStatus === "online"
                       ? "bg-emerald-500/20 text-emerald-300"
                       : "bg-white/10 text-white/50"
                   }`}>
                     <span className={`h-2 w-2 rounded-full ${
-                      provider.onlineStatus === "online" ? "bg-emerald-400 animate-pulse" : "bg-white/40"
+                      liveStatus.onlineStatus === "online" ? "bg-emerald-400 animate-pulse" : "bg-white/40"
                     }`} />
-                    {provider.onlineStatus === "online"
-                      ? (provider.engagementStatus === "busy" ? "Online · Busy" : "Online · Available")
+                    {liveStatus.onlineStatus === "online"
+                      ? (liveStatus.engagementStatus === "busy" ? "Online · Busy" : "Online · Available")
                       : "Offline"}
                   </span>
                 </div>
@@ -178,6 +185,19 @@ const filteredServices = useMemo(() => {
 
           {/* Sub-categories */}
          {/* Services — table style */}
+
+{/* Offline/Busy banner */}
+{(liveStatus.onlineStatus === "offline" || liveStatus.engagementStatus === "busy") && filteredServices.length > 0 && (
+  <div className="rounded-[16px] border border-amber-200 bg-amber-50 px-5 py-3 flex items-center gap-3">
+    <span className="h-2.5 w-2.5 rounded-full bg-amber-400 shrink-0" />
+    <p className="text-[13px] font-semibold text-amber-800">
+      {liveStatus.onlineStatus === "offline"
+        ? "This provider is currently offline. Services cannot be booked right now."
+        : "This provider is currently busy. Services cannot be booked right now."}
+    </p>
+  </div>
+)}
+
 {filteredServices.length > 0 && (
   <section className="rounded-[22px] border border-[var(--border)] bg-white overflow-hidden">
     <div className="flex items-center justify-between px-6 py-5 border-b border-[var(--border-light)]">
@@ -185,20 +205,35 @@ const filteredServices = useMemo(() => {
       <span className="text-[12px] font-bold text-[var(--text-muted)]">{filteredServices.length} available</span>
     </div>
     <div className="divide-y divide-[var(--border-light)]">
-      {filteredServices.map((s) => (
-        <Link key={s.id} href={`/services/${s.id}`} className="group flex items-center justify-between px-6 py-4 transition hover:bg-[var(--surface-2)]">
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-[14px] font-semibold text-[var(--text-primary)] group-hover:text-[var(--primary)]">{s.name}</p>
-            <p className="mt-0.5 line-clamp-1 text-[12px] text-[var(--text-muted)]">{s.description}</p>
+      {filteredServices.map((s) =>
+        (liveStatus.onlineStatus === "offline" || liveStatus.engagementStatus === "busy") ? (
+          <div key={s.id} className="flex items-center justify-between px-6 py-4 opacity-60 cursor-not-allowed">
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-[14px] font-semibold text-[var(--text-primary)]">{s.name}</p>
+              <p className="mt-0.5 line-clamp-1 text-[12px] text-[var(--text-muted)]">{s.description}</p>
+            </div>
+            <div className="flex items-center gap-3 pl-4">
+              <span className="text-[15px] font-[800] text-[var(--text-primary)]">&#8377;{s.price.toFixed(0)}</span>
+              <span className="text-[11px] font-bold text-slate-400">
+                {liveStatus.onlineStatus === "offline" ? "Offline" : "Busy"}
+              </span>
+            </div>
           </div>
-          <div className="flex items-center gap-3 pl-4">
-            <span className="text-[15px] font-[800] text-[var(--text-primary)]">₹{s.price.toFixed(0)}</span>
-            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[var(--surface-3)] text-[var(--text-muted)] transition group-hover:bg-[var(--primary)] group-hover:text-white group-hover:rotate-[-45deg]">
-              <ArrowUpRight size={13} />
-            </span>
-          </div>
-        </Link>
-      ))}
+        ) : (
+          <Link key={s.id} href={`/services/${s.id}`} className="group flex items-center justify-between px-6 py-4 transition hover:bg-[var(--surface-2)]">
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-[14px] font-semibold text-[var(--text-primary)] group-hover:text-[var(--primary)]">{s.name}</p>
+              <p className="mt-0.5 line-clamp-1 text-[12px] text-[var(--text-muted)]">{s.description}</p>
+            </div>
+            <div className="flex items-center gap-3 pl-4">
+              <span className="text-[15px] font-[800] text-[var(--text-primary)]">&#8377;{s.price.toFixed(0)}</span>
+              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[var(--surface-3)] text-[var(--text-muted)] transition group-hover:bg-[var(--primary)] group-hover:text-white group-hover:rotate-[-45deg]">
+                <ArrowUpRight size={13} />
+              </span>
+            </div>
+          </Link>
+        )
+      )}
     </div>
   </section>
 )}

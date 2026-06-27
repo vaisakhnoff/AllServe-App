@@ -24,6 +24,7 @@ import { Role } from "@/enums/role.enum";
 import { getErrorMessage } from "@/utils/errorHandler";
 import { UI_MESSAGES } from "@/shared/messages";
 import { LoginRequiredPrompt } from "@/components/auth/LoginRequiredPrompt";
+import { useProviderStatus } from "@/hooks/useProviderStatus";
 import {
   getDisplayPrice,
   getPriceSubline,
@@ -187,6 +188,13 @@ export default function ServiceDetailPage() {
   };
 
   const dates = useMemo(() => getNext7Days(), []);
+
+  // Real-time provider status via WebSocket
+  const liveStatus = useProviderStatus(
+    providerId,
+    { onlineStatus: provider?.onlineStatus, engagementStatus: provider?.engagementStatus }
+  );
+  const isProviderOffline = liveStatus.onlineStatus === "offline" || liveStatus.engagementStatus === "busy";
 
   if (isInitialized && !canViewDetails) {
     return (
@@ -511,7 +519,28 @@ export default function ServiceDetailPage() {
             </article>
 
             {/* Slot picker — only for instant and visit_first */}
-            {(service.deliveryModel ?? service.serviceType) === "direct" ? (
+            {isProviderOffline ? (
+            <section id="available-slots" className="mt-5 rounded-[18px] border border-slate-200/60 bg-slate-50 p-5 sm:p-6">
+              <div className="flex items-center gap-3">
+                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-200">
+                  <span className="h-2.5 w-2.5 rounded-full bg-slate-400" />
+                </span>
+                <div>
+                  <h2 className="text-lg font-extrabold text-slate-700">
+                    {liveStatus.onlineStatus === "offline" ? "Provider Offline" : "Provider Busy"}
+                  </h2>
+                  <p className="text-sm text-slate-500">
+                    {liveStatus.onlineStatus === "offline"
+                      ? "This provider is currently offline and cannot accept new requests right now."
+                      : "This provider is currently busy and cannot accept new requests right now."}
+                  </p>
+                </div>
+              </div>
+              <p className="mt-4 text-sm text-slate-500">
+                You can still send them a message — they&apos;ll respond when they&apos;re available.
+              </p>
+            </section>
+            ) : (service.deliveryModel ?? service.serviceType) === "direct" ? (
             <section id="available-slots" className="mt-5 rounded-[18px] border border-slate-200/60 bg-white p-5 sm:p-6">
               <h2 className="flex items-center gap-2.5 text-lg font-extrabold text-slate-900 mb-1">
                 <CalendarDays size={18} className="text-[var(--primary)]" />
@@ -627,6 +656,25 @@ export default function ServiceDetailPage() {
                       <span className="inline-flex items-center gap-1 text-xs font-bold text-[var(--primary)] mt-0.5"><BadgeCheck size={12} /> Verified</span>
                     </div>
                   </Link>
+
+                    
+    {liveStatus.onlineStatus && (
+      <div className="mt-3">
+        <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-bold ${
+          liveStatus.onlineStatus === "online"
+            ? "bg-emerald-50 text-emerald-700"
+            : "bg-slate-100 text-slate-500"
+        }`}>
+          <span className={`h-2 w-2 rounded-full ${
+            liveStatus.onlineStatus === "online" ? "bg-emerald-500 animate-pulse" : "bg-slate-400"
+          }`} />
+          {liveStatus.onlineStatus === "online"
+            ? (liveStatus.engagementStatus === "busy" ? "Online · Busy" : "Online · Available")
+            : "Currently Offline"}
+        </span>
+      </div>
+    )}
+
                   {isAuthenticated && role === Role.USER && providerId && (
                     <button
                       onClick={async () => {
@@ -661,7 +709,11 @@ export default function ServiceDetailPage() {
               : `${service.duration} min`}
           </p>
         </div>
-        {requiresServiceRequest((service.deliveryModel ?? service.serviceType) ?? "direct") ? (
+        {isProviderOffline ? (
+          <span className="rounded-[14px] bg-slate-200 px-6 py-3 text-sm font-bold text-slate-500 cursor-not-allowed">
+            {liveStatus.onlineStatus === "offline" ? "Provider Offline" : "Provider Busy"}
+          </span>
+        ) : requiresServiceRequest((service.deliveryModel ?? service.serviceType) ?? "direct") ? (
           <Link
             href={`/request-custom?categoryId=${service.category?.id ?? ""}`}
             className="rounded-[14px] bg-gradient-to-r from-purple-600 to-violet-600 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-purple-500/20 hover:shadow-xl transition-all"
