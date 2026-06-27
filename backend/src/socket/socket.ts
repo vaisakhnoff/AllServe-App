@@ -140,6 +140,18 @@ export function setupSocket(
       const remainingCount = removeOnlineSocket(userId, socket.id);
       if (remainingCount === 0) io.emit("user:offline", { userId });
     });
+
+
+     socket.on("watch-provider", (providerId: string) => {
+      if (!providerId) return;
+      socket.join(`provider:${providerId}`);
+    });
+
+    socket.on("unwatch-provider", (providerId: string) => {
+      if (!providerId) return;
+      socket.leave(`provider:${providerId}`);
+    });
+
   });
 
   return io;

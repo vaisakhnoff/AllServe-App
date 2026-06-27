@@ -5,13 +5,15 @@ import { logger } from "./shared/logger/logger";
 import { connectDB } from "./database/db";
 import { setupSocket } from "./socket/socket";
 import { messagingService, conversationRepository } from "./di";
+import { setIo } from "./socket/io";
 
 const startServer = async () => {
   try {
     await connectDB();
 
     const server = http.createServer(app);
-    setupSocket(server, messagingService, conversationRepository);
+    const io = setupSocket(server, messagingService, conversationRepository);
+    setIo(io);
 
     server.listen(env.PORT, () => {
       logger.info(`Server running on port ${env.PORT}`);

@@ -2,6 +2,7 @@ import { IProviderStatusService, ProviderStatusResponse } from "../interfaces/pr
 import { IProviderRepository } from "../interfaces/provider/IProviderRepository";
 import { OnlineStatus } from "../models/providerAccount.model";
 import { NotFoundError } from "../shared/errors/HttpErrors";
+import { getIo } from "../socket/io";
 
 export class ProviderStatusService implements IProviderStatusService {
   constructor(private readonly providerRepo: IProviderRepository) {}
@@ -21,6 +22,15 @@ export class ProviderStatusService implements IProviderStatusService {
 
     const updated = await this.providerRepo.updateAccount(providerId, updateData);
     if (!updated) throw new NotFoundError("Provider not found");
+
+    // Emit real-time status change
+    try {
+      getIo().to(`provider:${providerId}`).emit("provider:status-changed", {
+        providerId,
+        onlineStatus: updated.onlineStatus,
+        engagementStatus: updated.engagementStatus,
+      });
+    } catch { /* socket not ready yet, skip */ }
 
     return {
       onlineStatus: updated.onlineStatus,
@@ -43,16 +53,34 @@ export class ProviderStatusService implements IProviderStatusService {
   }
 
   async setBusy(providerId: string): Promise<void> {
+    const provider = await this.providerRepo.findById(providerId);
     await this.providerRepo.updateAccount(providerId, {
       engagementStatus: "busy",
       lastStatusChangeAt: new Date(),
     } as Record<string, unknown>);
+
+    try {
+      getIo().to(`provider:${providerId}`).emit("provider:status-changed", {
+        providerId,
+        onlineStatus: provider?.onlineStatus ?? "online",
+        engagementStatus: "busy",
+      });
+    } catch {}
   }
 
   async setAvailable(providerId: string): Promise<void> {
+    const provider = await this.providerRepo.findById(providerId);
     await this.providerRepo.updateAccount(providerId, {
       engagementStatus: "available",
       lastStatusChangeAt: new Date(),
     } as Record<string, unknown>);
+
+    try {
+      getIo().to(`provider:${providerId}`).emit("provider:status-changed", {
+        providerId,
+        onlineStatus: provider?.onlineStatus ?? "online",
+        engagementStatus: "available",
+      });
+    } catch {}
   }
 }
