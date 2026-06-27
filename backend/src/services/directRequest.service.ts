@@ -16,7 +16,8 @@ export class DirectRequestService implements IDirectRequestService {
   async createInstantRequest(customerId: string, dto: CreateDirectInstantDto): Promise<IServiceOrder> {
     const service = await ServiceModel.findById(dto.serviceId).lean();
     if (!service) throw new NotFoundError("Service not found");
-    if (service.deliveryModel !== "direct") throw new BadRequestError("This service does not support direct requests");
+    const effectiveDeliveryModel = service.deliveryModel || "direct";
+    if (effectiveDeliveryModel !== "direct") throw new BadRequestError("This service does not support direct requests");
     if (service.status !== "active" || service.isDeleted) throw new BadRequestError("Service is not available");
 
     const provider = await this.providerRepo.findById(dto.providerId);
@@ -52,7 +53,8 @@ export class DirectRequestService implements IDirectRequestService {
   async createScheduledRequest(customerId: string, dto: CreateDirectScheduledDto): Promise<IServiceOrder> {
     const service = await ServiceModel.findById(dto.serviceId).lean();
     if (!service) throw new NotFoundError("Service not found");
-    if (service.deliveryModel !== "direct") throw new BadRequestError("This service does not support direct requests");
+    const effectiveDeliveryModel = service.deliveryModel || "direct";
+    if (effectiveDeliveryModel !== "direct") throw new BadRequestError("This service does not support direct requests");
     if (service.status !== "active" || service.isDeleted) throw new BadRequestError("Service is not available");
 
     const provider = await this.providerRepo.findById(dto.providerId);
@@ -82,10 +84,17 @@ export class DirectRequestService implements IDirectRequestService {
     return order;
   }
 
+  private extractId(ref: unknown): string {
+    if (ref && typeof ref === "object" && "_id" in (ref as Record<string, unknown>)) {
+      return String((ref as Record<string, unknown>)._id);
+    }
+    return String(ref);
+  }
+
   async acceptRequest(orderId: string, providerId: string): Promise<IServiceOrder> {
     const order = await this.orderRepo.findById(orderId);
     if (!order) throw new NotFoundError("Order not found");
-    if (String(order.providerId) !== providerId) throw new ForbiddenError("Unauthorized");
+    if (this.extractId(order.providerId) !== providerId) throw new ForbiddenError("Unauthorized");
     if (order.status !== "awaiting_provider_response") throw new BadRequestError("Order cannot be accepted in current state");
 
     const updated = await this.orderRepo.updateStatus(orderId, "accepted", {
@@ -106,7 +115,7 @@ export class DirectRequestService implements IDirectRequestService {
   async rejectRequest(orderId: string, providerId: string): Promise<IServiceOrder> {
     const order = await this.orderRepo.findById(orderId);
     if (!order) throw new NotFoundError("Order not found");
-    if (String(order.providerId) !== providerId) throw new ForbiddenError("Unauthorized");
+    if (this.extractId(order.providerId) !== providerId) throw new ForbiddenError("Unauthorized");
     if (order.status !== "awaiting_provider_response") throw new BadRequestError("Order cannot be rejected in current state");
 
     const updated = await this.orderRepo.updateStatus(orderId, "rejected_by_provider", {
@@ -119,7 +128,7 @@ export class DirectRequestService implements IDirectRequestService {
   async handleCustomerChoice(orderId: string, customerId: string, dto: CustomerChoiceDto): Promise<IServiceOrder> {
     const order = await this.orderRepo.findById(orderId);
     if (!order) throw new NotFoundError("Order not found");
-    if (String(order.customerId) !== customerId) throw new ForbiddenError("Unauthorized");
+    if (this.extractId(order.customerId) !== customerId) throw new ForbiddenError("Unauthorized");
     if (!["rejected_by_provider", "provider_unresponsive"].includes(order.status)) {
       throw new BadRequestError("Customer choice is not available for this order");
     }

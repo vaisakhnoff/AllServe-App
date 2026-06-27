@@ -78,6 +78,8 @@ export interface ProviderDetailsDto extends ProviderListItemDto {
   category: CategoryRefDto | null;
   description?: string;
   serviceAreas: string[];
+  onlineStatus: "online" | "offline";
+  engagementStatus: "available" | "busy";
   services: { id: unknown; name: string; price: number; description: string }[];
   subcategoriesWorkedIn?: string[];
 }

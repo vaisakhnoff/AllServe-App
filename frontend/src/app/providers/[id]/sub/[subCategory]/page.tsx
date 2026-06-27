@@ -83,6 +83,20 @@ export default function ProviderSubcategoryPage() {
               <h1 className="text-2xl font-black text-slate-950">{subCategory}</h1>
               <p className="mt-1 text-sm text-slate-500">
                 Services from <span className="font-semibold">{provider?.businessName ?? provider?.name ?? "this provider"}</span>
+                {provider?.onlineStatus && (
+                  <span className={`ml-2 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-bold ${
+                    provider.onlineStatus === "online"
+                      ? "bg-emerald-50 text-emerald-700"
+                      : "bg-slate-100 text-slate-500"
+                  }`}>
+                    <span className={`h-1.5 w-1.5 rounded-full ${
+                      provider.onlineStatus === "online" ? "bg-emerald-500 animate-pulse" : "bg-slate-400"
+                    }`} />
+                    {provider.onlineStatus === "online"
+                      ? (provider.engagementStatus === "busy" ? "Busy" : "Available")
+                      : "Offline"}
+                  </span>
+                )}
               </p>
             </header>
 

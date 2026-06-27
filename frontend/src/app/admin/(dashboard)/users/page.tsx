@@ -8,6 +8,8 @@ import { getErrorMessage } from "@/utils/errorHandler";
 import { Modal } from "@/components/common/Modal";
 import { Button } from "@/components/common/Button";
 import { DataTable, ColumnDef } from "@/components/common/DataTable";
+import { displayId } from "@/utils/displayId";
+
 
 export default function AdminUsersPage() {
   const [filterStatus, setFilterStatus] = useState("all");
@@ -70,7 +72,7 @@ export default function AdminUsersPage() {
           </div>
           <div>
             <div style={{ fontWeight: 600, color: "#0f172a" }}>{user.name}</div>
-            <div style={{ fontSize: "0.75rem", color: "#64748b" }}>ID: {user._id.substring(0, 8)}...</div>
+            <div style={{ fontSize: "0.75rem", color: "#64748b" }}>ID: {displayId.user(user._id)}...</div>
           </div>
         </div>
       ),
@@ -133,7 +135,7 @@ export default function AdminUsersPage() {
             </div>
             <div>
               <h2 style={{ fontSize: "1.5rem", fontWeight: 700, color: "#0f172a", margin: 0 }}>{selectedUser.name}</h2>
-              <p style={{ color: "#64748b", margin: "0.25rem 0 0" }}>ID: {selectedUser._id}</p>
+              <p style={{ color: "#64748b", margin: "0.25rem 0 0" }}>ID: {displayId.user(selectedUser._id)}</p>
             </div>
             <span className={`admin-badge ${selectedUser.status}`} style={{ marginLeft: "auto" }}>
               {selectedUser.status.charAt(0).toUpperCase() + selectedUser.status.slice(1)}

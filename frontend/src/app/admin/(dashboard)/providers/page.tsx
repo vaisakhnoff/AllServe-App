@@ -8,6 +8,8 @@ import { getErrorMessage } from "@/utils/errorHandler";
 import { Modal } from "@/components/common/Modal";
 import { Button } from "@/components/common/Button";
 import { DataTable, ColumnDef } from "@/components/common/DataTable";
+import { displayId } from "@/utils/displayId";
+
 
 export default function AdminProvidersPage() {
   const [filterStatus, setFilterStatus] = useState("all");
@@ -70,7 +72,7 @@ export default function AdminProvidersPage() {
             </div>
             <div>
               <div style={{ fontWeight: 600, color: "#0f172a" }}>{pName}</div>
-              <div style={{ fontSize: "0.75rem", color: "#64748b" }}>ID: {provider._id.substring(0, 8)}...</div>
+              <div style={{ fontSize: "0.75rem", color: "#64748b" }}>ID: {displayId.provider(provider._id)}...</div>
             </div>
           </div>
         );
@@ -145,7 +147,7 @@ export default function AdminProvidersPage() {
             </div>
             <div>
               <h2 style={{ fontSize: "1.5rem", fontWeight: 700, color: "#0f172a", margin: 0 }}>{pName}</h2>
-              <p style={{ color: "#64748b", margin: "0.25rem 0 0" }}>ID: {selectedProvider._id}</p>
+              <p style={{ color: "#64748b", margin: "0.25rem 0 0" }}>ID: {displayId.provider(selectedProvider._id)}</p>
             </div>
             <span className={`admin-badge ${selectedProvider.applicationStatus === "approved" ? "active" : "blocked"}`} style={{ marginLeft: "auto" }}>
               {selectedProvider.applicationStatus.charAt(0).toUpperCase() + selectedProvider.applicationStatus.slice(1)}

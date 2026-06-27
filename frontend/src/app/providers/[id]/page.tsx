@@ -4,9 +4,10 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useSelector } from "react-redux";
+import { motion } from "framer-motion";
 import {
   ArrowLeft, Star, BadgeCheck, MapPin, Loader2, MessageSquarePlus,
-  Layers, Clock, CalendarDays, Sparkles,
+  Clock, CalendarDays, ArrowUpRight,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { RootState } from "@/store";
@@ -36,24 +37,24 @@ export default function ProviderDetailPage() {
 
   useEffect(() => {
     if (!id || !canViewDetails) return;
-    let cancelled = false;
+    let c = false;
     setLoading(true);
     providerService.getPublicProviderById(id)
-      .then((res) => { if (!cancelled) setProvider(res.data.data); })
-      .catch((err) => { if (!cancelled) toast.error(getErrorMessage(err) || "Failed to load provider"); })
-      .finally(() => { if (!cancelled) setLoading(false); });
-    return () => { cancelled = true; };
+      .then((res) => { if (!c) setProvider(res.data.data); })
+      .catch((err) => { if (!c) toast.error(getErrorMessage(err) || "Failed to load provider"); })
+      .finally(() => { if (!c) setLoading(false); });
+    return () => { c = true; };
   }, [id, canViewDetails]);
 
   useEffect(() => {
     if (!id || !canViewDetails) return;
-    let cancelled = false;
+    let c = false;
     setSlotsLoading(true);
     slotService.getAvailable(id)
-      .then((res) => { if (!cancelled) setSlots(res.data.data); })
+      .then((res) => { if (!c) setSlots(res.data.data); })
       .catch(() => {})
-      .finally(() => { if (!cancelled) setSlotsLoading(false); });
-    return () => { cancelled = true; };
+      .finally(() => { if (!c) setSlotsLoading(false); });
+    return () => { c = true; };
   }, [id, canViewDetails]);
 
   const slotsByDate = useMemo(() => {
@@ -62,190 +63,212 @@ export default function ProviderDetailPage() {
     return Array.from(map.entries()).sort(([a], [b]) => a.localeCompare(b));
   }, [slots]);
 
+  const startConversation = async () => {
+    if (!user || !provider) { router.push("/login"); return; }
+    try {
+      await messagingService.getOrCreateConversation({ providerId: provider.id });
+      router.push("/messages");
+    } catch { toast.error("Failed to start conversation"); }
+  };
+
   if (isInitialized && !canViewDetails) {
-    return (
-      <LoginRequiredPrompt
-        title="Login to view provider"
-        message="Please login or sign up to view provider details, availability, and services."
-      />
-    );
+    return <LoginRequiredPrompt title="Login to view provider" message="Please login or sign up to view provider details." />;
   }
 
   if (loading) {
-    return (
-      <main className="flex min-h-screen items-center justify-center bg-[var(--surface-2)]">
-        <Loader2 size={32} className="animate-spin text-[var(--primary)]" />
-      </main>
-    );
+    return <div className="flex min-h-[60vh] items-center justify-center"><Loader2 size={28} className="animate-spin text-[var(--primary)]" /></div>;
   }
 
   if (!provider) {
     return (
-      <main className="flex min-h-screen flex-col items-center justify-center bg-[var(--surface-2)]">
-        <div className="w-16 h-16 rounded-2xl bg-purple-50 flex items-center justify-center mb-4"><Sparkles size={24} className="text-purple-400" /></div>
-        <p className="font-bold text-slate-600 text-lg">Provider not found</p>
-        <Link href="/providers" className="mt-4 text-sm font-bold text-[var(--primary)] hover:underline">Back to providers</Link>
-      </main>
+      <div className="flex min-h-[60vh] flex-col items-center justify-center text-center">
+        <p className="text-lg font-bold text-[var(--text-primary)]">Provider not found</p>
+        <Link href="/providers" className="mt-3 text-sm font-semibold text-[var(--primary)] hover:underline">Back to providers</Link>
+      </div>
     );
   }
 
   return (
-    <main className="min-h-screen bg-[var(--surface-2)]">
-      <div className="mx-auto max-w-6xl px-4 py-5 sm:px-6 lg:px-8">
-        <button onClick={() => router.back()} className="mb-4 inline-flex items-center gap-1.5 text-sm font-semibold text-slate-500 hover:text-[var(--primary)] transition-colors">
-          <ArrowLeft size={15} /> Back
-        </button>
+    <div className="pb-12">
+      {/* Breadcrumb */}
+      <button onClick={() => router.back()} className="group mb-6 inline-flex items-center gap-1.5 text-sm font-semibold text-[var(--text-muted)] hover:text-[var(--primary)]">
+        <ArrowLeft size={15} className="transition-transform group-hover:-translate-x-0.5" /> Back
+      </button>
 
-        {/* Premium Hero Banner */}
-        <header className="overflow-hidden rounded-[20px] border border-purple-200/40 bg-gradient-to-br from-[#6D28FF] via-[#7c3aed] to-[#8B5CF6] text-white shadow-xl shadow-purple-500/10 fade-up">
-          <div className="relative p-5 sm:p-7">
-            <div className="absolute top-[-60px] right-[-40px] w-[250px] h-[250px] bg-white/5 rounded-full blur-2xl" />
-            <div className="absolute bottom-[-30px] left-[-30px] w-[180px] h-[180px] bg-white/5 rounded-full blur-2xl" />
-            <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center">
-              <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl bg-white/15 backdrop-blur-sm text-3xl font-extrabold overflow-hidden ring-2 ring-white/20">
+      <div className="grid gap-8 lg:grid-cols-[340px_1fr]">
+        {/* LEFT — Sticky profile card */}
+        <aside className="lg:sticky lg:top-24 lg:self-start">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="overflow-hidden rounded-[28px] border border-[var(--border)] bg-white shadow-[var(--shadow-card)]"
+          >
+            {/* Avatar region */}
+            <div className="relative bg-gradient-to-br from-[#141414] to-[#2d2d2d] px-6 pb-14 pt-8 text-center text-white">
+              <div className="absolute -right-6 -top-6 h-32 w-32 rounded-full bg-[var(--primary)]/20 blur-[60px]" />
+              <div className="relative mx-auto h-24 w-24 overflow-hidden rounded-full border-4 border-white/20 shadow-xl">
                 {provider.profileImage ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={provider.profileImage} alt="" className="h-full w-full object-cover" />
                 ) : (
-                  provider.name.charAt(0).toUpperCase()
+                  <div className="flex h-full w-full items-center justify-center bg-[var(--primary)] text-3xl font-[900]">{provider.name[0]}</div>
                 )}
               </div>
-              <div className="flex-1 min-w-0">
-                <h1 className="text-[clamp(1.6rem,4vw,2.25rem)] font-extrabold truncate tracking-tight">
-                  {provider.businessName ?? provider.name}
-                </h1>
-                <div className="mt-2.5 flex flex-wrap items-center gap-3 text-sm font-semibold">
-                  <span className="inline-flex items-center gap-1.5 text-purple-100"><BadgeCheck size={15} /> Verified</span>
-                  <span className="inline-flex items-center gap-1.5 text-amber-200"><Star size={14} fill="#fbbf24" strokeWidth={0} /> {provider.rating || "New"}</span>
-                  {provider.category && (
-                    <span className="rounded-full bg-white/15 backdrop-blur-sm px-3.5 py-1 text-xs font-bold">{provider.category.name}</span>
-                  )}
-                </div>
+              <h1 className="mt-4 truncate text-xl font-[800] tracking-tight">{provider.businessName ?? provider.name}</h1>
+              <div className="mt-2 flex items-center justify-center gap-3 text-[13px] text-white/60">
+                <span className="flex items-center gap-1"><BadgeCheck size={13} /> Verified</span>
+                <span className="flex items-center gap-1"><Star size={12} fill="#fbbf24" strokeWidth={0} /> {provider.rating || "New"}</span>
               </div>
+              {provider.category && (
+                <span className="mt-3 inline-block rounded-full bg-white/10 px-3 py-1 text-[11px] font-bold backdrop-blur-sm">{provider.category.name}</span>
+              )}
+              {/* Online / Availability status */}
+              {provider.onlineStatus && (
+                <div className="mt-3 flex items-center justify-center">
+                  <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-bold backdrop-blur-sm ${
+                    provider.onlineStatus === "online"
+                      ? "bg-emerald-500/20 text-emerald-300"
+                      : "bg-white/10 text-white/50"
+                  }`}>
+                    <span className={`h-2 w-2 rounded-full ${
+                      provider.onlineStatus === "online" ? "bg-emerald-400 animate-pulse" : "bg-white/40"
+                    }`} />
+                    {provider.onlineStatus === "online"
+                      ? (provider.engagementStatus === "busy" ? "Online · Busy" : "Online · Available")
+                      : "Offline"}
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {/* Stats + actions */}
+            <div className="relative -mt-6 rounded-t-[24px] bg-white px-6 pt-8 pb-6 space-y-5">
+              {/* Pricing */}
+              <div className="rounded-2xl bg-[var(--surface-3)] p-4 text-center">
+                <p className="text-[11px] font-bold uppercase tracking-wider text-[var(--text-muted)]">Starting from</p>
+                <p className="mt-1 text-[1.75rem] font-[900] tracking-tight text-[var(--text-primary)]">
+                  {provider.price !== null ? `₹${provider.price.toFixed(0)}` : "On request"}
+                </p>
+              </div>
+
+              {/* Service areas */}
+              {provider.serviceAreas && provider.serviceAreas.length > 0 && (
+                <div className="flex items-start gap-2.5">
+                  <MapPin size={15} className="mt-0.5 shrink-0 text-[var(--primary)]" />
+                  <p className="text-[13px] leading-relaxed text-[var(--text-secondary)]">{provider.serviceAreas.join(", ")}</p>
+                </div>
+              )}
+
+              {/* CTA */}
               <button
-                onClick={async () => {
-                  if (!user) { router.push("/login"); return; }
-                  try {
-                    await messagingService.getOrCreateConversation({ providerId: provider.id });
-                    router.push("/messages");
-                  } catch { toast.error("Failed to start conversation"); }
-                }}
-                className="inline-flex items-center justify-center gap-2 rounded-2xl bg-white px-5 py-3 text-sm font-bold text-[var(--primary)] shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all"
+                onClick={startConversation}
+                className="flex w-full items-center justify-center gap-2.5 rounded-2xl bg-[#141414] py-3.5 text-[14px] font-bold text-white transition hover:bg-black"
               >
-                <MessageSquarePlus size={16} /> Message provider
+                <MessageSquarePlus size={16} /> Message
               </button>
             </div>
-          </div>
-        </header>
+          </motion.div>
+        </aside>
 
-        <div className="mt-5 grid gap-5 lg:grid-cols-[1.5fr_1fr]">
-          {/* Left column */}
-          <section className="space-y-5">
-            {/* About */}
-            <article className="rounded-[18px] border border-slate-200/60 bg-white p-5 sm:p-6">
-              <h2 className="text-lg font-extrabold text-slate-900">About</h2>
-              {provider.description ? (
-                <p className="mt-3 whitespace-pre-line text-sm leading-7 text-slate-600">{provider.description}</p>
-              ) : (
-                <p className="mt-3 text-sm text-slate-500">No description provided.</p>
-              )}
-              {provider.serviceAreas && provider.serviceAreas.length > 0 && (
-                <p className="mt-4 inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 bg-slate-50 px-3 py-1.5 rounded-full">
-                  <MapPin size={12} className="text-[var(--primary)]" /> {provider.serviceAreas.join(", ")}
-                </p>
-              )}
-            </article>
-
-            {/* Subcategories */}
-            <article className="rounded-[18px] border border-slate-200/60 bg-white p-5 sm:p-6">
-              <h2 className="flex items-center gap-2.5 text-lg font-extrabold text-slate-900">
-                <Layers size={18} className="text-[var(--primary)]" /> Sub-categories
-              </h2>
-              {provider.subcategoriesWorkedIn.length === 0 ? (
-                <p className="mt-4 text-sm text-slate-500">No sub-categories tagged yet.</p>
-              ) : (
-                <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                  {provider.subcategoriesWorkedIn.map((sub) => (
-                    <Link key={sub} href={`/providers/${provider.id}/sub/${encodeURIComponent(sub)}`}
-                      className="rounded-xl border border-slate-200/80 bg-slate-50/50 px-5 py-3.5 text-sm font-bold text-slate-800 transition-all hover:border-purple-200 hover:bg-purple-50 hover:text-[var(--primary)] hover:-translate-y-0.5 hover:shadow-sm">
-                      {sub}
-                    </Link>
-                  ))}
-                </div>
-              )}
-            </article>
-
-            {/* Slots */}
-            <article className="rounded-[18px] border border-slate-200/60 bg-white p-5 sm:p-6">
-              <h2 className="flex items-center gap-2.5 text-lg font-extrabold text-slate-900">
-                <CalendarDays size={18} className="text-[var(--primary)]" /> Upcoming availability
-              </h2>
-              {slotsLoading ? (
-                <div className="mt-5 flex items-center gap-2 text-sm text-slate-500"><Loader2 size={14} className="animate-spin" /> Loading slots...</div>
-              ) : slotsByDate.length === 0 ? (
-                <div className="mt-4 rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50/50 p-6 text-center">
-                  <p className="font-bold text-slate-600">No published slots</p>
-                  <p className="mt-1 text-xs text-slate-500">Try messaging the provider directly</p>
-                </div>
-              ) : (
-                <div className="mt-4 space-y-4">
-                  {slotsByDate.slice(0, 5).map(([date, daySlots]) => (
-                    <div key={date}>
-                      <p className="mb-2.5 text-xs font-bold uppercase tracking-wider text-slate-400">{formatDateLabel(date)}</p>
-                      <div className="flex flex-wrap gap-2">
-                        {daySlots.slice(0, 12).map((slot) => (
-                          <span key={slot._id} className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-50 border border-emerald-100 px-3 py-1.5 text-xs font-bold text-emerald-700">
-                            <Clock size={11} /> {slot.startTime}–{slot.endTime}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                  <p className="text-xs text-slate-500 font-medium">Open a service to book a slot.</p>
-                </div>
-              )}
-            </article>
+        {/* RIGHT — Scrollable content */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1, duration: 0.5 }}
+          className="space-y-6"
+        >
+          {/* About */}
+          <section className="rounded-[22px] border border-[var(--border)] bg-white p-6">
+            <h2 className="text-[17px] font-[800] text-[var(--text-primary)]">About</h2>
+            {provider.description ? (
+              <p className="mt-3 text-[14px] leading-[1.8] text-[var(--text-secondary)]">{provider.description}</p>
+            ) : (
+              <p className="mt-3 text-sm italic text-[var(--text-muted)]">No description provided.</p>
+            )}
           </section>
 
-          {/* Right column */}
-          <aside className="space-y-4">
-            <div className="rounded-[18px] border border-slate-200/60 bg-white p-6 shadow-[0_8px_32px_rgba(0,0,0,0.03)]">
-              <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Pricing</p>
-              <p className="mt-2 text-[2rem] font-extrabold text-slate-950 tracking-tight">
-                {provider.price !== null ? `from ₹${provider.price.toFixed(0)}` : "On request"}
-              </p>
-              <p className="text-sm text-slate-500 mt-1">across active services</p>
-            </div>
+          {/* Services — table style */}
+          {provider.services.length > 0 && (
+            <section className="rounded-[22px] border border-[var(--border)] bg-white overflow-hidden">
+              <div className="flex items-center justify-between px-6 py-5 border-b border-[var(--border-light)]">
+                <h2 className="text-[17px] font-[800] text-[var(--text-primary)]">Services</h2>
+                <span className="text-[12px] font-bold text-[var(--text-muted)]">{provider.services.length} available</span>
+              </div>
+              <div className="divide-y divide-[var(--border-light)]">
+                {provider.services.map((s) => (
+                  <Link key={s.id} href={`/services/${s.id}`} className="group flex items-center justify-between px-6 py-4 transition hover:bg-[var(--surface-2)]">
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-[14px] font-semibold text-[var(--text-primary)] group-hover:text-[var(--primary)]">{s.name}</p>
+                      <p className="mt-0.5 line-clamp-1 text-[12px] text-[var(--text-muted)]">{s.description}</p>
+                    </div>
+                    <div className="flex items-center gap-3 pl-4">
+                      <span className="text-[15px] font-[800] text-[var(--text-primary)]">₹{s.price.toFixed(0)}</span>
+                      <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[var(--surface-3)] text-[var(--text-muted)] transition group-hover:bg-[var(--primary)] group-hover:text-white group-hover:rotate-[-45deg]">
+                        <ArrowUpRight size={13} />
+                      </span>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </section>
+          )}
 
-            {provider.services.length > 0 && (
-              <div className="rounded-[18px] border border-slate-200/60 bg-white p-6 shadow-[0_8px_32px_rgba(0,0,0,0.03)]">
-                <p className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-4">All services</p>
-                <ul className="space-y-3">
-                  {provider.services.slice(0, 6).map((s) => (
-                    <li key={s.id} className="flex items-center justify-between text-sm">
-                      <Link href={`/services/${s.id}`} className="truncate font-semibold text-slate-700 hover:text-[var(--primary)] transition-colors">{s.name}</Link>
-                      <span className="font-extrabold text-slate-900 shrink-0 ml-3">₹{s.price.toFixed(0)}</span>
-                    </li>
-                  ))}
-                </ul>
+          {/* Sub-categories */}
+          {provider.subcategoriesWorkedIn.length > 0 && (
+            <section className="rounded-[22px] border border-[var(--border)] bg-white p-6">
+              <h2 className="text-[17px] font-[800] text-[var(--text-primary)]">Specialisations</h2>
+              <div className="mt-4 flex flex-wrap gap-2.5">
+                {provider.subcategoriesWorkedIn.map((sub) => (
+                  <Link
+                    key={sub}
+                    href={`/providers/${provider.id}/sub/${encodeURIComponent(sub)}`}
+                    className="rounded-full border border-[var(--border)] bg-[var(--surface-2)] px-4 py-2 text-[13px] font-semibold text-[var(--text-secondary)] transition hover:border-[var(--primary)] hover:bg-[var(--primary-light)] hover:text-[var(--primary)]"
+                  >
+                    {sub}
+                  </Link>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* Availability */}
+          <section className="rounded-[22px] border border-[var(--border)] bg-white p-6">
+            <div className="flex items-center gap-2.5">
+              <CalendarDays size={18} className="text-[var(--primary)]" />
+              <h2 className="text-[17px] font-[800] text-[var(--text-primary)]">Availability</h2>
+            </div>
+            {slotsLoading ? (
+              <div className="mt-5 flex items-center gap-2 text-sm text-[var(--text-muted)]"><Loader2 size={14} className="animate-spin" /> Loading...</div>
+            ) : slotsByDate.length === 0 ? (
+              <div className="mt-5 rounded-2xl border border-dashed border-[var(--border)] bg-[var(--surface-2)] p-8 text-center">
+                <p className="font-semibold text-[var(--text-secondary)]">No upcoming slots published</p>
+                <p className="mt-1 text-[13px] text-[var(--text-muted)]">Send them a message to check availability</p>
+              </div>
+            ) : (
+              <div className="mt-5 space-y-5">
+                {slotsByDate.slice(0, 4).map(([date, daySlots]) => (
+                  <div key={date}>
+                    <p className="mb-2 text-[12px] font-bold uppercase tracking-wider text-[var(--text-muted)]">{formatDateLabel(date)}</p>
+                    <div className="flex flex-wrap gap-2">
+                      {daySlots.slice(0, 8).map((slot) => (
+                        <span key={slot._id} className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-100 bg-emerald-50 px-3.5 py-2 text-[12px] font-bold text-emerald-700">
+                          <Clock size={11} /> {slot.startTime}–{slot.endTime}
+                        </span>
+                      ))}
+                      {daySlots.length > 8 && (
+                        <span className="rounded-xl bg-[var(--surface-3)] px-3.5 py-2 text-[12px] font-semibold text-[var(--text-muted)]">
+                          +{daySlots.length - 8} more
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
-
-            <button
-              onClick={async () => {
-                if (!user) { router.push("/login"); return; }
-                try {
-                  await messagingService.getOrCreateConversation({ providerId: provider.id });
-                  router.push("/messages");
-                } catch { toast.error("Failed to start conversation"); }
-              }}
-              className="w-full rounded-[14px] bg-gradient-to-r from-[#6D28FF] to-[#8B5CF6] px-6 py-3.5 text-sm font-bold text-white shadow-lg shadow-purple-500/20 hover:shadow-xl hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2"
-            >
-              <MessageSquarePlus size={16} /> Message provider
-            </button>
-          </aside>
-        </div>
+          </section>
+        </motion.div>
       </div>
-    </main>
+    </div>
   );
 }

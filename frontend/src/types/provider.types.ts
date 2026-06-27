@@ -136,6 +136,8 @@ export interface PublicProviderDetails {
   rating: number;
   price: number | null;
   profileImage?: string | null;
+  onlineStatus?: "online" | "offline";
+  engagementStatus?: "available" | "busy";
   services: Array<{
     id: string;
     name: string;

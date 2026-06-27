@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { motion } from "framer-motion";
 import { UserProfile } from "@/types/user.types";
 import { userService } from "@/services/user";
 import { getErrorMessage } from "@/utils/errorHandler";
@@ -9,13 +10,11 @@ import { Button } from "@/components/common/Button";
 import { AddressList } from "@/components/user/AddressList";
 import { Loader } from "@/components/common/Loader";
 import { ImageCropper } from "@/components/common/ImageCropper";
-import { validatePasswordStrength, doPasswordsMatch, validateProfileForm, validateProfilePasswordForm, ProfileErrors, ProfilePwdErrors } from "@/utils/validation";
-import { UI_MESSAGES } from '@/shared/messages';
+import { validatePasswordStrength, validateProfileForm, validateProfilePasswordForm, ProfileErrors, ProfilePwdErrors } from "@/utils/validation";
+import { UI_MESSAGES } from "@/shared/messages";
 import { PasswordStrength } from "@/components/common/PasswordStrength";
-import { Camera, Mail, Phone, MapPin, CreditCard, Shield, CheckCircle2, Pencil, ArrowLeft, LogOut, Eye, EyeOff, Sparkles } from "lucide-react";
+import { Camera, Mail, Phone, MapPin, Shield, CheckCircle2, Pencil, LogOut, Eye, EyeOff, User, CalendarDays } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import Link from "next/link";
-import { ROUTES } from "@/shared/routes";
 
 const sanitizeIndianPhone = (value: string) => value.replace(/\D/g, "").slice(0, 10);
 const getIndianPhoneDigits = (value?: string) => {
@@ -26,7 +25,7 @@ const formatIndianPhone = (value: string) => `+91${sanitizeIndianPhone(value)}`;
 
 const FieldError = ({ message }: { message?: string }) => {
   if (!message) return null;
-  return <p className="text-red-600 text-xs mt-1 font-medium">{message}</p>;
+  return <p className="mt-1 text-xs font-medium text-red-600">{message}</p>;
 };
 
 export default function ProfilePage() {
@@ -156,7 +155,7 @@ export default function ProfilePage() {
     reader.readAsDataURL(croppedFile);
   };
 
-  if (loading) return <div className="flex justify-center items-center min-h-[60vh]"><Loader /></div>;
+  if (loading) return <div className="flex min-h-[60vh] items-center justify-center"><Loader /></div>;
   if (!profile) return <div className="p-8 text-red-500 font-semibold">Error loading profile.</div>;
 
   const memberSince = profile.createdAt
@@ -164,107 +163,81 @@ export default function ProfilePage() {
     : "recently";
 
   return (
-    <div className="max-w-[1040px] mx-auto space-y-6 fade-up">
+    <div className="pb-12">
       {/* Success toast */}
       {successMsg && (
-        <div className="fixed top-6 right-6 z-[99999] animate-in fade-in slide-in-from-top-2 duration-300">
-          <div className="bg-emerald-50 border border-emerald-200 rounded-2xl px-6 py-4 flex items-center gap-3 text-emerald-700 font-semibold shadow-xl shadow-emerald-500/10 min-w-[280px]">
-            <div className="flex-shrink-0 w-9 h-9 rounded-full bg-emerald-100 flex items-center justify-center">
-              <CheckCircle2 size={20} />
-            </div>
-            <div>
-              <p className="text-sm font-bold">{successMsg}</p>
-            </div>
-          </div>
+        <div className="fixed right-6 top-6 z-[99999]">
+          <motion.div
+            initial={{ opacity: 0, y: -12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            className="flex items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-3.5 text-sm font-semibold text-emerald-700 shadow-lg"
+          >
+            <CheckCircle2 size={18} /> {successMsg}
+          </motion.div>
         </div>
       )}
 
       {apiError && (
-        <div className="bg-red-50 border border-red-100 rounded-2xl px-5 py-4 text-red-600 font-semibold text-sm">⚠️ {apiError}</div>
+        <div className="mb-5 rounded-2xl border border-red-200 bg-red-50 px-5 py-3.5 text-sm font-semibold text-red-700">⚠️ {apiError}</div>
       )}
 
-      {/* Top bar */}
-      <div className="flex justify-between items-center">
-        <div className="flex items-center gap-3">
-          <Link href={ROUTES.DASHBOARD} className="w-9 h-9 rounded-xl bg-slate-100 flex items-center justify-center text-slate-400 hover:text-[var(--primary)] hover:bg-purple-50 transition-all">
-            <ArrowLeft size={18} />
-          </Link>
-          <div>
-            <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">Profile</h1>
-            <p className="text-sm text-slate-500 mt-0.5">Manage your account settings</p>
-          </div>
-        </div>
-        <button
-          onClick={() => { setEditMode(!editMode); setProfileErrors({}); }}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-purple-50 text-[var(--primary)] font-bold text-sm hover:bg-purple-100 transition-all">
-          <Pencil size={14} /> {editMode ? "Cancel" : "Edit Profile"}
-        </button>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-[280px_1fr] gap-6 items-start">
-        {/* LEFT COLUMN */}
-        <div className="space-y-4">
-          {/* Avatar card */}
-          <div className="card p-8 text-center">
-            <div className="relative w-[110px] h-[110px] mx-auto mb-5">
-              <div className="w-[110px] h-[110px] rounded-full overflow-hidden bg-gradient-to-br from-purple-100 to-violet-100 border-4 border-white shadow-lg shadow-purple-500/10 flex items-center justify-center">
-                {imagePreview || profile.profileImage ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={imagePreview ?? profile.profileImage} alt="Profile" className="w-full h-full object-cover" />
-                ) : (
-                  <span className="text-4xl font-extrabold text-[var(--primary)]">{profile.name?.[0]?.toUpperCase()}</span>
-                )}
-              </div>
-              <label htmlFor="avatar-upload" className="absolute bottom-1 right-1 w-9 h-9 rounded-full bg-[var(--primary)] border-3 border-white flex items-center justify-center cursor-pointer shadow-lg shadow-purple-500/30 hover:scale-110 transition-transform">
-                <Camera size={14} color="white" />
-                <input id="avatar-upload" type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
-              </label>
+      {/* Profile hero — wide horizontal banner with avatar */}
+      <motion.section
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="relative mb-8 overflow-hidden rounded-[28px] bg-[#141414] p-6 text-white sm:p-8"
+      >
+        <div className="absolute -right-16 -top-16 h-48 w-48 rounded-full bg-[var(--primary)]/20 blur-[70px]" />
+        <div className="relative flex flex-col gap-5 sm:flex-row sm:items-center">
+          {/* Avatar */}
+          <div className="relative">
+            <div className="h-20 w-20 overflow-hidden rounded-full border-4 border-white/10 shadow-xl sm:h-24 sm:w-24">
+              {imagePreview || profile.profileImage ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={imagePreview ?? profile.profileImage} alt="Profile" className="h-full w-full object-cover" />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center bg-[var(--primary)] text-3xl font-[900]">{profile.name?.[0]?.toUpperCase()}</div>
+              )}
             </div>
-            <p className="font-extrabold text-slate-900 text-lg">{profile.name}</p>
-            <p className="text-slate-500 text-sm mt-1">Member since {memberSince}</p>
-            {profile.isVerified && (
-              <div className="inline-flex items-center gap-1.5 bg-purple-50 text-[var(--primary)] text-xs font-bold px-3.5 py-1.5 rounded-full mt-3 border border-purple-100">
-                <CheckCircle2 size={13} /> Verified Client
-              </div>
-            )}
+            <label htmlFor="avatar-upload" className="absolute -bottom-1 -right-1 flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-white text-[#141414] shadow-lg transition hover:scale-110">
+              <Camera size={14} />
+              <input id="avatar-upload" type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
+            </label>
           </div>
-
-          {/* Contact details */}
-          <div className="card p-6">
-            <h3 className="text-sm font-bold text-slate-900 mb-4">Contact Details</h3>
-            <div className="space-y-4">
-              <div className="flex items-center gap-3.5">
-                <div className="w-10 h-10 rounded-xl bg-purple-50 flex items-center justify-center shrink-0">
-                  <Mail size={16} className="text-[var(--primary)]" />
-                </div>
-                <div>
-                  <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Email</p>
-                  <p className="text-sm text-slate-900 font-semibold mt-0.5">{profile.email}</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3.5">
-                <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center shrink-0">
-                  <Phone size={16} className="text-emerald-600" />
-                </div>
-                <div>
-                  <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Phone</p>
-                  <p className="text-sm text-slate-900 font-semibold mt-0.5">
-                    {profile.phone || <span className="text-slate-400 italic font-normal">Not added</span>}
-                  </p>
-                </div>
-              </div>
+          {/* Info */}
+          <div className="flex-1 min-w-0">
+            <h1 className="truncate text-xl font-[800] sm:text-2xl">{profile.name}</h1>
+            <p className="mt-1 text-[13px] text-white/50">{profile.email}</p>
+            <div className="mt-3 flex flex-wrap items-center gap-3 text-[12px] font-semibold text-white/50">
+              {profile.isVerified && (
+                <span className="inline-flex items-center gap-1 text-emerald-300"><CheckCircle2 size={13} /> Verified</span>
+              )}
+              <span className="inline-flex items-center gap-1"><CalendarDays size={12} /> Since {memberSince}</span>
+              <span className="inline-flex items-center gap-1"><MapPin size={12} /> {profile.addresses?.length || 0} addresses</span>
             </div>
           </div>
+          {/* Edit toggle */}
+          <button
+            onClick={() => { setEditMode(!editMode); setProfileErrors({}); }}
+            className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2.5 text-[13px] font-bold backdrop-blur-sm transition hover:bg-white/20"
+          >
+            <Pencil size={13} /> {editMode ? "Cancel" : "Edit"}
+          </button>
         </div>
+      </motion.section>
 
-        {/* RIGHT COLUMN */}
-        <div className="space-y-4">
+      {/* Content — two column */}
+      <div className="grid gap-6 lg:grid-cols-[1fr_380px]">
+        {/* Main column */}
+        <div className="space-y-5">
           {/* Personal info */}
-          <div className="card p-6">
-            <h3 className="text-sm font-bold text-slate-900 mb-5">Personal Information</h3>
+          <section className="rounded-[22px] border border-[var(--border)] bg-white p-6">
+            <h2 className="text-[17px] font-[800] text-[var(--text-primary)]">Personal Information</h2>
             {editMode ? (
-              <form onSubmit={handleUpdateBasic} className="space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <form onSubmit={handleUpdateBasic} className="mt-5 space-y-4">
+                <div className="grid gap-4 sm:grid-cols-2">
                   <div>
                     <Input id="name" label="Full Name" value={basicForm.name} onChange={e => { setBasicForm({ ...basicForm, name: e.target.value }); setProfileErrors(prev => ({ ...prev, name: undefined })); }} />
                     <FieldError message={profileErrors.name} />
@@ -272,7 +245,7 @@ export default function ProfilePage() {
                   <div>
                     <label className="input-label" htmlFor="phone">Phone Number</label>
                     <div className="flex gap-2">
-                      <div className="px-4 bg-slate-50 border border-slate-200 rounded-xl flex items-center font-bold text-slate-500 text-sm h-[46px]">+91</div>
+                      <div className="flex h-[46px] items-center rounded-xl border border-[var(--border)] bg-[var(--surface-3)] px-3 text-sm font-bold text-[var(--text-muted)]">+91</div>
                       <input id="phone" type="tel" inputMode="numeric" pattern="[0-9]{10}" maxLength={10} className="input flex-1" placeholder="9876543210"
                         value={basicForm.phone} onChange={e => { setBasicForm({ ...basicForm, phone: sanitizeIndianPhone(e.target.value) }); setProfileErrors(prev => ({ ...prev, phone: undefined })); }} />
                     </div>
@@ -280,34 +253,38 @@ export default function ProfilePage() {
                   </div>
                 </div>
                 <Input id="email" label="Email Address" value={profile.email} readOnly disabled />
-                <div className="flex gap-3 pt-2">
+                <div className="flex gap-3 pt-1">
                   <Button type="submit" loading={saving}>Save Changes</Button>
                   <Button type="button" variant="ghost" onClick={() => { setEditMode(false); setBasicForm({ name: profile.name, phone: getIndianPhoneDigits(profile.phone) }); setProfileErrors({}); }}>Cancel</Button>
                 </div>
               </form>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              <div className="mt-5 grid gap-5 sm:grid-cols-2">
                 {[
-                  { label: "First Name", value: profile.name?.split(" ")[0] },
-                  { label: "Last Name", value: profile.name?.split(" ").slice(1).join(" ") || "—" },
-                  { label: "Email Address", value: profile.email },
-                  { label: "Phone Number", value: profile.phone || "Not added" },
-                ].map(field => (
-                  <div key={field.label}>
-                    <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">{field.label}</p>
-                    <p className="text-[0.9375rem] font-semibold text-slate-900">{field.value}</p>
+                  { icon: User, label: "Name", value: profile.name },
+                  { icon: Mail, label: "Email", value: profile.email },
+                  { icon: Phone, label: "Phone", value: profile.phone || "Not added" },
+                ].map((f) => (
+                  <div key={f.label} className="flex items-center gap-3.5">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[var(--surface-3)]">
+                      <f.icon size={16} className="text-[var(--primary)]" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-[11px] font-bold uppercase tracking-wider text-[var(--text-muted)]">{f.label}</p>
+                      <p className="truncate text-[14px] font-semibold text-[var(--text-primary)]">{f.value}</p>
+                    </div>
                   </div>
                 ))}
               </div>
             )}
-          </div>
+          </section>
 
-          {/* Addresses */}
-          <div className="card p-6">
-            <div className="flex justify-between items-center mb-5">
-              <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                <MapPin size={15} className="text-[var(--primary)]" /> Saved Addresses
-              </h3>
+          {/* Saved Addresses */}
+          <section className="rounded-[22px] border border-[var(--border)] bg-white p-6">
+            <div className="mb-5 flex items-center justify-between">
+              <h2 className="flex items-center gap-2 text-[17px] font-[800] text-[var(--text-primary)]">
+                <MapPin size={17} className="text-[var(--primary)]" /> Saved Addresses
+              </h2>
             </div>
             <AddressList
               addresses={profile.addresses || []}
@@ -316,95 +293,83 @@ export default function ProfilePage() {
               onDelete={async (id) => { try { const res = await userService.deleteAddress(id); setProfile({ ...profile, addresses: res.data.data }); showSuccess("Address deleted!"); } catch (err) { setApiError(getErrorMessage(err)); } }}
               onSetDefault={async (id) => { try { const res = await userService.setDefaultAddress(id); setProfile({ ...profile, addresses: res.data.data }); showSuccess("Default address updated!"); } catch (err) { setApiError(getErrorMessage(err)); } }}
             />
-          </div>
+          </section>
+        </div>
 
-          {/* Payment + Security */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="card p-6">
-              <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2 mb-4">
-                <CreditCard size={15} className="text-[var(--primary)]" /> Payment Methods
-              </h3>
-              <div className="bg-slate-900 rounded-xl px-3 py-2 inline-flex items-center gap-2 mb-3">
-                <span className="text-[11px] font-extrabold text-blue-400 tracking-wider">VISA</span>
+        {/* Sidebar */}
+        <aside className="space-y-5">
+          {/* Security */}
+          <section className="rounded-[22px] border border-[var(--border)] bg-white p-6">
+            <h2 className="flex items-center gap-2 text-[17px] font-[800] text-[var(--text-primary)]">
+              <Shield size={17} className="text-[var(--primary)]" /> Security
+            </h2>
+            <form onSubmit={handleChangePassword} className="mt-5 space-y-3.5">
+              <div>
+                <label className="input-label" htmlFor="oldPwd">Current Password</label>
+                <div className="relative">
+                  <input id="oldPwd" type={showOldPwd ? "text" : "password"} className="input pr-11" placeholder="••••••••"
+                    value={pwdForm.oldPassword} onChange={e => { setPwdForm({ ...pwdForm, oldPassword: e.target.value }); setPwdErrors(prev => ({ ...prev, oldPassword: undefined })); }} />
+                  <button type="button" onClick={() => setShowOldPwd(!showOldPwd)} className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]">
+                    {showOldPwd ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
+                <FieldError message={pwdErrors.oldPassword} />
               </div>
-              <p className="text-sm text-slate-900 font-semibold">Ending in 4242</p>
-              <button onClick={() => showSuccess("Payment management coming soon!")} className="text-[var(--primary)] font-bold text-sm mt-3 hover:text-purple-700 transition-colors">
-                Manage payments →
-              </button>
-            </div>
-
-            <div className="card p-6">
-              <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2 mb-4">
-                <Shield size={15} className="text-[var(--primary)]" /> Account Security
-              </h3>
-              <form onSubmit={handleChangePassword} className="space-y-3.5">
-                <div>
-                  <label className="input-label" htmlFor="oldPwd">Current Password</label>
-                  <div className="relative">
-                    <input id="oldPwd" type={showOldPwd ? "text" : "password"} className="input pr-11" placeholder="Enter current password"
-                      value={pwdForm.oldPassword} onChange={e => { setPwdForm({ ...pwdForm, oldPassword: e.target.value }); setPwdErrors(prev => ({ ...prev, oldPassword: undefined })); }} />
-                    <button type="button" onClick={() => setShowOldPwd(!showOldPwd)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
-                      {showOldPwd ? <EyeOff size={16} /> : <Eye size={16} />}
-                    </button>
-                  </div>
-                  <FieldError message={pwdErrors.oldPassword} />
+              <div>
+                <label className="input-label" htmlFor="newPwd">New Password</label>
+                <div className="relative">
+                  <input id="newPwd" type={showNewPwd ? "text" : "password"} className="input pr-11" placeholder="Min. 8 chars"
+                    value={pwdForm.newPassword} onChange={e => { setPwdForm({ ...pwdForm, newPassword: e.target.value }); setPwdErrors(prev => ({ ...prev, newPassword: undefined })); }} />
+                  <button type="button" onClick={() => setShowNewPwd(!showNewPwd)} className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]">
+                    {showNewPwd ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
                 </div>
-                <div>
-                  <label className="input-label" htmlFor="newPwd">New Password</label>
-                  <div className="relative">
-                    <input id="newPwd" type={showNewPwd ? "text" : "password"} className="input pr-11" placeholder="Min. 8 characters"
-                      value={pwdForm.newPassword} onChange={e => { setPwdForm({ ...pwdForm, newPassword: e.target.value }); setPwdErrors(prev => ({ ...prev, newPassword: undefined })); }} />
-                    <button type="button" onClick={() => setShowNewPwd(!showNewPwd)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
-                      {showNewPwd ? <EyeOff size={16} /> : <Eye size={16} />}
-                    </button>
-                  </div>
-                  <FieldError message={pwdErrors.newPassword} />
-                  <PasswordStrength score={pwdStrength.score} message={pwdStrength.message} />
+                <FieldError message={pwdErrors.newPassword} />
+                <PasswordStrength score={pwdStrength.score} message={pwdStrength.message} />
+              </div>
+              <div>
+                <label className="input-label" htmlFor="confirmPwd">Confirm Password</label>
+                <div className="relative">
+                  <input id="confirmPwd" type={showConfirmPwd ? "text" : "password"} className="input pr-11" placeholder="Re-enter"
+                    value={confirmPwd} onChange={e => { setConfirmPwd(e.target.value); setPwdErrors(prev => ({ ...prev, confirmPassword: undefined })); }} />
+                  <button type="button" onClick={() => setShowConfirmPwd(!showConfirmPwd)} className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]">
+                    {showConfirmPwd ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
                 </div>
-                <div>
-                  <label className="input-label" htmlFor="confirmPwd">Confirm Password</label>
-                  <div className="relative">
-                    <input id="confirmPwd" type={showConfirmPwd ? "text" : "password"} className="input pr-11" placeholder="Re-enter new password"
-                      value={confirmPwd} onChange={e => { setConfirmPwd(e.target.value); setPwdErrors(prev => ({ ...prev, confirmPassword: undefined })); }} />
-                    <button type="button" onClick={() => setShowConfirmPwd(!showConfirmPwd)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
-                      {showConfirmPwd ? <EyeOff size={16} /> : <Eye size={16} />}
-                    </button>
-                  </div>
-                  <FieldError message={pwdErrors.confirmPassword} />
-                </div>
-                <Button type="submit" variant="ghost" size="sm" style={{ marginTop: 4, height: 40 }}>Update Password</Button>
-              </form>
-            </div>
-          </div>
+                <FieldError message={pwdErrors.confirmPassword} />
+              </div>
+              <Button type="submit" variant="ghost" size="sm">Update Password</Button>
+            </form>
+          </section>
 
           {/* Sign out */}
-          <div className="text-center pt-2">
-            <button onClick={logout} className="text-red-500 font-bold text-sm inline-flex items-center gap-2 hover:text-red-600 transition-colors">
-              <LogOut size={15} /> Sign out of account
-            </button>
-          </div>
-        </div>
+          <button onClick={logout} className="flex w-full items-center justify-center gap-2 rounded-2xl border border-red-100 bg-red-50 py-3.5 text-[14px] font-bold text-red-600 transition hover:bg-red-100">
+            <LogOut size={16} /> Sign out
+          </button>
+        </aside>
       </div>
 
       {/* OTP Modal */}
       {phoneOtpMode && (
-        <div className="fixed inset-0 z-[10000] bg-black/30 backdrop-blur-md flex items-center justify-center">
-          <div className="fade-up bg-white rounded-[24px] p-8 w-[90%] max-w-[420px] shadow-2xl">
-            <h2 className="text-xl font-extrabold text-slate-900 mb-2">Verify Phone Number</h2>
-            <p className="text-slate-500 text-sm mb-6">
-              We sent a 6-digit code to <strong className="text-slate-900">+91 {basicForm.phone}</strong>.
+        <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/30 backdrop-blur-md">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="w-[90%] max-w-[400px] rounded-[24px] bg-white p-7 shadow-2xl"
+          >
+            <h2 className="text-xl font-[800] text-[var(--text-primary)]">Verify Phone</h2>
+            <p className="mt-1.5 text-sm text-[var(--text-secondary)]">
+              Enter the 6-digit code sent to <span className="font-bold text-[var(--text-primary)]">+91 {basicForm.phone}</span>
             </p>
-            <form onSubmit={handleVerifyPhoneOtp}>
-              <div className="mb-6">
-                <Input id="phoneOtp" value={phoneOtp} onChange={e => { setPhoneOtp(e.target.value.replace(/\D/g, "").slice(0, 6)); setOtpError(null); }} placeholder="Enter 6-digit code" />
-                {otpError && <p className="text-red-600 text-xs mt-1.5 font-medium">{otpError}</p>}
-              </div>
-              <div className="flex gap-3">
+            <form onSubmit={handleVerifyPhoneOtp} className="mt-5">
+              <Input id="phoneOtp" value={phoneOtp} onChange={e => { setPhoneOtp(e.target.value.replace(/\D/g, "").slice(0, 6)); setOtpError(null); }} placeholder="Enter 6-digit code" />
+              {otpError && <p className="mt-1.5 text-xs font-medium text-red-600">{otpError}</p>}
+              <div className="mt-5 flex gap-3">
                 <Button type="button" variant="ghost" size="full" onClick={() => { setPhoneOtpMode(false); setPhoneOtp(""); setOtpError(null); }}>Cancel</Button>
                 <Button type="submit" size="full" loading={saving}>Verify</Button>
               </div>
             </form>
-          </div>
+          </motion.div>
         </div>
       )}
 

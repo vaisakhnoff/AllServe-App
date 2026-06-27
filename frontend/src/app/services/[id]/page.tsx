@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState, useCallback } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useSelector } from "react-redux";
+import { motion } from "framer-motion";
 import {
   ArrowLeft, Clock, MapPin, Tag as TagIcon, Loader2, CalendarDays,
   Image as ImageIcon, BadgeCheck, ChevronLeft, ChevronRight, CheckCircle2,

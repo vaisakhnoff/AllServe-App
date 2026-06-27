@@ -4,10 +4,12 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   Bell, CalendarCheck, Home, LogOut, MessageSquare,
-  Sparkles, User, Zap, FileText, PlusCircle,
+  Sparkles, User, Zap, FileText, PlusCircle, Menu, X,
+  ChevronDown, Heart,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
+import { motion, AnimatePresence } from "framer-motion";
 import { RootState } from "@/store";
 import { useAuth } from "@/hooks/useAuth";
 import { userService } from "@/services/user";
@@ -19,8 +21,10 @@ const navItems = [
   { label: "Bookings", href: "/bookings", icon: CalendarCheck },
   { label: "My Requests", href: "/my-requests", icon: FileText },
   { label: "Post Request", href: "/post-request", icon: PlusCircle },
-  { label: "Messages", href: "/messages", icon: MessageSquare },
+  { label: "Messages", href: "/messages", icon: MessageSquare, badge: 3 },
+  { label: "Favourites", href: "/favourites", icon: Heart },
   { label: "Profile", href: ROUTES.PROFILE, icon: User },
+  { label: "Notifications", href: "/notifications", icon: Bell },
 ];
 
 export function UserShell({ children }: { children: React.ReactNode }) {
@@ -28,6 +32,8 @@ export function UserShell({ children }: { children: React.ReactNode }) {
   const { logout } = useAuth();
   const { user } = useSelector((state: RootState) => state.auth);
   const [profileImage, setProfileImage] = useState<string | null>(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
 
   useEffect(() => {
     userService.getProfile()
@@ -35,93 +41,253 @@ export function UserShell({ children }: { children: React.ReactNode }) {
       .catch(() => {});
   }, []);
 
+  useEffect(() => { setMobileMenuOpen(false); setProfileOpen(false); }, [pathname]);
+
   return (
-    <div className="marketplace-shell flex min-h-screen text-slate-950">
-      {/* Premium Sidebar */}
-      <aside className="hidden w-[248px] shrink-0 border-r border-slate-200/60 bg-white px-4 py-5 shadow-[8px_0_32px_rgba(15,23,42,0.03)] lg:flex lg:flex-col">
-        {/* Brand */}
-        <Link href={ROUTES.DASHBOARD} className="mb-6 flex items-center gap-3 group">
-          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-[#6D28FF] to-[#A855F7] text-white shadow-lg shadow-purple-500/20 group-hover:shadow-purple-500/30 transition-shadow">
-            <Zap size={20} strokeWidth={2.5} />
-          </div>
-          <div>
-            <p className="text-lg font-extrabold tracking-tight">Allserve</p>
-            <p className="text-[10px] font-bold text-[var(--primary)] uppercase tracking-widest">Marketplace</p>
-          </div>
-        </Link>
+    <div className="marketplace-shell flex min-h-screen">
+      {/* Desktop Sidebar — Floating Glass Panel */}
+      <aside className="hidden w-[260px] shrink-0 lg:flex lg:flex-col fixed top-0 left-0 h-screen z-40">
+        <div className="m-3 flex flex-1 flex-col rounded-[var(--radius-xl)] bg-white/90 backdrop-blur-xl border border-white/60 shadow-[0_8px_40px_rgba(0,0,0,0.04),0_2px_8px_rgba(0,0,0,0.02)] overflow-hidden">
+          {/* Brand */}
+          <Link href={ROUTES.DASHBOARD} className="flex items-center gap-3 px-5 pt-6 pb-4 group">
+            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[#141414] text-white shadow-lg shadow-black/15 group-hover:scale-105 transition-all duration-300">
+              <Zap size={20} strokeWidth={2.5} />
+            </div>
+            <div>
+              <p className="text-[1.05rem] font-extrabold tracking-tight text-slate-900 uppercase">Allserve</p>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.15em]">Marketplace</p>
+            </div>
+          </Link>
 
-        {/* Navigation */}
-        <nav className="flex flex-1 flex-col gap-1.5">
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            const active = pathname === item.href || (item.href !== ROUTES.DASHBOARD && pathname.startsWith(item.href));
-            return (
-              <Link key={item.href} href={item.href} className={active ? "sidebar-link-active" : "sidebar-link"}>
-                <Icon size={18} />
-                {item.label}
-              </Link>
-            );
-          })}
-        </nav>
+          {/* Navigation */}
+          <nav className="flex flex-1 flex-col gap-1 px-3 mt-2">
+            {navItems.map((item) => {
+              const Icon = item.icon;
+              const active = pathname === item.href || (item.href !== ROUTES.DASHBOARD && pathname.startsWith(item.href));
+              return (
+                <Link key={item.href} href={item.href} className={`${active ? "sidebar-link-active" : "sidebar-link"} justify-between`}>
+                  <span className="flex items-center gap-3">
+                    <Icon size={18} />
+                    {item.label}
+                  </span>
+                  {item.badge && (
+                    <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-[var(--primary)] px-1.5 text-[10px] font-bold text-white">
+                      {item.badge}
+                    </span>
+                  )}
+                </Link>
+              );
+            })}
+          </nav>
 
-        {/* Sign out */}
-        <button onClick={logout} className="sidebar-link mt-4 hover:!bg-red-50 hover:!text-red-600 border border-transparent">
-          <LogOut size={18} />
-          Sign out
-        </button>
-
-        {/* Promo card */}
-        <div className="mt-4 rounded-2xl border border-purple-100 bg-gradient-to-br from-purple-50 to-violet-50/50 p-4">
-          <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-xl bg-white text-[var(--primary)] shadow-sm">
-            <Sparkles size={16} />
+          {/* Promo card */}
+          <div className="mx-3 mb-3 mt-2 rounded-[var(--radius)] bg-[var(--primary-light)] p-4 text-center">
+            <div className="mx-auto mb-2.5 flex h-9 w-9 items-center justify-center rounded-xl bg-white text-[var(--primary)] ring-1 ring-[var(--primary)]/10">
+              <Sparkles size={16} />
+            </div>
+            <p className="text-[0.8125rem] font-bold text-slate-900">AllServe Premium</p>
+            <p className="mt-1 text-[11px] leading-[1.5] text-slate-500">Unlock priority support, exclusive offers &amp; more.</p>
+            <button className="mt-3 w-full rounded-xl bg-[#141414] py-2 text-[12px] font-bold text-white transition hover:bg-black">
+              Upgrade Now
+            </button>
           </div>
-          <p className="text-sm font-bold text-slate-900">Find trusted pros</p>
-          <p className="mt-1 text-xs leading-5 text-slate-500">Browse categories and book verified professionals near you.</p>
+
+          {/* Sign out */}
+          <div className="border-t border-slate-100 px-3 py-3">
+            <button onClick={logout} className="sidebar-link w-full hover:!bg-red-50 hover:!text-red-600">
+              <LogOut size={18} />
+              Logout
+            </button>
+          </div>
         </div>
       </aside>
 
       {/* Main content area */}
-      <div className="flex min-w-0 flex-1 flex-col">
-        {/* Top header */}
-        <header className="sticky top-0 z-30 border-b border-slate-200/60 bg-white/85 backdrop-blur-xl px-4 py-2.5 sm:px-6 lg:px-8">
-          <div className="mx-auto flex max-w-7xl items-center justify-between gap-4">
-            {/* Mobile brand */}
-            <Link href={ROUTES.DASHBOARD} className="flex items-center gap-2 lg:hidden">
-              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-[#6D28FF] to-[#A855F7] text-white">
-                <Zap size={18} strokeWidth={2.5} />
-              </div>
-              <span className="font-extrabold text-slate-900">Allserve</span>
-            </Link>
-
-            {/* Right actions */}
-            <div className="flex items-center gap-3 ml-auto">
+      <div className="flex min-w-0 flex-1 flex-col lg:pl-[260px]">
+        {/* Top header — detailed navbar */}
+        <header className="sticky top-0 z-30 bg-white/80 backdrop-blur-2xl border-b border-slate-100/60 px-4 py-2.5 sm:px-6 lg:px-8">
+          <div className="mx-auto flex max-w-7xl items-center justify-between gap-3">
+            {/* Left: mobile menu + location */}
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setMobileMenuOpen(true)}
+                className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200/80 bg-white text-slate-600 shadow-sm hover:bg-slate-50 transition-all lg:hidden"
+                aria-label="Open menu"
+              >
+                <Menu size={18} />
+              </button>
               <LocationPicker />
-              <button className="relative flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 shadow-sm hover:bg-purple-50 hover:text-[var(--primary)] transition-all">
+            </div>
+
+            {/* Right: messages · notifications · profile */}
+            <div className="flex items-center gap-2">
+              <Link
+                href="/messages"
+                aria-label="Messages"
+                className="relative flex h-10 w-10 items-center justify-center rounded-full border border-slate-200/80 bg-white text-slate-500 shadow-sm transition-all duration-200 hover:bg-purple-50 hover:text-[var(--primary)] hover:border-purple-200 hover:shadow-md"
+              >
+                <MessageSquare size={17} />
+              </Link>
+
+              <button
+                aria-label="Notifications"
+                className="relative flex h-10 w-10 items-center justify-center rounded-full border border-slate-200/80 bg-white text-slate-500 shadow-sm transition-all duration-200 hover:bg-purple-50 hover:text-[var(--primary)] hover:border-purple-200 hover:shadow-md"
+              >
                 <Bell size={17} />
               </button>
-              <Link href={ROUTES.PROFILE} className="flex items-center gap-3 rounded-full border border-slate-200 bg-white py-1.5 pl-1.5 pr-4 shadow-sm hover:bg-slate-50 transition-colors">
-                <div className="h-9 w-9 overflow-hidden rounded-full bg-gradient-to-br from-purple-100 to-violet-100 flex items-center justify-center text-[var(--primary)] font-bold text-sm border-2 border-white">
-                  {profileImage ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={profileImage} className="h-full w-full object-cover" alt="" />
-                  ) : (
-                    <User size={15} />
+
+              <span className="mx-0.5 hidden h-7 w-px bg-slate-200/80 sm:block" />
+
+              {/* Profile dropdown */}
+              <div className="relative">
+                <button
+                  onClick={() => setProfileOpen((v) => !v)}
+                  className="flex items-center gap-2.5 rounded-full border border-slate-200/80 bg-white py-1.5 pl-1.5 pr-2.5 shadow-sm transition-all duration-200 hover:shadow-md hover:border-purple-200/60"
+                >
+                  <div className="h-9 w-9 overflow-hidden rounded-full bg-gradient-to-br from-purple-100 to-violet-100 flex items-center justify-center text-[var(--primary)] font-bold text-sm border-2 border-white shadow-inner">
+                    {profileImage ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={profileImage} className="h-full w-full object-cover" alt="" />
+                    ) : (
+                      <User size={15} />
+                    )}
+                  </div>
+                  <div className="hidden text-left sm:block">
+                    <p className="text-sm font-bold leading-none text-slate-900">{user?.name?.split(" ")[0] || "User"}</p>
+                    <p className="mt-0.5 text-[11px] font-medium text-slate-400">Customer</p>
+                  </div>
+                  <ChevronDown size={15} className={`hidden text-slate-400 transition-transform sm:block ${profileOpen ? "rotate-180" : ""}`} />
+                </button>
+
+                <AnimatePresence>
+                  {profileOpen && (
+                    <>
+                      <div className="fixed inset-0 z-40" onClick={() => setProfileOpen(false)} />
+                      <motion.div
+                        initial={{ opacity: 0, y: -8, scale: 0.97 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: -8, scale: 0.97 }}
+                        transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
+                        className="absolute right-0 z-50 mt-2 w-64 overflow-hidden rounded-2xl border border-slate-100 bg-white/95 backdrop-blur-xl shadow-[0_16px_50px_-12px_rgba(0,0,0,0.18)]"
+                      >
+                        <div className="flex items-center gap-3 border-b border-slate-100 px-4 py-3.5">
+                          <div className="h-11 w-11 overflow-hidden rounded-full bg-gradient-to-br from-purple-100 to-violet-100 flex items-center justify-center text-[var(--primary)] font-bold border-2 border-white shadow-inner">
+                            {profileImage ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img src={profileImage} className="h-full w-full object-cover" alt="" />
+                            ) : (
+                              <User size={18} />
+                            )}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="truncate text-sm font-bold text-slate-900">{user?.name || "User"}</p>
+                            <p className="truncate text-[12px] text-slate-400">{user?.email || "Customer account"}</p>
+                          </div>
+                        </div>
+                        <div className="p-1.5">
+                          {[
+                            { label: "My profile", icon: User, href: ROUTES.PROFILE },
+                            { label: "My bookings", icon: CalendarCheck, href: "/bookings" },
+                            { label: "Messages", icon: MessageSquare, href: "/messages" },
+                            { label: "My requests", icon: FileText, href: "/my-requests" },
+                          ].map((item) => (
+                            <Link
+                              key={item.label}
+                              href={item.href}
+                              onClick={() => setProfileOpen(false)}
+                              className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-600 transition-colors hover:bg-purple-50 hover:text-[var(--primary)]"
+                            >
+                              <item.icon size={16} /> {item.label}
+                            </Link>
+                          ))}
+                        </div>
+                        <div className="border-t border-slate-100 p-1.5">
+                          <button
+                            onClick={() => { setProfileOpen(false); logout(); }}
+                            className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-red-500 transition-colors hover:bg-red-50"
+                          >
+                            <LogOut size={16} /> Sign out
+                          </button>
+                        </div>
+                      </motion.div>
+                    </>
                   )}
-                </div>
-                <div className="hidden sm:block">
-                  <p className="text-sm font-bold leading-none text-slate-900">{user?.name?.split(" ")[0] || "User"}</p>
-                  <p className="mt-0.5 text-[11px] text-slate-500">Customer</p>
-                </div>
-              </Link>
+                </AnimatePresence>
+              </div>
             </div>
           </div>
         </header>
 
         {/* Page content */}
-        <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-5 sm:px-6 lg:px-7">
-          {children}
+        <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-6 sm:px-6 lg:px-8">
+          <motion.div
+            key={pathname}
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+          >
+            {children}
+          </motion.div>
         </main>
       </div>
+
+      {/* Mobile Menu — Spatial Overlay */}
+      <AnimatePresence>
+        {mobileMenuOpen && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="fixed inset-0 z-50 bg-black/20 backdrop-blur-sm lg:hidden"
+              onClick={() => setMobileMenuOpen(false)}
+            />
+            <motion.aside
+              initial={{ x: -280, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              exit={{ x: -280, opacity: 0 }}
+              transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              className="fixed top-0 left-0 bottom-0 z-50 w-[280px] bg-white/95 backdrop-blur-xl shadow-2xl lg:hidden flex flex-col"
+            >
+              <div className="flex items-center justify-between px-5 pt-5 pb-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-[12px] bg-gradient-to-br from-[#6D28FF] to-[#A855F7] text-white shadow-md">
+                    <Zap size={18} strokeWidth={2.5} />
+                  </div>
+                  <span className="font-extrabold text-slate-900">Allserve</span>
+                </div>
+                <button
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 text-slate-500 hover:bg-slate-200 transition-colors"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+
+              <nav className="flex-1 px-3 py-4 space-y-1">
+                {navItems.map((item) => {
+                  const Icon = item.icon;
+                  const active = pathname === item.href || (item.href !== ROUTES.DASHBOARD && pathname.startsWith(item.href));
+                  return (
+                    <Link key={item.href} href={item.href} className={active ? "sidebar-link-active" : "sidebar-link"}>
+                      <Icon size={18} />
+                      {item.label}
+                    </Link>
+                  );
+                })}
+              </nav>
+
+              <div className="px-3 pb-5">
+                <button onClick={logout} className="sidebar-link w-full hover:!bg-red-50 hover:!text-red-600">
+                  <LogOut size={18} />
+                  Sign out
+                </button>
+              </div>
+            </motion.aside>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

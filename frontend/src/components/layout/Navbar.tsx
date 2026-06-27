@@ -18,27 +18,27 @@ export const Navbar: React.FC<NavbarProps> = ({ title = "Dashboard" }) => {
   const { logout } = useAuth();
 
   return (
-    <header className="h-16 bg-gray-900/80 backdrop-blur border-b border-gray-800 flex items-center justify-between px-6 sticky top-0 z-30">
-      <h1 className="text-base font-semibold text-white">{title}</h1>
+    <header className="h-16 bg-white/80 backdrop-blur-2xl border-b border-slate-100/60 flex items-center justify-between px-6 sticky top-0 z-30">
+      <h1 className="text-base font-bold text-slate-900">{title}</h1>
 
-      <div className="flex items-center gap-4">
-        {/* Notification placeholder */}
-        <button className="relative p-2 rounded-lg hover:bg-gray-800 text-gray-400 hover:text-white transition-colors">
-          <Bell size={18} />
+      <div className="flex items-center gap-3">
+        {/* Notification */}
+        <button className="relative p-2.5 rounded-xl border border-slate-200/80 bg-white hover:bg-purple-50 hover:border-purple-200 text-slate-500 hover:text-[var(--primary)] transition-all shadow-sm">
+          <Bell size={17} />
         </button>
 
         {/* User chip */}
-        <div className="flex items-center gap-3 bg-gray-800 rounded-xl px-3 py-2">
-          <div className="w-7 h-7 rounded-lg bg-blue-600/30 border border-blue-600/50 flex items-center justify-center">
-            <span className="text-xs font-bold text-blue-400">
+        <div className="flex items-center gap-3 bg-white border border-slate-200/80 rounded-full px-3 py-1.5 shadow-sm">
+          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-100 to-violet-100 border-2 border-white flex items-center justify-center shadow-inner">
+            <span className="text-xs font-bold text-[var(--primary)]">
               {user?.name?.[0]?.toUpperCase() ?? "U"}
             </span>
           </div>
           <div className="flex flex-col">
-            <span className="text-sm font-medium text-white leading-none">
+            <span className="text-sm font-bold text-slate-900 leading-none">
               {user?.name ?? "User"}
             </span>
-            <span className="text-xs text-gray-400 leading-none mt-0.5 capitalize">{role}</span>
+            <span className="text-[11px] text-slate-400 leading-none mt-0.5 capitalize font-medium">{role}</span>
           </div>
           {user?.status && (
             <Badge status={user.status as Status} />

@@ -2,31 +2,32 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { motion } from "framer-motion";
 import {
   Plus, Clock, CheckCircle2, XCircle, MessageSquare,
-  MapPin, IndianRupee, Zap, FileText, ArrowRight,
+  MapPin, IndianRupee, Zap, FileText, ArrowUpRight,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { serviceRequestService } from "@/services/serviceRequest";
 import { ServiceRequest, ServiceRequestStatus } from "@/types/serviceRequest.types";
 import { getErrorMessage } from "@/utils/errorHandler";
 
-const tabs: { label: string; value: ServiceRequestStatus | "all"; icon: React.ElementType }[] = [
-  { label: "All", value: "all", icon: FileText },
-  { label: "Open", value: "open", icon: Zap },
-  { label: "Receiving Quotes", value: "receiving_quotes", icon: MessageSquare },
-  { label: "Completed", value: "completed", icon: CheckCircle2 },
-  { label: "Cancelled", value: "cancelled", icon: XCircle },
+const tabs: { label: string; value: ServiceRequestStatus | "all" }[] = [
+  { label: "All", value: "all" },
+  { label: "Open", value: "open" },
+  { label: "Receiving Quotes", value: "receiving_quotes" },
+  { label: "Completed", value: "completed" },
+  { label: "Cancelled", value: "cancelled" },
 ];
 
-const statusConfig: Record<string, { label: string; color: string }> = {
-  open: { label: "Open", color: "bg-blue-100 text-blue-700" },
-  receiving_quotes: { label: "Receiving Quotes", color: "bg-amber-100 text-amber-700" },
-  quote_selected: { label: "Quote Selected", color: "bg-purple-100 text-purple-700" },
-  booking_created: { label: "Booking Created", color: "bg-emerald-100 text-emerald-700" },
-  completed: { label: "Completed", color: "bg-green-100 text-green-700" },
-  cancelled: { label: "Cancelled", color: "bg-red-100 text-red-700" },
-  expired: { label: "Expired", color: "bg-slate-100 text-slate-600" },
+const statusConfig: Record<string, { label: string; bg: string }> = {
+  open: { label: "Open", bg: "bg-blue-50 text-blue-700" },
+  receiving_quotes: { label: "Receiving Quotes", bg: "bg-amber-50 text-amber-700" },
+  quote_selected: { label: "Quote Selected", bg: "bg-purple-50 text-purple-700" },
+  booking_created: { label: "Booking Created", bg: "bg-emerald-50 text-emerald-700" },
+  completed: { label: "Completed", bg: "bg-green-50 text-green-700" },
+  cancelled: { label: "Cancelled", bg: "bg-red-50 text-red-700" },
+  expired: { label: "Expired", bg: "bg-slate-100 text-slate-600" },
 };
 
 const formatBudget = (r: ServiceRequest) => {
@@ -44,7 +45,7 @@ export default function MyRequestsPage() {
   useEffect(() => {
     fetchRequests();
     serviceRequestService.getStats().then((res) => setStats(res.data.data)).catch(() => {});
-  }, [activeTab]);
+  }, [activeTab]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchRequests = async () => {
     setLoading(true);
@@ -60,105 +61,107 @@ export default function MyRequestsPage() {
   };
 
   return (
-    <div>
+    <div className="pb-12">
       {/* Header */}
-      <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+      <div className="mb-7 flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="text-sm font-bold text-purple-600">Request Marketplace</p>
-          <h1 className="mt-1 text-2xl font-black tracking-tight text-slate-900">My Service Requests</h1>
-          <p className="mt-1 text-sm text-slate-500">Track your requests and manage incoming quotes</p>
+          <h1 className="text-[2rem] font-[800] tracking-[-0.03em] text-[var(--text-primary)]">My Requests</h1>
+          <p className="mt-1 text-[15px] text-[var(--text-secondary)]">Track requests and manage incoming quotes</p>
         </div>
-        <Link href="/post-request" className="flex items-center gap-2 rounded-2xl bg-gradient-to-r from-violet-600 to-purple-600 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-purple-500/20 hover:shadow-purple-500/35 transition-all">
-          <Plus size={16} /> Post New Request
+        <Link
+          href="/post-request"
+          className="group inline-flex items-center gap-2 rounded-full bg-[#141414] py-2.5 pl-5 pr-2.5 text-sm font-bold text-white transition hover:bg-black"
+        >
+          <Plus size={14} /> Post Request
+          <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[var(--primary)] text-white transition group-hover:rotate-[-45deg]">
+            <ArrowUpRight size={13} />
+          </span>
         </Link>
       </div>
 
-      {/* Stats */}
-      <div className="mb-6 grid grid-cols-3 gap-4">
+      {/* Stats strip */}
+      <div className="mb-6 grid grid-cols-3 gap-3">
         {[
-          { label: "Total Requests", value: stats.total, color: "from-blue-500 to-cyan-500" },
-          { label: "Active", value: stats.active, color: "from-amber-500 to-orange-500" },
-          { label: "Completed", value: stats.completed, color: "from-emerald-500 to-teal-500" },
+          { label: "Total", value: stats.total, icon: FileText },
+          { label: "Active", value: stats.active, icon: Zap },
+          { label: "Completed", value: stats.completed, icon: CheckCircle2 },
         ].map((s) => (
-          <div key={s.label} className="premium-card p-4 text-center">
-            <p className="text-2xl font-black">{s.value}</p>
-            <p className="mt-1 text-xs font-semibold text-slate-500">{s.label}</p>
+          <div key={s.label} className="flex items-center gap-3 rounded-2xl border border-[var(--border)] bg-white p-4">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--surface-3)]">
+              <s.icon size={16} className="text-[var(--primary)]" />
+            </div>
+            <div>
+              <p className="text-xl font-[800] text-[var(--text-primary)]">{s.value}</p>
+              <p className="text-[11px] font-semibold text-[var(--text-muted)]">{s.label}</p>
+            </div>
           </div>
         ))}
       </div>
 
       {/* Tabs */}
-      <div className="mb-6 flex gap-1 overflow-x-auto rounded-2xl border border-slate-200 bg-slate-50/50 p-1.5">
-        {tabs.map((tab) => {
-          const Icon = tab.icon;
-          return (
-            <button
-              key={tab.value}
-              onClick={() => setActiveTab(tab.value)}
-              className={`flex items-center gap-1.5 whitespace-nowrap rounded-xl px-4 py-2.5 text-xs font-bold transition-all ${
-                activeTab === tab.value
-                  ? "bg-white text-slate-900 shadow-sm"
-                  : "text-slate-500 hover:text-slate-700"
-              }`}
-            >
-              <Icon size={14} /> {tab.label}
-            </button>
-          );
-        })}
+      <div className="mb-6 flex gap-1.5 overflow-x-auto">
+        {tabs.map((tab) => (
+          <button
+            key={tab.value}
+            onClick={() => setActiveTab(tab.value)}
+            className={`shrink-0 rounded-full px-4 py-2 text-[13px] font-semibold transition ${
+              activeTab === tab.value
+                ? "bg-[#141414] text-white shadow-sm"
+                : "bg-white border border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--text-muted)]"
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
       </div>
 
-      {/* Request List */}
+      {/* List */}
       {loading ? (
-        <div className="flex h-48 items-center justify-center">
-          <div className="animate-pulse text-sm font-semibold text-slate-500">Loading requests...</div>
-        </div>
+        <div className="flex h-48 items-center justify-center text-sm font-semibold text-[var(--text-muted)]">Loading...</div>
       ) : requests.length === 0 ? (
-        <div className="flex flex-col items-center justify-center rounded-3xl border-2 border-dashed border-slate-200 py-16 text-center">
-          <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-slate-100">
-            <FileText size={28} className="text-slate-400" />
+        <div className="flex flex-col items-center py-20 text-center">
+          <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-[var(--surface-3)]">
+            <FileText size={28} className="text-[var(--text-muted)]" />
           </div>
-          <h3 className="text-lg font-bold text-slate-900">No requests yet</h3>
-          <p className="mt-1 text-sm text-slate-500 max-w-sm">Post your first service request and get quotes from verified providers near you.</p>
+          <p className="text-lg font-bold text-[var(--text-primary)]">No requests yet</p>
+          <p className="mt-1 max-w-sm text-sm text-[var(--text-muted)]">Post a service request to get quotes from verified providers</p>
         </div>
       ) : (
-        <div className="space-y-4">
-          {requests.map((req) => {
+        <div className="space-y-3">
+          {requests.map((req, i) => {
             const status = statusConfig[req.status] || statusConfig.open;
             return (
-              <Link
+              <motion.div
                 key={req._id}
-                href={`/my-requests/${req._id}`}
-                className="group block rounded-2xl border border-slate-200 bg-white p-5 shadow-sm hover:shadow-md hover:border-purple-200 transition-all"
+                initial={{ opacity: 0, x: -8 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.03 * i, duration: 0.3 }}
               >
-                <div className="flex items-start justify-between gap-4">
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[10px] font-bold ${status.color}`}>
-                        {status.label}
-                      </span>
-                      {req.quoteCount > 0 && (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-purple-100 px-2.5 py-0.5 text-[10px] font-bold text-purple-700">
-                          <MessageSquare size={10} /> {req.quoteCount} quote{req.quoteCount > 1 ? "s" : ""}
-                        </span>
-                      )}
+                <Link href={`/my-requests/${req._id}`} className="group block rounded-[18px] border border-[var(--border)] bg-white p-5 transition-all hover:-translate-y-0.5 hover:border-[var(--border-hover)] hover:shadow-[var(--shadow-card-hover)]">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2 mb-1.5">
+                        <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[10px] font-bold ${status.bg}`}>{status.label}</span>
+                        {req.quoteCount > 0 && (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-[var(--primary-light)] px-2.5 py-0.5 text-[10px] font-bold text-[var(--primary)]">
+                            <MessageSquare size={10} /> {req.quoteCount} quote{req.quoteCount > 1 ? "s" : ""}
+                          </span>
+                        )}
+                      </div>
+                      <h3 className="text-[15px] font-bold text-[var(--text-primary)] truncate group-hover:text-[var(--primary)]">{req.title}</h3>
+                      <p className="mt-1 text-[13px] text-[var(--text-muted)] line-clamp-1">{req.description}</p>
+                      <div className="mt-3 flex flex-wrap items-center gap-3 text-[12px] text-[var(--text-muted)]">
+                        <span className="flex items-center gap-1 font-semibold"><IndianRupee size={11} /> {formatBudget(req)}</span>
+                        <span className="flex items-center gap-1"><MapPin size={11} /> {req.address.city}</span>
+                        <span className="flex items-center gap-1"><Clock size={11} /> {new Date(req.createdAt).toLocaleDateString()}</span>
+                      </div>
                     </div>
-                    <h3 className="text-base font-bold text-slate-900 group-hover:text-purple-700 transition-colors truncate">{req.title}</h3>
-                    <p className="mt-1 text-sm text-slate-500 line-clamp-1">{req.description}</p>
-                    <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-slate-500">
-                      <span className="flex items-center gap-1 font-semibold">
-                        <IndianRupee size={12} /> {formatBudget(req)}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <MapPin size={12} /> {req.address.city}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <Clock size={12} /> {new Date(req.createdAt).toLocaleDateString()}
-                      </span>
-                    </div>
+                    <span className="mt-2 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--surface-3)] text-[var(--text-muted)] transition group-hover:bg-[var(--primary)] group-hover:text-white group-hover:rotate-[-45deg]">
+                      <ArrowUpRight size={14} />
+                    </span>
                   </div>
-                  <ArrowRight size={18} className="text-slate-300 group-hover:text-purple-500 transition-colors mt-2 shrink-0" />
-                </div>
-              </Link>
+                </Link>
+              </motion.div>
             );
           })}
         </div>

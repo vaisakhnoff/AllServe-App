@@ -80,6 +80,8 @@ export const mapProviderDetails = (provider: IProviderAccount): ProviderDetailsD
   category: resolveCategory(provider.categoryId),
   description: provider.description,
   serviceAreas: provider.serviceAreas ?? [],
+  onlineStatus: provider.onlineStatus ?? "offline",
+  engagementStatus: provider.engagementStatus ?? "available",
   services: (provider.services ?? []).map((s) => ({
     id: (s as unknown as Record<string, unknown>)._id,
     name: s.name,
