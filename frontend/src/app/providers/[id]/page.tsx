@@ -1,27 +1,23 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import {  useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useSelector } from "react-redux";
 import { motion } from "framer-motion";
 import {
   ArrowLeft, Star, BadgeCheck, MapPin, Loader2, MessageSquarePlus,
-  Clock, CalendarDays, ArrowUpRight,
+   ArrowUpRight,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { RootState } from "@/store";
 import { providerService } from "@/services/provider";
-import { slotService, Slot } from "@/services/provider";
 import { messagingService } from "@/services/messaging";
 import { PublicProviderDetails } from "@/types/provider.types";
 import { getErrorMessage } from "@/utils/errorHandler";
 import { Role } from "@/enums/role.enum";
 import { LoginRequiredPrompt } from "@/components/auth/LoginRequiredPrompt";
 
-function formatDateLabel(iso: string) {
-  return new Intl.DateTimeFormat("en-IN", { weekday: "short", day: "numeric", month: "short" }).format(new Date(iso));
-}
 
 export default function ProviderDetailPage() {
   const params = useParams<{ id: string }>();
@@ -32,8 +28,8 @@ export default function ProviderDetailPage() {
 
   const [provider, setProvider] = useState<PublicProviderDetails | null>(null);
   const [loading, setLoading] = useState(true);
-  const [slots, setSlots] = useState<Slot[]>([]);
-  const [slotsLoading, setSlotsLoading] = useState(false);
+  const [activeSubCategory, setActiveSubCategory] = useState<string | null>(null);
+
 
   useEffect(() => {
     if (!id || !canViewDetails) return;
@@ -46,22 +42,12 @@ export default function ProviderDetailPage() {
     return () => { c = true; };
   }, [id, canViewDetails]);
 
-  useEffect(() => {
-    if (!id || !canViewDetails) return;
-    let c = false;
-    setSlotsLoading(true);
-    slotService.getAvailable(id)
-      .then((res) => { if (!c) setSlots(res.data.data); })
-      .catch(() => {})
-      .finally(() => { if (!c) setSlotsLoading(false); });
-    return () => { c = true; };
-  }, [id, canViewDetails]);
 
-  const slotsByDate = useMemo(() => {
-    const map = new Map<string, Slot[]>();
-    slots.forEach((s) => { const list = map.get(s.date) ?? []; list.push(s); map.set(s.date, list); });
-    return Array.from(map.entries()).sort(([a], [b]) => a.localeCompare(b));
-  }, [slots]);
+const filteredServices = useMemo(() => {
+  if (!provider) return [];
+  if (!activeSubCategory) return provider.services;
+  return provider.services.filter((s) => s.subCategory === activeSubCategory);
+}, [provider, activeSubCategory]);
 
   const startConversation = async () => {
     if (!user || !provider) { router.push("/login"); return; }
@@ -188,85 +174,51 @@ export default function ProviderDetailPage() {
             )}
           </section>
 
-          {/* Services — table style */}
-          {provider.services.length > 0 && (
-            <section className="rounded-[22px] border border-[var(--border)] bg-white overflow-hidden">
-              <div className="flex items-center justify-between px-6 py-5 border-b border-[var(--border-light)]">
-                <h2 className="text-[17px] font-[800] text-[var(--text-primary)]">Services</h2>
-                <span className="text-[12px] font-bold text-[var(--text-muted)]">{provider.services.length} available</span>
-              </div>
-              <div className="divide-y divide-[var(--border-light)]">
-                {provider.services.map((s) => (
-                  <Link key={s.id} href={`/services/${s.id}`} className="group flex items-center justify-between px-6 py-4 transition hover:bg-[var(--surface-2)]">
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-[14px] font-semibold text-[var(--text-primary)] group-hover:text-[var(--primary)]">{s.name}</p>
-                      <p className="mt-0.5 line-clamp-1 text-[12px] text-[var(--text-muted)]">{s.description}</p>
-                    </div>
-                    <div className="flex items-center gap-3 pl-4">
-                      <span className="text-[15px] font-[800] text-[var(--text-primary)]">₹{s.price.toFixed(0)}</span>
-                      <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[var(--surface-3)] text-[var(--text-muted)] transition group-hover:bg-[var(--primary)] group-hover:text-white group-hover:rotate-[-45deg]">
-                        <ArrowUpRight size={13} />
-                      </span>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            </section>
-          )}
+      
 
           {/* Sub-categories */}
-          {provider.subcategoriesWorkedIn.length > 0 && (
-            <section className="rounded-[22px] border border-[var(--border)] bg-white p-6">
-              <h2 className="text-[17px] font-[800] text-[var(--text-primary)]">Specialisations</h2>
-              <div className="mt-4 flex flex-wrap gap-2.5">
-                {provider.subcategoriesWorkedIn.map((sub) => (
-                  <Link
-                    key={sub}
-                    href={`/providers/${provider.id}/sub/${encodeURIComponent(sub)}`}
-                    className="rounded-full border border-[var(--border)] bg-[var(--surface-2)] px-4 py-2 text-[13px] font-semibold text-[var(--text-secondary)] transition hover:border-[var(--primary)] hover:bg-[var(--primary-light)] hover:text-[var(--primary)]"
-                  >
-                    {sub}
-                  </Link>
-                ))}
-              </div>
-            </section>
-          )}
+         {/* Services — table style */}
+{filteredServices.length > 0 && (
+  <section className="rounded-[22px] border border-[var(--border)] bg-white overflow-hidden">
+    <div className="flex items-center justify-between px-6 py-5 border-b border-[var(--border-light)]">
+      <h2 className="text-[17px] font-[800] text-[var(--text-primary)]">Services</h2>
+      <span className="text-[12px] font-bold text-[var(--text-muted)]">{filteredServices.length} available</span>
+    </div>
+    <div className="divide-y divide-[var(--border-light)]">
+      {filteredServices.map((s) => (
+        <Link key={s.id} href={`/services/${s.id}`} className="group flex items-center justify-between px-6 py-4 transition hover:bg-[var(--surface-2)]">
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-[14px] font-semibold text-[var(--text-primary)] group-hover:text-[var(--primary)]">{s.name}</p>
+            <p className="mt-0.5 line-clamp-1 text-[12px] text-[var(--text-muted)]">{s.description}</p>
+          </div>
+          <div className="flex items-center gap-3 pl-4">
+            <span className="text-[15px] font-[800] text-[var(--text-primary)]">₹{s.price.toFixed(0)}</span>
+            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[var(--surface-3)] text-[var(--text-muted)] transition group-hover:bg-[var(--primary)] group-hover:text-white group-hover:rotate-[-45deg]">
+              <ArrowUpRight size={13} />
+            </span>
+          </div>
+        </Link>
+      ))}
+    </div>
+  </section>
+)}
 
-          {/* Availability */}
-          <section className="rounded-[22px] border border-[var(--border)] bg-white p-6">
-            <div className="flex items-center gap-2.5">
-              <CalendarDays size={18} className="text-[var(--primary)]" />
-              <h2 className="text-[17px] font-[800] text-[var(--text-primary)]">Availability</h2>
-            </div>
-            {slotsLoading ? (
-              <div className="mt-5 flex items-center gap-2 text-sm text-[var(--text-muted)]"><Loader2 size={14} className="animate-spin" /> Loading...</div>
-            ) : slotsByDate.length === 0 ? (
-              <div className="mt-5 rounded-2xl border border-dashed border-[var(--border)] bg-[var(--surface-2)] p-8 text-center">
-                <p className="font-semibold text-[var(--text-secondary)]">No upcoming slots published</p>
-                <p className="mt-1 text-[13px] text-[var(--text-muted)]">Send them a message to check availability</p>
-              </div>
-            ) : (
-              <div className="mt-5 space-y-5">
-                {slotsByDate.slice(0, 4).map(([date, daySlots]) => (
-                  <div key={date}>
-                    <p className="mb-2 text-[12px] font-bold uppercase tracking-wider text-[var(--text-muted)]">{formatDateLabel(date)}</p>
-                    <div className="flex flex-wrap gap-2">
-                      {daySlots.slice(0, 8).map((slot) => (
-                        <span key={slot._id} className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-100 bg-emerald-50 px-3.5 py-2 text-[12px] font-bold text-emerald-700">
-                          <Clock size={11} /> {slot.startTime}–{slot.endTime}
-                        </span>
-                      ))}
-                      {daySlots.length > 8 && (
-                        <span className="rounded-xl bg-[var(--surface-3)] px-3.5 py-2 text-[12px] font-semibold text-[var(--text-muted)]">
-                          +{daySlots.length - 8} more
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </section>
+{/* Empty state when filter yields nothing */}
+{activeSubCategory && filteredServices.length === 0 && (
+  <section className="rounded-[22px] border border-dashed border-[var(--border)] bg-white p-8 text-center">
+    <p className="font-semibold text-[var(--text-secondary)]">No services in &ldquo;{activeSubCategory}&rdquo;</p>
+    <button
+      onClick={() => setActiveSubCategory(null)}
+      className="mt-2 text-sm font-semibold text-[var(--primary)] hover:underline"
+    >
+      Show all services
+    </button>
+  </section>
+)}
+
+
+        
+         
         </motion.div>
       </div>
     </div>

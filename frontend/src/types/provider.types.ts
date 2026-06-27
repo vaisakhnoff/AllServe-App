@@ -143,6 +143,7 @@ export interface PublicProviderDetails {
     name: string;
     price: number;
     description: string;
+     subCategory: string | null; 
   }>;
   subcategoriesWorkedIn: string[];
 }

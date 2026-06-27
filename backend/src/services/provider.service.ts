@@ -143,8 +143,26 @@ export class ProviderService implements IProviderService {
   async getPublicProviderById(id: string) {
     const provider = await this.repo.findApprovedProviderById(id);
     if (!provider) throw new NotFoundError(Messages.PROVIDER_NOT_FOUND);
-    const subcategoriesWorkedIn = await this.serviceRepo.findProviderSubcategories(String(provider._id));
-    return { ...mapProviderDetails(provider), subcategoriesWorkedIn };
+
+      const [subcategoriesWorkedIn, services] = await Promise.all([
+    this.serviceRepo.findProviderSubcategories(String(provider._id)),
+    this.serviceRepo.findPublicByProvider(String(provider._id)),
+  ]);
+    
+    const mapped = mapProviderDetails(provider);
+    return {
+    ...mapped,
+    subcategoriesWorkedIn,
+    services: services.map((s) => ({
+      id: String(s._id),
+      name: s.name,
+      price: s.price,
+      description: s.description,
+      subCategory: s.subCategory ?? null,
+    })),
+  };
+
+
   }
 
   async getProfile(providerId: string) {
