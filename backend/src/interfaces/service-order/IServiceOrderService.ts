@@ -15,6 +15,9 @@ export interface IDirectRequestService {
   acceptRequest(orderId: string, providerId: string): Promise<IServiceOrder>;
   rejectRequest(orderId: string, providerId: string): Promise<IServiceOrder>;
   handleCustomerChoice(orderId: string, customerId: string, dto: CustomerChoiceDto): Promise<IServiceOrder>;
+  startWork(orderId: string, providerId: string): Promise<IServiceOrder>;
+completeWork(orderId: string, providerId: string): Promise<IServiceOrder>;
+
 }
 
 export interface IInspectionRequestService {

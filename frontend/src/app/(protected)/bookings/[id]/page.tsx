@@ -18,6 +18,8 @@ import { getErrorMessage } from "@/utils/errorHandler";
 const STATUS_CONFIG: Record<string, { label: string; dot: string; bg: string }> = {
   awaiting_provider_response: { label: "Waiting for provider", dot: "bg-amber-400", bg: "bg-amber-50 text-amber-700" },
   accepted: { label: "Accepted", dot: "bg-emerald-400", bg: "bg-emerald-50 text-emerald-700" },
+  in_progress: { label: "In progress", dot: "bg-blue-500", bg: "bg-blue-50 text-blue-700" },
+  work_completed: { label: "Work done — invoice pending", dot: "bg-violet-400", bg: "bg-violet-50 text-violet-700" },
   rejected_by_provider: { label: "Rejected", dot: "bg-red-400", bg: "bg-red-50 text-red-600" },
   provider_unresponsive: { label: "No response", dot: "bg-slate-400", bg: "bg-slate-100 text-slate-600" },
   awaiting_payment: { label: "Invoice ready", dot: "bg-blue-400", bg: "bg-blue-50 text-blue-700" },
@@ -28,7 +30,6 @@ const STATUS_CONFIG: Record<string, { label: string; dot: string; bg: string }> 
   quotation_submitted: { label: "Quote received", dot: "bg-indigo-400", bg: "bg-indigo-50 text-indigo-700" },
   quotation_accepted: { label: "Quote accepted", dot: "bg-emerald-400", bg: "bg-emerald-50 text-emerald-700" },
   awaiting_advance: { label: "Advance pending", dot: "bg-amber-400", bg: "bg-amber-50 text-amber-700" },
-  in_progress: { label: "In progress", dot: "bg-blue-500", bg: "bg-blue-50 text-blue-700" },
   awaiting_final_payment: { label: "Payment pending", dot: "bg-indigo-400", bg: "bg-indigo-50 text-indigo-700" },
   broadcast_open: { label: "Receiving quotes", dot: "bg-purple-400", bg: "bg-purple-50 text-purple-700" },
   receiving_quotations: { label: "Receiving quotes", dot: "bg-purple-400", bg: "bg-purple-50 text-purple-700" },

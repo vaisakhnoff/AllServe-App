@@ -17,6 +17,8 @@ import { getErrorMessage } from "@/utils/errorHandler";
 const STATUS_COLORS: Record<string, string> = {
   awaiting_provider_response: "bg-amber-50 text-amber-700",
   accepted: "bg-emerald-50 text-emerald-700",
+  in_progress: "bg-blue-50 text-blue-700",
+  work_completed: "bg-violet-50 text-violet-700",
   rejected_by_provider: "bg-red-50 text-red-600",
   provider_unresponsive: "bg-slate-100 text-slate-600",
   awaiting_payment: "bg-blue-50 text-blue-700",
@@ -27,7 +29,6 @@ const STATUS_COLORS: Record<string, string> = {
   quotation_submitted: "bg-indigo-50 text-indigo-700",
   quotation_accepted: "bg-emerald-50 text-emerald-700",
   awaiting_advance: "bg-amber-50 text-amber-700",
-  in_progress: "bg-violet-50 text-violet-700",
   awaiting_final_payment: "bg-indigo-50 text-indigo-700",
   broadcast_open: "bg-purple-50 text-purple-700",
   receiving_quotations: "bg-purple-50 text-purple-700",
@@ -87,6 +88,20 @@ export default function ProviderBookingsPage() {
     if (!confirm("Reject this booking?")) return;
     setActionLoading(id);
     try { await orderService.reject(id); toast.success("Booking rejected"); fetchOrders(); }
+    catch (err) { toast.error(getErrorMessage(err) || "Failed"); }
+    finally { setActionLoading(null); }
+  };
+
+  const handleStartWork = async (id: string) => {
+    setActionLoading(id);
+    try { await orderService.startWork(id); toast.success("Work started — you're now busy"); fetchOrders(); }
+    catch (err) { toast.error(getErrorMessage(err) || "Failed"); }
+    finally { setActionLoading(null); }
+  };
+
+  const handleCompleteWork = async (id: string) => {
+    setActionLoading(id);
+    try { await orderService.completeWork(id); toast.success("Work completed — you're available again"); fetchOrders(); }
     catch (err) { toast.error(getErrorMessage(err) || "Failed"); }
     finally { setActionLoading(null); }
   };
@@ -155,11 +170,23 @@ export default function ProviderBookingsPage() {
       actions.push({ label: "Reject", icon: XCircle, onClick: () => handleReject(order._id), color: "border border-red-200 bg-red-50 text-red-600 hover:bg-red-100" });
     }
 
+    if (order.status === "accepted" && order.deliveryModel === "direct") {
+      actions.push({ label: "Start Work", icon: Play, onClick: () => handleStartWork(order._id), color: "bg-blue-600 text-white hover:bg-blue-700" });
+    }
+
+    if (order.status === "in_progress" && order.deliveryModel === "direct") {
+      actions.push({ label: "Finish Work", icon: CheckCircle2, onClick: () => handleCompleteWork(order._id), color: "bg-emerald-600 text-white hover:bg-emerald-700" });
+    }
+
     if (order.status === "inspection_pending" && order.deliveryModel === "inspection_required") {
       actions.push({ label: "Send Quotation", icon: Send, onClick: () => setQuoteForm({ orderId: order._id, labour: "", material: "", additional: "", days: "", notes: "", advance: "" }), color: "bg-blue-600 text-white hover:bg-blue-700" });
     }
 
-    if (["accepted", "in_progress"].includes(order.status) && !["awaiting_payment", "awaiting_final_payment"].includes(order.status)) {
+    if (order.status === "work_completed" && order.deliveryModel === "direct") {
+      actions.push({ label: "Generate Invoice", icon: Receipt, onClick: () => setInvoiceForm({ orderId: order._id, labour: "", material: "", additional: "", discount: "", remark: "" }), color: "bg-indigo-600 text-white hover:bg-indigo-700" });
+    }
+
+    if (["in_progress"].includes(order.status) && order.deliveryModel !== "direct") {
       actions.push({ label: "Generate Invoice", icon: Receipt, onClick: () => setInvoiceForm({ orderId: order._id, labour: "", material: "", additional: "", discount: "", remark: "" }), color: "bg-indigo-600 text-white hover:bg-indigo-700" });
     }
 
@@ -196,7 +223,8 @@ export default function ProviderBookingsPage() {
             <option value="">All statuses</option>
             <option value="awaiting_provider_response">⏳ Pending</option>
             <option value="accepted">✅ Accepted</option>
-            <option value="in_progress">🔄 In Progress</option>
+            <option value="in_progress">🔧 In Progress</option>
+            <option value="work_completed">✓ Work Done</option>
             <option value="inspection_pending">🏠 Inspection Pending</option>
             <option value="awaiting_payment">💰 Awaiting Payment</option>
             <option value="completed">✓ Completed</option>

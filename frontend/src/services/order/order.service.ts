@@ -40,6 +40,13 @@ export const orderService = {
   cancel: (id: string, reason?: string) =>
     api.patch<ApiResponse<ServiceOrder>>(API_ENDPOINTS.ORDER_CANCEL(id), { reason }),
 
+  startWork: (id: string) =>
+  api.patch<ApiResponse<ServiceOrder>>(API_ENDPOINTS.ORDER_START(id)),
+
+completeWork: (id: string) =>
+  api.patch<ApiResponse<ServiceOrder>>(API_ENDPOINTS.ORDER_COMPLETE(id)),
+
+
   // ── Query ───────────────────────────────────────────────────────────────
   getMyOrders: (query?: OrderListQuery) =>
     api.get<ApiResponse<PaginatedOrders>>(API_ENDPOINTS.ORDERS_MY, { params: query }),

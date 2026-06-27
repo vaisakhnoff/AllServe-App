@@ -8,12 +8,15 @@ export type DirectSubMode = "instant" | "scheduled";
 export type DirectStatus =
   | "awaiting_provider_response"
   | "accepted"
+  | "in_progress"
+  | "work_completed"
   | "rejected_by_provider"
   | "provider_unresponsive"
   | "awaiting_payment"
   | "completed"
   | "cancelled_with_refund"
   | "cancelled";
+
 
 export type InspectionStatus =
   | "inspection_pending"
@@ -107,11 +110,11 @@ export interface IServiceOrder extends Document {
 
 // ── All possible status values ────────────────────────────────────────────────
 const ALL_STATUSES: string[] = [
-  "awaiting_provider_response", "accepted", "rejected_by_provider",
-  "provider_unresponsive", "awaiting_payment", "completed",
+  "awaiting_provider_response", "accepted", "in_progress", "work_completed",
+  "rejected_by_provider", "provider_unresponsive", "awaiting_payment", "completed",
   "cancelled_with_refund", "cancelled",
   "inspection_pending", "quotation_submitted", "quotation_accepted",
-  "awaiting_advance", "in_progress", "awaiting_final_payment",
+  "awaiting_advance", "awaiting_final_payment",
   "broadcast_open", "receiving_quotations", "expired",
 ];
 

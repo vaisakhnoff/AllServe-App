@@ -15,6 +15,8 @@ import { getErrorMessage } from "@/utils/errorHandler";
 const STATUS_CONFIG: Record<string, { label: string; dot: string; bg: string }> = {
   awaiting_provider_response: { label: "Waiting for provider", dot: "bg-amber-400", bg: "bg-amber-50 text-amber-700" },
   accepted: { label: "Accepted", dot: "bg-emerald-400", bg: "bg-emerald-50 text-emerald-700" },
+  in_progress: { label: "In progress", dot: "bg-blue-500", bg: "bg-blue-50 text-blue-700" },
+  work_completed: { label: "Work done", dot: "bg-violet-400", bg: "bg-violet-50 text-violet-700" },
   rejected_by_provider: { label: "Rejected", dot: "bg-red-400", bg: "bg-red-50 text-red-600" },
   provider_unresponsive: { label: "No response", dot: "bg-slate-400", bg: "bg-slate-100 text-slate-600" },
   awaiting_payment: { label: "Invoice ready", dot: "bg-blue-400", bg: "bg-blue-50 text-blue-700" },
@@ -43,6 +45,8 @@ const STATUS_FILTERS = [
   { value: "awaiting_provider_response", label: "Waiting" },
   { value: "accepted", label: "Accepted" },
   { value: "in_progress", label: "In Progress" },
+  { value: "work_completed", label: "Work Done" },
+  { value: "awaiting_payment", label: "Invoice Ready" },
   { value: "completed", label: "Completed" },
   { value: "cancelled", label: "Cancelled" },
 ];

@@ -112,4 +112,19 @@ export class ServiceOrderController {
       sendSuccess(res, data, "Order cancelled");
     } catch (err) { next(err); }
   }
+
+  async startWork(req: AuthRequest, res: Response, next: NextFunction) {
+  try {
+    const data = await this.directService.startWork(req.params.id as string, req.user!.id);
+    sendSuccess(res, data, "Work started");
+  } catch (err) { next(err); }
+}
+
+async completeWork(req: AuthRequest, res: Response, next: NextFunction) {
+  try {
+    const data = await this.directService.completeWork(req.params.id as string, req.user!.id);
+    sendSuccess(res, data, "Work completed");
+  } catch (err) { next(err); }
+}
+
 }

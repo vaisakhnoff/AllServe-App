@@ -34,6 +34,11 @@ export function createServiceOrderRouter(controller: ServiceOrderController): Ro
   router.patch("/:id/accept", ...providerGuard, controller.acceptOrder.bind(controller));
   router.patch("/:id/reject", ...providerGuard, controller.rejectOrder.bind(controller));
 
+  router.patch("/:id/start", ...providerGuard, controller.startWork.bind(controller));
+router.patch("/:id/complete", ...providerGuard, controller.completeWork.bind(controller));
+
+
+
   // ── Customer: Choice after rejection/timeout ────────────────────────────────
   router.patch("/:id/customer-choice", ...userGuard, controller.customerChoice.bind(controller));
 

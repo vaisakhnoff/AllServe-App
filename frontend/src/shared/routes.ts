@@ -122,6 +122,9 @@ export const API_ENDPOINTS = {
   ORDER_REJECT: (id: string) => `/orders/${id}/reject`,
   ORDER_CUSTOMER_CHOICE: (id: string) => `/orders/${id}/customer-choice`,
   ORDER_CANCEL: (id: string) => `/orders/${id}/cancel`,
+  ORDER_START: (id: string) => `/orders/${id}/start`,
+ORDER_COMPLETE: (id: string) => `/orders/${id}/complete`,
+
 
   // ── Quotations ──
   QUOTATIONS: "/quotations",

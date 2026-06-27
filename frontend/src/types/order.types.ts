@@ -6,12 +6,15 @@ export type DirectSubMode = "instant" | "scheduled";
 export type DirectStatus =
   | "awaiting_provider_response"
   | "accepted"
+  | "in_progress"
+  | "work_completed"
   | "rejected_by_provider"
   | "provider_unresponsive"
   | "awaiting_payment"
   | "completed"
   | "cancelled_with_refund"
   | "cancelled";
+
 
 export type InspectionStatus =
   | "inspection_pending"
