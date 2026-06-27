@@ -10,6 +10,8 @@ type PopulatedRef = {
   icon?: string;
   headshot?: string;
   rating?: number;
+  onlineStatus?: "online" | "offline";
+  engagementStatus?: "available" | "busy";
 };
 
 export const mapService = (service: IService) => {
@@ -26,6 +28,8 @@ export const mapService = (service: IService) => {
             email: (providerId as PopulatedRef).email,
             phone: (providerId as PopulatedRef).phone,
             businessName: (providerId as PopulatedRef).businessName,
+             onlineStatus: (providerId as PopulatedRef).onlineStatus ?? "offline",
+        engagementStatus: (providerId as PopulatedRef).engagementStatus ?? "available",
           }
         : providerId,
     category:

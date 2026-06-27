@@ -40,6 +40,8 @@ export interface ServiceProviderRef {
   email?: string;
   phone?: string;
   businessName?: string;
+  onlineStatus?: "online" | "offline";
+  engagementStatus?: "available" | "busy";
 }
 
 /**

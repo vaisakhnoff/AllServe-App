@@ -138,7 +138,7 @@ export class ServiceRepository
     return this.model
       .findOne({ _id: id, ...liveScope })
       .populate("categoryId", "name icon")
-      .populate("providerId", "name email phone businessName")
+      .populate("providerId", "name email phone businessName onlineStatus engagementStatus headshot")
       .exec();
   }
 
@@ -213,7 +213,7 @@ export class ServiceRepository
         isBlocked: { $ne: true },
       })
       .populate("categoryId", "name icon")
-      .populate("providerId", "name businessName headshot rating description serviceArea")
+      .populate("providerId", "name businessName headshot rating description serviceArea onlineStatus engagementStatus")
       .exec();
   }
 }
