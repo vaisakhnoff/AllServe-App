@@ -41,10 +41,32 @@ export const orderService = {
     api.patch<ApiResponse<ServiceOrder>>(API_ENDPOINTS.ORDER_CANCEL(id), { reason }),
 
   startWork: (id: string) =>
-  api.patch<ApiResponse<ServiceOrder>>(API_ENDPOINTS.ORDER_START(id)),
+    api.patch<ApiResponse<ServiceOrder>>(API_ENDPOINTS.ORDER_START(id)),
 
-completeWork: (id: string) =>
-  api.patch<ApiResponse<ServiceOrder>>(API_ENDPOINTS.ORDER_COMPLETE(id)),
+  completeWork: (id: string) =>
+    api.patch<ApiResponse<ServiceOrder>>(API_ENDPOINTS.ORDER_COMPLETE(id)),
+
+  // ── Inspection Lifecycle ────────────────────────────────────────────────
+  acceptInspection: (id: string) =>
+    api.patch<ApiResponse<ServiceOrder>>(API_ENDPOINTS.ORDER_INSPECTION_ACCEPT(id)),
+
+  rejectInspection: (id: string) =>
+    api.patch<ApiResponse<ServiceOrder>>(API_ENDPOINTS.ORDER_INSPECTION_REJECT(id)),
+
+  markInspectionDone: (id: string) =>
+    api.patch<ApiResponse<ServiceOrder>>(API_ENDPOINTS.ORDER_INSPECTION_DONE(id)),
+
+  inspectionStartWork: (id: string) =>
+    api.patch<ApiResponse<ServiceOrder>>(API_ENDPOINTS.ORDER_INSPECTION_START(id)),
+
+  inspectionCompleteWork: (id: string) =>
+    api.patch<ApiResponse<ServiceOrder>>(API_ENDPOINTS.ORDER_INSPECTION_COMPLETE(id)),
+
+  dropByProvider: (id: string, reason: string) =>
+    api.patch<ApiResponse<ServiceOrder>>(API_ENDPOINTS.ORDER_DROP_PROVIDER(id), { reason }),
+
+  dropByCustomer: (id: string, reason: string) =>
+    api.patch<ApiResponse<ServiceOrder>>(API_ENDPOINTS.ORDER_DROP_CUSTOMER(id), { reason }),
 
 
   // ── Query ───────────────────────────────────────────────────────────────

@@ -17,12 +17,16 @@ export type DirectStatus =
 
 
 export type InspectionStatus =
-  | "inspection_pending"
+  | "awaiting_provider_response"
+  | "inspection_accepted"
+  | "inspection_completed"
   | "quotation_submitted"
   | "quotation_accepted"
-  | "awaiting_advance"
+  | "dropped_by_provider"
+  | "dropped_by_customer"
   | "in_progress"
-  | "awaiting_final_payment"
+  | "work_completed"
+  | "awaiting_payment"
   | "completed"
   | "cancelled";
 

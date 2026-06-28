@@ -19,12 +19,16 @@ export type DirectStatus =
 
 
 export type InspectionStatus =
-  | "inspection_pending"
+  | "awaiting_provider_response"
+  | "inspection_accepted"
+  | "inspection_completed"
   | "quotation_submitted"
   | "quotation_accepted"
-  | "awaiting_advance"
+  | "dropped_by_provider"
+  | "dropped_by_customer"
   | "in_progress"
-  | "awaiting_final_payment"
+  | "work_completed"
+  | "awaiting_payment"
   | "completed"
   | "cancelled";
 
@@ -102,6 +106,8 @@ export interface IServiceOrder extends Document {
   expiresAt?: Date;
 
   customerChoice?: CustomerChoice;
+  dropReason?: string;
+  estimatedStartDate?: string;
   reroutedFromOrderId?: mongoose.Types.ObjectId;
 
   createdAt: Date;
@@ -113,7 +119,8 @@ const ALL_STATUSES: string[] = [
   "awaiting_provider_response", "accepted", "in_progress", "work_completed",
   "rejected_by_provider", "provider_unresponsive", "awaiting_payment", "completed",
   "cancelled_with_refund", "cancelled",
-  "inspection_pending", "quotation_submitted", "quotation_accepted",
+  "inspection_accepted", "inspection_completed", "quotation_submitted", "quotation_accepted",
+  "dropped_by_provider", "dropped_by_customer",
   "awaiting_advance", "awaiting_final_payment",
   "broadcast_open", "receiving_quotations", "expired",
 ];
@@ -187,6 +194,8 @@ const serviceOrderSchema = new Schema<IServiceOrder>(
     expiresAt: { type: Date },
 
     customerChoice: { type: String, enum: ["reroute", "refund"] },
+    dropReason: { type: String, trim: true },
+    estimatedStartDate: { type: String },
     reroutedFromOrderId: { type: Schema.Types.ObjectId, ref: "ServiceOrder" },
   },
   { timestamps: true }

@@ -25,9 +25,12 @@ const STATUS_COLORS: Record<string, string> = {
   completed: "bg-emerald-50 text-emerald-700",
   cancelled: "bg-slate-100 text-slate-500",
   cancelled_with_refund: "bg-slate-100 text-slate-500",
-  inspection_pending: "bg-blue-50 text-blue-700",
+  inspection_accepted: "bg-sky-50 text-sky-700",
+  inspection_completed: "bg-teal-50 text-teal-700",
   quotation_submitted: "bg-indigo-50 text-indigo-700",
   quotation_accepted: "bg-emerald-50 text-emerald-700",
+  dropped_by_provider: "bg-red-50 text-red-600",
+  dropped_by_customer: "bg-slate-100 text-slate-600",
   awaiting_advance: "bg-amber-50 text-amber-700",
   awaiting_final_payment: "bg-indigo-50 text-indigo-700",
   broadcast_open: "bg-purple-50 text-purple-700",
@@ -162,10 +165,56 @@ export default function ProviderBookingsPage() {
     finally { setActionLoading(null); }
   };
 
+  const handleAcceptInspection = async (id: string) => {
+    setActionLoading(id);
+    try { await orderService.acceptInspection(id); toast.success("Inspection accepted"); fetchOrders(); }
+    catch (err) { toast.error(getErrorMessage(err) || "Failed"); }
+    finally { setActionLoading(null); }
+  };
+
+  const handleRejectInspection = async (id: string) => {
+    if (!confirm("Reject this inspection request?")) return;
+    setActionLoading(id);
+    try { await orderService.rejectInspection(id); toast.success("Inspection rejected"); fetchOrders(); }
+    catch (err) { toast.error(getErrorMessage(err) || "Failed"); }
+    finally { setActionLoading(null); }
+  };
+
+  const handleMarkInspectionDone = async (id: string) => {
+    setActionLoading(id);
+    try { await orderService.markInspectionDone(id); toast.success("Inspection marked as done"); fetchOrders(); }
+    catch (err) { toast.error(getErrorMessage(err) || "Failed"); }
+    finally { setActionLoading(null); }
+  };
+
+  const handleDropByProvider = async (id: string) => {
+    const reason = prompt("Why are you dropping this service?");
+    if (!reason) return;
+    setActionLoading(id);
+    try { await orderService.dropByProvider(id, reason); toast.success("Service dropped"); fetchOrders(); }
+    catch (err) { toast.error(getErrorMessage(err) || "Failed"); }
+    finally { setActionLoading(null); }
+  };
+
+  const handleInspectionStartWork = async (id: string) => {
+    setActionLoading(id);
+    try { await orderService.inspectionStartWork(id); toast.success("Work started"); fetchOrders(); }
+    catch (err) { toast.error(getErrorMessage(err) || "Failed"); }
+    finally { setActionLoading(null); }
+  };
+
+  const handleInspectionCompleteWork = async (id: string) => {
+    setActionLoading(id);
+    try { await orderService.inspectionCompleteWork(id); toast.success("Work completed"); fetchOrders(); }
+    catch (err) { toast.error(getErrorMessage(err) || "Failed"); }
+    finally { setActionLoading(null); }
+  };
+
   const getActions = (order: ServiceOrder) => {
     const actions: { label: string; icon: typeof CheckCircle2; onClick: () => void; color: string }[] = [];
 
-    if (order.status === "awaiting_provider_response") {
+    // ── Direct flow ───────────────────────────────────────────────────────
+    if (order.status === "awaiting_provider_response" && order.deliveryModel === "direct") {
       actions.push({ label: "Accept", icon: CheckCircle2, onClick: () => handleAccept(order._id), color: "bg-emerald-600 text-white hover:bg-emerald-700" });
       actions.push({ label: "Reject", icon: XCircle, onClick: () => handleReject(order._id), color: "border border-red-200 bg-red-50 text-red-600 hover:bg-red-100" });
     }
@@ -178,18 +227,39 @@ export default function ProviderBookingsPage() {
       actions.push({ label: "Finish Work", icon: CheckCircle2, onClick: () => handleCompleteWork(order._id), color: "bg-emerald-600 text-white hover:bg-emerald-700" });
     }
 
-    if (order.status === "inspection_pending" && order.deliveryModel === "inspection_required") {
-      actions.push({ label: "Send Quotation", icon: Send, onClick: () => setQuoteForm({ orderId: order._id, labour: "", material: "", additional: "", days: "", notes: "", advance: "" }), color: "bg-blue-600 text-white hover:bg-blue-700" });
-    }
-
     if (order.status === "work_completed" && order.deliveryModel === "direct") {
       actions.push({ label: "Generate Invoice", icon: Receipt, onClick: () => setInvoiceForm({ orderId: order._id, labour: "", material: "", additional: "", discount: "", remark: "" }), color: "bg-indigo-600 text-white hover:bg-indigo-700" });
     }
 
-    if (["in_progress"].includes(order.status) && order.deliveryModel !== "direct") {
+    // ── Inspection flow ───────────────────────────────────────────────────
+    if (order.status === "awaiting_provider_response" && order.deliveryModel === "inspection_required") {
+      actions.push({ label: "Accept Inspection", icon: CheckCircle2, onClick: () => handleAcceptInspection(order._id), color: "bg-emerald-600 text-white hover:bg-emerald-700" });
+      actions.push({ label: "Reject", icon: XCircle, onClick: () => handleRejectInspection(order._id), color: "border border-red-200 bg-red-50 text-red-600 hover:bg-red-100" });
+    }
+
+    if (order.status === "inspection_accepted" && order.deliveryModel === "inspection_required") {
+      actions.push({ label: "Mark Inspection Done", icon: CheckCircle2, onClick: () => handleMarkInspectionDone(order._id), color: "bg-blue-600 text-white hover:bg-blue-700" });
+      actions.push({ label: "Drop Service", icon: XCircle, onClick: () => handleDropByProvider(order._id), color: "border border-red-200 bg-red-50 text-red-600 hover:bg-red-100" });
+    }
+
+    if (order.status === "inspection_completed" && order.deliveryModel === "inspection_required") {
+      actions.push({ label: "Send Quotation", icon: Send, onClick: () => setQuoteForm({ orderId: order._id, labour: "", material: "", additional: "", days: "", notes: "", advance: "" }), color: "bg-blue-600 text-white hover:bg-blue-700" });
+      actions.push({ label: "Drop Service", icon: XCircle, onClick: () => handleDropByProvider(order._id), color: "border border-red-200 bg-red-50 text-red-600 hover:bg-red-100" });
+    }
+
+    if (order.status === "quotation_accepted" && order.deliveryModel === "inspection_required") {
+      actions.push({ label: "Start Work", icon: Play, onClick: () => handleInspectionStartWork(order._id), color: "bg-blue-600 text-white hover:bg-blue-700" });
+    }
+
+    if (order.status === "in_progress" && order.deliveryModel === "inspection_required") {
+      actions.push({ label: "Finish Work", icon: CheckCircle2, onClick: () => handleInspectionCompleteWork(order._id), color: "bg-emerald-600 text-white hover:bg-emerald-700" });
+    }
+
+    if (order.status === "work_completed" && order.deliveryModel === "inspection_required") {
       actions.push({ label: "Generate Invoice", icon: Receipt, onClick: () => setInvoiceForm({ orderId: order._id, labour: "", material: "", additional: "", discount: "", remark: "" }), color: "bg-indigo-600 text-white hover:bg-indigo-700" });
     }
 
+    // ── Shared ────────────────────────────────────────────────────────────
     if (["awaiting_payment", "awaiting_final_payment"].includes(order.status)) {
       actions.push({ label: "Mark Cash Paid", icon: IndianRupee, onClick: () => handleMarkCash(order._id), color: "border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100" });
     }

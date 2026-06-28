@@ -23,7 +23,7 @@ export class QuotationService implements IQuotationService {
     if (!order) throw new NotFoundError("Order not found");
 
     // Validate order accepts quotations
-    const validStatuses = ["inspection_pending", "broadcast_open", "receiving_quotations"];
+    const validStatuses = ["inspection_completed", "broadcast_open", "receiving_quotations"];
     if (!validStatuses.includes(order.status)) {
       throw new BadRequestError("This order is not accepting quotations");
     }
@@ -75,7 +75,7 @@ export class QuotationService implements IQuotationService {
 
     // Update order status
     await this.orderRepo.incrementQuoteCount(dto.orderId);
-    if (order.deliveryModel === "inspection_required" && order.status === "inspection_pending") {
+    if (order.deliveryModel === "inspection_required" && order.status === "inspection_completed") {
       await this.orderRepo.updateStatus(dto.orderId, "quotation_submitted");
     } else if (order.deliveryModel === "custom" && order.status === "broadcast_open") {
       await this.orderRepo.updateStatus(dto.orderId, "receiving_quotations");

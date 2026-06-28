@@ -22,6 +22,13 @@ completeWork(orderId: string, providerId: string): Promise<IServiceOrder>;
 
 export interface IInspectionRequestService {
   createRequest(customerId: string, dto: CreateInspectionDto): Promise<IServiceOrder>;
+  acceptInspection(orderId: string, providerId: string): Promise<IServiceOrder>;
+  rejectInspection(orderId: string, providerId: string): Promise<IServiceOrder>;
+  markInspectionDone(orderId: string, providerId: string): Promise<IServiceOrder>;
+  dropByProvider(orderId: string, providerId: string, reason: string): Promise<IServiceOrder>;
+  dropByCustomer(orderId: string, customerId: string, reason: string): Promise<IServiceOrder>;
+  startWork(orderId: string, providerId: string): Promise<IServiceOrder>;
+  completeWork(orderId: string, providerId: string): Promise<IServiceOrder>;
 }
 
 export interface ICustomRequestService {

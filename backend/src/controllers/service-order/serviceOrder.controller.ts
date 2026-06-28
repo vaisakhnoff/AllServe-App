@@ -72,6 +72,58 @@ export class ServiceOrderController {
     } catch (err) { next(err); }
   }
 
+  // ── Inspection Lifecycle ────────────────────────────────────────────────────
+  async acceptInspection(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      const data = await this.inspectionService.acceptInspection(req.params.id as string, req.user!.id);
+      sendSuccess(res, data, "Inspection accepted");
+    } catch (err) { next(err); }
+  }
+
+  async rejectInspection(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      const data = await this.inspectionService.rejectInspection(req.params.id as string, req.user!.id);
+      sendSuccess(res, data, "Inspection rejected");
+    } catch (err) { next(err); }
+  }
+
+  async markInspectionDone(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      const data = await this.inspectionService.markInspectionDone(req.params.id as string, req.user!.id);
+      sendSuccess(res, data, "Inspection marked as done");
+    } catch (err) { next(err); }
+  }
+
+  async dropByProvider(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      const reason = req.body?.reason || "No reason provided";
+      const data = await this.inspectionService.dropByProvider(req.params.id as string, req.user!.id, reason);
+      sendSuccess(res, data, "Order dropped");
+    } catch (err) { next(err); }
+  }
+
+  async dropByCustomer(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      const reason = req.body?.reason || "No reason provided";
+      const data = await this.inspectionService.dropByCustomer(req.params.id as string, req.user!.id, reason);
+      sendSuccess(res, data, "Order dropped");
+    } catch (err) { next(err); }
+  }
+
+  async inspectionStartWork(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      const data = await this.inspectionService.startWork(req.params.id as string, req.user!.id);
+      sendSuccess(res, data, "Work started");
+    } catch (err) { next(err); }
+  }
+
+  async inspectionCompleteWork(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      const data = await this.inspectionService.completeWork(req.params.id as string, req.user!.id);
+      sendSuccess(res, data, "Work completed");
+    } catch (err) { next(err); }
+  }
+
   // ── Custom ──────────────────────────────────────────────────────────────────
   async createCustom(req: AuthRequest, res: Response, next: NextFunction) {
     try {
