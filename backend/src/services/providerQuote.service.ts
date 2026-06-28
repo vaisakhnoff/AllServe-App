@@ -3,7 +3,6 @@ import { IServiceRequestRepository } from "../interfaces/service-request/IServic
 import { IProviderQuoteService, ProviderQuoteListResult, ProviderQuoteStats, AcceptQuoteResult } from "../interfaces/provider-quote/IProviderQuoteService";
 import { CreateProviderQuoteDto, UpdateProviderQuoteDto } from "../dto/provider-quote/providerQuote.dto";
 import { IProviderQuote } from "../models/providerQuote.model";
-import { BookingModel } from "../models/booking.model";
 import { NotFoundError, BadRequestError, ForbiddenError, ConflictError } from "../shared/errors/HttpErrors";
 
 export class ProviderQuoteService implements IProviderQuoteService {
@@ -73,28 +72,38 @@ export class ProviderQuoteService implements IProviderQuoteService {
     await this.repo.updateStatus(quoteId, "accepted");
     await this.repo.rejectAllExcept(String(quote.serviceRequestId), quoteId);
 
-    const booking = await BookingModel.create({
-      userId: request.userId,
+    // Create a Service Order so it shows in provider bookings with full lifecycle
+    const { ServiceOrderModel } = await import("../models/serviceOrder.model");
+    const { nanoid } = await import("nanoid");
+
+    const order = await ServiceOrderModel.create({
+      orderId: `ORD-${nanoid(8).toUpperCase()}`,
+      customerId: request.userId,
       providerId: quote.providerId,
-      serviceId: request.categoryId,
-      slotId: request._id,
-      date: request.preferredDate || new Date().toISOString().split("T")[0],
-      startTime: request.preferredTime || "09:00",
-      endTime: "18:00",
+      categoryId: request.categoryId,
+      deliveryModel: "custom",
+      status: "quotation_accepted",
+      statusHistory: [
+        { status: "broadcast_open", at: request.createdAt },
+        { status: "quotation_accepted", at: new Date(), note: "Quote accepted from service request" },
+      ],
+      title: request.title,
+      description: request.description,
+      images: request.images || [],
       address: request.address,
-      amount: quote.price,
-      bookingStatus: "confirmed",
-      paymentStatus: "pending",
-      statusHistory: [{ status: "confirmed", at: new Date(), note: "Created from accepted quote" }],
+      budget: quote.price,
+      platformFee: 0,
+      platformFeeStatus: "paid",
+      quoteCount: request.quoteCount || 1,
     });
 
     await this.requestRepo.updateStatus(String(request._id), "booking_created", {
       selectedQuoteId: quote._id,
       selectedProviderId: quote.providerId as unknown as IProviderQuote["providerId"],
-      bookingId: booking._id,
+      bookingId: order._id,
     } as never);
 
-    return { quote, booking };
+    return { quote, booking: order };
   }
 
   async getProviderStats(providerId: string): Promise<ProviderQuoteStats> {

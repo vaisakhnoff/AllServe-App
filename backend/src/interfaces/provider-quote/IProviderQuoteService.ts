@@ -1,5 +1,4 @@
 import { IProviderQuote } from "../../models/providerQuote.model";
-import { IBooking } from "../../models/booking.model";
 import { CreateProviderQuoteDto, UpdateProviderQuoteDto } from "../../dto/provider-quote/providerQuote.dto";
 
 export interface ProviderQuoteListResult {
@@ -18,7 +17,7 @@ export interface ProviderQuoteStats {
 
 export interface AcceptQuoteResult {
   quote: IProviderQuote;
-  booking: IBooking;
+  booking: unknown;
 }
 
 export interface IProviderQuoteService {
