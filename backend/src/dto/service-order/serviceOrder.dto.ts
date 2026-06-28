@@ -50,6 +50,8 @@ export const createInspectionSchema = z.object({
 // ── Custom Request ────────────────────────────────────────────────────────────
 export const createCustomSchema = z.object({
   categoryId: objectIdField,
+  providerId: objectIdField.optional(),
+  serviceId: objectIdField.optional(),
   title: z.string().trim().min(5).max(200),
   description: z.string().trim().min(10).max(3000),
   budget: z.number().positive().optional(),

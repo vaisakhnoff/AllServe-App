@@ -243,6 +243,8 @@ export interface CreateInspectionRequestDto {
 
 export interface CreateCustomRequestDto {
   categoryId: string;
+  providerId?: string;
+  serviceId?: string;
   title: string;
   description: string;
   budget?: number;

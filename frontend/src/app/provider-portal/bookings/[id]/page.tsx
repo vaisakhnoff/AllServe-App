@@ -354,14 +354,14 @@ export default function ProviderBookingDetailPage() {
             <h3 className="text-[14px] font-bold text-slate-900 mb-5">Actions</h3>
             <div className="space-y-3">
               {/* Direct: Accept/Reject */}
-              {order.status === "awaiting_provider_response" && order.deliveryModel === "direct" && (<>
+              {order.status === "awaiting_provider_response" && (order.deliveryModel === "direct" || order.deliveryModel === "custom") && (<>
                 <button onClick={() => setShowConfirm({ title: "Accept Booking", message: "You'll be committing to this service request.", label: "Accept", variant: "success", action: () => orderService.accept(id) })} className="w-full rounded-xl bg-emerald-600 py-3.5 text-sm font-bold text-white hover:bg-emerald-700 flex items-center justify-center gap-2"><CheckCircle2 size={15} /> Accept Booking</button>
                 <button onClick={() => setShowConfirm({ title: "Reject Booking", message: "The customer will be notified and can choose another provider.", label: "Reject", variant: "danger", action: () => orderService.reject(id) })} className="w-full rounded-xl border border-red-200 bg-red-50 py-3.5 text-sm font-bold text-red-600 hover:bg-red-100 flex items-center justify-center gap-2"><XCircle size={15} /> Reject</button>
               </>)}
-              {order.status === "accepted" && order.deliveryModel === "direct" && (
+              {order.status === "accepted" && (order.deliveryModel === "direct" || order.deliveryModel === "custom") && (
                 <button onClick={() => setShowConfirm({ title: "Start Work", message: "Your status will change to busy.", label: "Start", variant: "success", action: () => orderService.startWork(id) })} className="w-full rounded-xl bg-blue-600 py-3.5 text-sm font-bold text-white hover:bg-blue-700 flex items-center justify-center gap-2"><Play size={15} /> Start Work</button>
               )}
-              {order.status === "in_progress" && order.deliveryModel === "direct" && (
+              {order.status === "in_progress" && (order.deliveryModel === "direct" || order.deliveryModel === "custom") && (
                 <button onClick={() => setShowConfirm({ title: "Finish Work", message: "Mark this job as completed. You can then generate an invoice.", label: "Finish", variant: "success", action: () => orderService.completeWork(id) })} className="w-full rounded-xl bg-emerald-600 py-3.5 text-sm font-bold text-white hover:bg-emerald-700 flex items-center justify-center gap-2"><CheckCircle2 size={15} /> Finish Work</button>
               )}
               {order.status === "work_completed" && !invoice && (

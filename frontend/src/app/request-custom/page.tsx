@@ -25,6 +25,8 @@ export default function RequestCustomPage() {
   const canAccess = isInitialized && isAuthenticated && role === Role.USER;
 
   const prefilledCategoryId = searchParams?.get("categoryId") || "";
+  const prefilledProviderId = searchParams?.get("providerId") || "";
+  const prefilledServiceId = searchParams?.get("serviceId") || "";
 
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedCategoryId, setSelectedCategoryId] = useState(prefilledCategoryId);
@@ -78,6 +80,8 @@ export default function RequestCustomPage() {
           country: selectedAddress.country,
         },
         images,
+        ...(prefilledProviderId ? { providerId: prefilledProviderId } : {}),
+        ...(prefilledServiceId ? { serviceId: prefilledServiceId } : {}),
       });
       setOrderId(res.data.data.orderId);
       setSuccess(true);

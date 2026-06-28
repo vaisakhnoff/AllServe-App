@@ -3,6 +3,8 @@ import { IServiceRequestRepository } from "../interfaces/service-request/IServic
 import { IProviderQuoteService, ProviderQuoteListResult, ProviderQuoteStats, AcceptQuoteResult } from "../interfaces/provider-quote/IProviderQuoteService";
 import { CreateProviderQuoteDto, UpdateProviderQuoteDto } from "../dto/provider-quote/providerQuote.dto";
 import { IProviderQuote } from "../models/providerQuote.model";
+import { ServiceOrderModel } from "../models/serviceOrder.model";
+import { nanoid } from "nanoid";
 import { NotFoundError, BadRequestError, ForbiddenError, ConflictError } from "../shared/errors/HttpErrors";
 
 export class ProviderQuoteService implements IProviderQuoteService {
@@ -73,9 +75,6 @@ export class ProviderQuoteService implements IProviderQuoteService {
     await this.repo.rejectAllExcept(String(quote.serviceRequestId), quoteId);
 
     // Create a Service Order so it shows in provider bookings with full lifecycle
-    const { ServiceOrderModel } = await import("../models/serviceOrder.model");
-    const { nanoid } = await import("nanoid");
-
     const order = await ServiceOrderModel.create({
       orderId: `ORD-${nanoid(8).toUpperCase()}`,
       customerId: request.userId,
@@ -96,7 +95,7 @@ export class ProviderQuoteService implements IProviderQuoteService {
       platformFee: 0,
       platformFeeStatus: "paid",
       quoteCount: request.quoteCount || 1,
-    });
+    } as Record<string, unknown>);
 
     await this.requestRepo.updateStatus(String(request._id), "booking_created", {
       selectedQuoteId: quote._id,

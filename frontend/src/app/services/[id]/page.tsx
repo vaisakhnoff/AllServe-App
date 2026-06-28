@@ -584,7 +584,7 @@ export default function ServiceDetailPage() {
                 competitive quotes from multiple providers.
               </p>
               <Link
-                href={`/request-custom?categoryId=${service.category?.id ?? ""}`}
+                href={`/request-custom?categoryId=${service.category?.id ?? ""}&providerId=${providerId}&serviceId=${service.id}`}
                 className="mt-4 inline-flex items-center gap-2 rounded-[14px] bg-gradient-to-r from-purple-600 to-violet-600 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-purple-500/20 hover:shadow-xl hover:-translate-y-0.5 transition-all"
               >
                 Post a Custom Request
@@ -715,7 +715,7 @@ export default function ServiceDetailPage() {
           </span>
         ) : requiresServiceRequest((service.deliveryModel ?? service.serviceType) ?? "direct") ? (
           <Link
-            href={`/request-custom?categoryId=${service.category?.id ?? ""}`}
+            href={`/request-custom?categoryId=${service.category?.id ?? ""}&providerId=${providerId}&serviceId=${service.id}`}
             className="rounded-[14px] bg-gradient-to-r from-purple-600 to-violet-600 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-purple-500/20 hover:shadow-xl transition-all"
           >
             Post Request
