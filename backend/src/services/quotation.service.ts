@@ -23,7 +23,10 @@ export class QuotationService implements IQuotationService {
 
     // For inspection: only the assigned provider can submit
     if (order.deliveryModel === "inspection_required") {
-      if (String(order.providerId) !== providerId) {
+      const orderProviderId = order.providerId && typeof order.providerId === "object" && "_id" in (order.providerId as unknown as Record<string, unknown>)
+        ? String((order.providerId as unknown as { _id: unknown })._id)
+        : String(order.providerId);
+      if (orderProviderId !== providerId) {
         throw new ForbiddenError("Only the assigned provider can submit a quotation for inspection orders");
       }
       // Check for existing active quotation
