@@ -122,6 +122,18 @@ export const API_ENDPOINTS = {
   ORDER_REJECT: (id: string) => `/orders/${id}/reject`,
   ORDER_CUSTOMER_CHOICE: (id: string) => `/orders/${id}/customer-choice`,
   ORDER_CANCEL: (id: string) => `/orders/${id}/cancel`,
+  ORDER_START: (id: string) => `/orders/${id}/start`,
+  ORDER_COMPLETE: (id: string) => `/orders/${id}/complete`,
+
+  // ── Inspection Lifecycle ──
+  ORDER_INSPECTION_ACCEPT: (id: string) => `/orders/${id}/inspection/accept`,
+  ORDER_INSPECTION_REJECT: (id: string) => `/orders/${id}/inspection/reject`,
+  ORDER_INSPECTION_DONE: (id: string) => `/orders/${id}/inspection/done`,
+  ORDER_INSPECTION_START: (id: string) => `/orders/${id}/inspection/start`,
+  ORDER_INSPECTION_COMPLETE: (id: string) => `/orders/${id}/inspection/complete`,
+  ORDER_DROP_PROVIDER: (id: string) => `/orders/${id}/drop/provider`,
+  ORDER_DROP_CUSTOMER: (id: string) => `/orders/${id}/drop/customer`,
+
 
   // ── Quotations ──
   QUOTATIONS: "/quotations",

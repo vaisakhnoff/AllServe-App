@@ -4,8 +4,9 @@ import { env } from "./config/env";
 import { logger } from "./shared/logger/logger";
 import { connectDB } from "./database/db";
 import { setupSocket } from "./socket/socket";
-import { messagingService, conversationRepository } from "./di";
 import { setIo } from "./socket/io";
+import { messagingService, conversationRepository, orderTimerService } from "./di";
+import { startOrderExpiryCron } from "./cron/orderExpiry.cron";
 
 const startServer = async () => {
   try {
@@ -14,6 +15,9 @@ const startServer = async () => {
     const server = http.createServer(app);
     const io = setupSocket(server, messagingService, conversationRepository);
     setIo(io);
+
+    // Start cron jobs
+    startOrderExpiryCron(orderTimerService);
 
     server.listen(env.PORT, () => {
       logger.info(`Server running on port ${env.PORT}`);

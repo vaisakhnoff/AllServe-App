@@ -34,6 +34,20 @@ export function createServiceOrderRouter(controller: ServiceOrderController): Ro
   router.patch("/:id/accept", ...providerGuard, controller.acceptOrder.bind(controller));
   router.patch("/:id/reject", ...providerGuard, controller.rejectOrder.bind(controller));
 
+  router.patch("/:id/start", ...providerGuard, controller.startWork.bind(controller));
+  router.patch("/:id/complete", ...providerGuard, controller.completeWork.bind(controller));
+
+  // ── Inspection Lifecycle (Provider) ─────────────────────────────────────────
+  router.patch("/:id/inspection/accept", ...providerGuard, controller.acceptInspection.bind(controller));
+  router.patch("/:id/inspection/reject", ...providerGuard, controller.rejectInspection.bind(controller));
+  router.patch("/:id/inspection/done", ...providerGuard, controller.markInspectionDone.bind(controller));
+  router.patch("/:id/inspection/start", ...providerGuard, controller.inspectionStartWork.bind(controller));
+  router.patch("/:id/inspection/complete", ...providerGuard, controller.inspectionCompleteWork.bind(controller));
+  router.patch("/:id/drop/provider", ...providerGuard, controller.dropByProvider.bind(controller));
+
+  // ── Inspection Lifecycle (Customer) ─────────────────────────────────────────
+  router.patch("/:id/drop/customer", ...userGuard, controller.dropByCustomer.bind(controller));
+
   // ── Customer: Choice after rejection/timeout ────────────────────────────────
   router.patch("/:id/customer-choice", ...userGuard, controller.customerChoice.bind(controller));
 

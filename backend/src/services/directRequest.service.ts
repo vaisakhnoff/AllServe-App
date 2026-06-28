@@ -101,13 +101,7 @@ export class DirectRequestService implements IDirectRequestService {
       respondedAt: new Date(),
     });
 
-    // Set provider busy for instant requests
-    if (order.subMode === "instant") {
-      await this.providerRepo.updateAccount(providerId, {
-        engagementStatus: "busy",
-        lastStatusChangeAt: new Date(),
-      } as Record<string, unknown>);
-    }
+    
 
     return updated!;
   }
@@ -181,4 +175,60 @@ export class DirectRequestService implements IDirectRequestService {
 
     return newOrder;
   }
+
+async startWork(orderId: string, providerId: string): Promise<IServiceOrder> {
+  const order = await this.orderRepo.findById(orderId);
+  if (!order) throw new NotFoundError("Order not found");
+  if (this.extractId(order.providerId) !== providerId) throw new ForbiddenError("Unauthorized");
+  if (order.status !== "accepted") throw new BadRequestError("Order must be accepted before starting work");
+
+  const updated = await this.orderRepo.updateStatus(orderId, "in_progress");
+
+  // Set provider busy
+  await this.providerRepo.updateAccount(providerId, {
+    engagementStatus: "busy",
+    lastStatusChangeAt: new Date(),
+  } as Record<string, unknown>);
+
+  // Emit socket event
+  try {
+    const { getIo } = await import("../socket/io");
+    getIo().to(`provider:${providerId}`).emit("provider:status-changed", {
+      providerId,
+      onlineStatus: "online",
+      engagementStatus: "busy",
+    });
+  } catch {}
+
+  return updated!;
+}
+
+async completeWork(orderId: string, providerId: string): Promise<IServiceOrder> {
+  const order = await this.orderRepo.findById(orderId);
+  if (!order) throw new NotFoundError("Order not found");
+  if (this.extractId(order.providerId) !== providerId) throw new ForbiddenError("Unauthorized");
+  if (order.status !== "in_progress") throw new BadRequestError("Order must be in progress to mark as complete");
+
+  const updated = await this.orderRepo.updateStatus(orderId, "work_completed");
+
+  // Set provider available again
+  await this.providerRepo.updateAccount(providerId, {
+    engagementStatus: "available",
+    lastStatusChangeAt: new Date(),
+  } as Record<string, unknown>);
+
+  // Emit socket event
+  try {
+    const { getIo } = await import("../socket/io");
+    getIo().to(`provider:${providerId}`).emit("provider:status-changed", {
+      providerId,
+      onlineStatus: "online",
+      engagementStatus: "available",
+    });
+  } catch {}
+
+  return updated!;
+}
+
+
 }
