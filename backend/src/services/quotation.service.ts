@@ -11,6 +11,13 @@ export class QuotationService implements IQuotationService {
     private readonly orderRepo: IServiceOrderRepository
   ) {}
 
+  private extractId(ref: unknown): string {
+    if (ref && typeof ref === "object" && "_id" in (ref as unknown as Record<string, unknown>)) {
+      return String((ref as unknown as { _id: unknown })._id);
+    }
+    return String(ref);
+  }
+
   async submit(providerId: string, dto: CreateQuotationDto): Promise<IQuotation> {
     const order = await this.orderRepo.findById(dto.orderId);
     if (!order) throw new NotFoundError("Order not found");
@@ -82,25 +89,25 @@ export class QuotationService implements IQuotationService {
     if (!quotation) throw new NotFoundError("Quotation not found");
     if (quotation.status !== "submitted") throw new BadRequestError("Only submitted quotations can be accepted");
 
-    const order = await this.orderRepo.findById(String(quotation.orderId));
+    const order = await this.orderRepo.findById(this.extractId(quotation.orderId));
     if (!order) throw new NotFoundError("Order not found");
 
-    const orderCustomerId = (order.customerId as unknown as { _id?: unknown })._id || order.customerId;
-    if (String(orderCustomerId) !== customerId) throw new ForbiddenError("Unauthorized");
+    const orderCustomerId = this.extractId(order.customerId);
+    if (orderCustomerId !== customerId) throw new ForbiddenError("Unauthorized");
 
     // Accept this quotation
     await this.repo.updateStatus(quotationId, "accepted");
 
     // Reject all other quotations for this order (custom flow)
     if (order.deliveryModel === "custom") {
-      await this.repo.rejectAllExcept(String(quotation.orderId), quotationId);
+      await this.repo.rejectAllExcept(this.extractId(quotation.orderId), quotationId);
     }
 
     // Determine next order status
     const needsAdvance = quotation.currentRevision.advanceRequired && quotation.currentRevision.advanceAmount > 0;
     const nextStatus = needsAdvance ? "awaiting_advance" : "in_progress";
 
-    await this.orderRepo.updateStatus(String(order._id), nextStatus as never, {
+    await this.orderRepo.updateStatus(this.extractId(order._id), nextStatus as never, {
       selectedQuotationId: quotation._id,
       providerId: quotation.providerId,
     });
@@ -113,10 +120,10 @@ export class QuotationService implements IQuotationService {
     if (!quotation) throw new NotFoundError("Quotation not found");
     if (quotation.status !== "submitted") throw new BadRequestError("Only submitted quotations can be rejected");
 
-    const order = await this.orderRepo.findById(String(quotation.orderId));
+    const order = await this.orderRepo.findById(this.extractId(quotation.orderId));
     if (!order) throw new NotFoundError("Order not found");
-    const orderCustomerId = (order.customerId as unknown as { _id?: unknown })._id || order.customerId;
-    if (String(orderCustomerId) !== customerId) throw new ForbiddenError("Unauthorized");
+    const orderCustomerId = this.extractId(order.customerId);
+    if (orderCustomerId !== customerId) throw new ForbiddenError("Unauthorized");
 
     await this.repo.updateStatus(quotationId, "rejected");
     return (await this.repo.findById(quotationId))!;
@@ -127,10 +134,10 @@ export class QuotationService implements IQuotationService {
     if (!quotation) throw new NotFoundError("Quotation not found");
     if (quotation.status !== "submitted") throw new BadRequestError("Only submitted quotations can be modified");
 
-    const order = await this.orderRepo.findById(String(quotation.orderId));
+    const order = await this.orderRepo.findById(this.extractId(quotation.orderId));
     if (!order) throw new NotFoundError("Order not found");
-    const orderCustomerId = (order.customerId as unknown as { _id?: unknown })._id || order.customerId;
-    if (String(orderCustomerId) !== customerId) throw new ForbiddenError("Unauthorized");
+    const orderCustomerId = this.extractId(order.customerId);
+    if (orderCustomerId !== customerId) throw new ForbiddenError("Unauthorized");
 
     await this.repo.updateStatus(quotationId, "modification_requested", {
       modificationComment: dto.comment,
@@ -146,8 +153,8 @@ export class QuotationService implements IQuotationService {
       throw new BadRequestError("Only quotations with modification requested can be revised");
     }
 
-    const qProviderId = (quotation.providerId as unknown as { _id?: unknown })._id || quotation.providerId;
-    if (String(qProviderId) !== providerId) throw new ForbiddenError("Unauthorized");
+    const qProviderId = this.extractId(quotation.providerId);
+    if (qProviderId !== providerId) throw new ForbiddenError("Unauthorized");
 
     const newRevisionNumber = quotation.revisionHistory.length + 1;
     const totalAmount = dto.labourCharge + dto.materialCost + dto.additionalCharges;
