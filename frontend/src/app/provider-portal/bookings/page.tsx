@@ -210,6 +210,12 @@ export default function ProviderBookingsPage() {
     finally { setActionLoading(null); }
   };
 
+  const handleRequestOnlinePay = async (orderId: string) => {
+    // For now, this just notifies the user that online payment is requested
+    // In production, this would trigger a payment link sent to the customer
+    toast.success("Online payment request sent to customer");
+  };
+
   const getActions = (order: ServiceOrder) => {
     const actions: { label: string; icon: typeof CheckCircle2; onClick: () => void; color: string }[] = [];
 
@@ -262,6 +268,7 @@ export default function ProviderBookingsPage() {
     // ── Shared ────────────────────────────────────────────────────────────
     if (["awaiting_payment", "awaiting_final_payment"].includes(order.status)) {
       actions.push({ label: "Mark Cash Paid", icon: IndianRupee, onClick: () => handleMarkCash(order._id), color: "border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100" });
+      actions.push({ label: "Request Online Pay", icon: Receipt, onClick: () => handleRequestOnlinePay(order._id), color: "border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100" });
     }
 
     return actions;

@@ -13,12 +13,19 @@ export class InvoiceService implements IInvoiceService {
     private readonly orderRepo: IServiceOrderRepository
   ) {}
 
+  private extractId(ref: unknown): string {
+    if (ref && typeof ref === "object" && "_id" in (ref as unknown as Record<string, unknown>)) {
+      return String((ref as unknown as { _id: unknown })._id);
+    }
+    return String(ref);
+  }
+
   async generate(providerId: string, dto: CreateInvoiceDto): Promise<IInvoice> {
     const order = await this.orderRepo.findById(dto.orderId);
     if (!order) throw new NotFoundError("Order not found");
 
-    const orderProviderId = (order.providerId as unknown as { _id?: unknown })?._id || order.providerId;
-    if (String(orderProviderId) !== providerId) throw new ForbiddenError("Unauthorized");
+    const orderProviderId = this.extractId(order.providerId);
+    if (orderProviderId !== providerId) throw new ForbiddenError("Unauthorized");
 
     // Validate order is in correct state for invoice generation
     const validStatuses: Record<string, string[]> = {
@@ -41,7 +48,7 @@ export class InvoiceService implements IInvoiceService {
     const commissionRate = category?.commissionRate ?? 15;
     const platformCommission = Math.round((total * commissionRate) / 100);
 
-    const orderCustomerId = (order.customerId as unknown as { _id?: unknown })?._id || order.customerId;
+    const orderCustomerId = this.extractId(order.customerId);
 
     const invoice = await this.repo.create({
       orderId: dto.orderId as unknown as IInvoice["orderId"],
@@ -58,9 +65,8 @@ export class InvoiceService implements IInvoiceService {
       platformCommission,
     });
 
-    // Transition order status
-    const nextStatus = "awaiting_payment";
-    await this.orderRepo.updateStatus(dto.orderId, nextStatus as never, {
+    // Transition order to awaiting_payment
+    await this.orderRepo.updateStatus(dto.orderId, "awaiting_payment" as never, {
       invoiceId: invoice._id,
     } as Partial<IServiceOrder>);
 
@@ -72,8 +78,8 @@ export class InvoiceService implements IInvoiceService {
     if (!invoice) throw new NotFoundError("Invoice not found");
     if (invoice.paymentStatus !== "pending") throw new BadRequestError("Invoice is already settled");
 
-    const invCustomerId = (invoice.customerId as unknown as { _id?: unknown })?._id || invoice.customerId;
-    if (String(invCustomerId) !== customerId) throw new ForbiddenError("Unauthorized");
+    const invCustomerId = this.extractId(invoice.customerId);
+    if (invCustomerId !== customerId) throw new ForbiddenError("Unauthorized");
 
     const updated = await this.repo.update(invoiceId, {
       paymentStatus: "paid_online",
@@ -83,10 +89,8 @@ export class InvoiceService implements IInvoiceService {
     });
 
     // Transition order to completed
-    const order = await this.orderRepo.findById(String(invoice.orderId));
-    if (order) {
-      await this.orderRepo.updateStatus(String(order._id), "completed");
-    }
+    const orderId = this.extractId(invoice.orderId);
+    await this.orderRepo.updateStatus(orderId, "completed" as never);
 
     return updated!;
   }
@@ -96,8 +100,8 @@ export class InvoiceService implements IInvoiceService {
     if (!invoice) throw new NotFoundError("Invoice not found");
     if (invoice.paymentStatus !== "pending") throw new BadRequestError("Invoice is already settled");
 
-    const invProviderId = (invoice.providerId as unknown as { _id?: unknown })?._id || invoice.providerId;
-    if (String(invProviderId) !== providerId) throw new ForbiddenError("Unauthorized");
+    const invProviderId = this.extractId(invoice.providerId);
+    if (invProviderId !== providerId) throw new ForbiddenError("Unauthorized");
 
     const updated = await this.repo.update(invoiceId, {
       paymentStatus: "paid_cash",
@@ -107,15 +111,8 @@ export class InvoiceService implements IInvoiceService {
     });
 
     // Transition order to completed
-    const order = await this.orderRepo.findById(String(invoice.orderId));
-    if (order) {
-      await this.orderRepo.updateStatus(String(order._id), "completed");
-
-      // Release provider busy status for direct instant orders
-      if (order.deliveryModel === "direct" && order.subMode === "instant") {
-        // Provider availability release handled separately
-      }
-    }
+    const orderId = this.extractId(invoice.orderId);
+    await this.orderRepo.updateStatus(orderId, "completed" as never);
 
     return updated!;
   }
