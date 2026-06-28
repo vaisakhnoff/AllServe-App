@@ -22,8 +22,8 @@ export class InvoiceService implements IInvoiceService {
 
     // Validate order is in correct state for invoice generation
     const validStatuses: Record<string, string[]> = {
-      direct: ["accepted"],
-      inspection_required: ["in_progress"],
+      direct: ["work_completed"],
+      inspection_required: ["work_completed"],
       custom: ["in_progress"],
     };
     const allowed = validStatuses[order.deliveryModel] || [];
@@ -59,7 +59,7 @@ export class InvoiceService implements IInvoiceService {
     });
 
     // Transition order status
-    const nextStatus = order.deliveryModel === "direct" ? "awaiting_payment" : "awaiting_final_payment";
+    const nextStatus = "awaiting_payment";
     await this.orderRepo.updateStatus(dto.orderId, nextStatus as never, {
       invoiceId: invoice._id,
     } as Partial<IServiceOrder>);
