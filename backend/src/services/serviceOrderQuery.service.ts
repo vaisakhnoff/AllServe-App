@@ -21,6 +21,10 @@ export class ServiceOrderQueryService implements IServiceOrderQueryService {
     return this.repo.findByProvider(providerId, filter, query.page, query.limit);
   }
 
+  async getBroadcastCustomOrders(page = 1, limit = 20): Promise<PaginatedOrders> {
+    return this.repo.findBroadcastCustom(page, limit);
+  }
+
   async getOrderById(id: string, actorId: string): Promise<IServiceOrder> {
     const order = await this.repo.findById(id);
     if (!order) throw new NotFoundError("Order not found");

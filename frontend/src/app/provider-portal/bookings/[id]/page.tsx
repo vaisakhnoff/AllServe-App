@@ -385,13 +385,13 @@ export default function ProviderBookingDetailPage() {
                 <button onClick={() => setShowConfirm({ title: "Start Work", message: "Begin the project.", label: "Start", variant: "success", action: () => orderService.inspectionStartWork(id) })} className="w-full rounded-xl bg-blue-600 py-3.5 text-sm font-bold text-white hover:bg-blue-700 flex items-center justify-center gap-2"><Play size={15} /> Start Work</button>
               )}
               {order.status === "quotation_accepted" && order.deliveryModel === "custom" && (
-                <button onClick={() => setShowConfirm({ title: "Start Work", message: "Begin the project.", label: "Start", variant: "success", action: () => orderService.inspectionStartWork(id) })} className="w-full rounded-xl bg-blue-600 py-3.5 text-sm font-bold text-white hover:bg-blue-700 flex items-center justify-center gap-2"><Play size={15} /> Start Work</button>
+                <button onClick={() => setShowConfirm({ title: "Start Work", message: "Begin the project.", label: "Start", variant: "success", action: () => orderService.startWork(id) })} className="w-full rounded-xl bg-blue-600 py-3.5 text-sm font-bold text-white hover:bg-blue-700 flex items-center justify-center gap-2"><Play size={15} /> Start Work</button>
               )}
               {order.status === "in_progress" && order.deliveryModel === "inspection_required" && (
                 <button onClick={() => setShowConfirm({ title: "Finish Work", message: "Mark as done, then generate invoice.", label: "Finish", variant: "success", action: () => orderService.inspectionCompleteWork(id) })} className="w-full rounded-xl bg-emerald-600 py-3.5 text-sm font-bold text-white hover:bg-emerald-700 flex items-center justify-center gap-2"><CheckCircle2 size={15} /> Finish Work</button>
               )}
               {order.status === "in_progress" && order.deliveryModel === "custom" && (
-                <button onClick={() => setShowConfirm({ title: "Finish Work", message: "Mark as done, then generate invoice.", label: "Finish", variant: "success", action: () => orderService.inspectionCompleteWork(id) })} className="w-full rounded-xl bg-emerald-600 py-3.5 text-sm font-bold text-white hover:bg-emerald-700 flex items-center justify-center gap-2"><CheckCircle2 size={15} /> Finish Work</button>
+                <button onClick={() => setShowConfirm({ title: "Finish Work", message: "Mark as done, then generate invoice.", label: "Finish", variant: "success", action: () => orderService.completeWork(id) })} className="w-full rounded-xl bg-emerald-600 py-3.5 text-sm font-bold text-white hover:bg-emerald-700 flex items-center justify-center gap-2"><CheckCircle2 size={15} /> Finish Work</button>
               )}
 
               {/* Payment */}

@@ -180,7 +180,8 @@ async startWork(orderId: string, providerId: string): Promise<IServiceOrder> {
   const order = await this.orderRepo.findById(orderId);
   if (!order) throw new NotFoundError("Order not found");
   if (this.extractId(order.providerId) !== providerId) throw new ForbiddenError("Unauthorized");
-  if (order.status !== "accepted") throw new BadRequestError("Order must be accepted before starting work");
+  const validStartStatuses = ["accepted", "quotation_accepted"];
+  if (!validStartStatuses.includes(order.status)) throw new BadRequestError("Order must be accepted before starting work");
 
   const updated = await this.orderRepo.updateStatus(orderId, "in_progress");
 

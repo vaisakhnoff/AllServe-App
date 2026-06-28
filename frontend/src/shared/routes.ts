@@ -117,6 +117,7 @@ export const API_ENDPOINTS = {
   ORDERS_CUSTOM: "/orders/custom",
   ORDERS_MY: "/orders/my",
   ORDERS_PROVIDER: "/orders/provider",
+  ORDERS_BROADCAST_CUSTOM: "/orders/broadcast/custom",
   ORDER_BY_ID: (id: string) => `/orders/${id}`,
   ORDER_ACCEPT: (id: string) => `/orders/${id}/accept`,
   ORDER_REJECT: (id: string) => `/orders/${id}/reject`,

@@ -8,8 +8,10 @@ import {
 import toast from "react-hot-toast";
 import { ProviderPortalShell } from "@/components/provider/ProviderPortalShell";
 import { serviceRequestService } from "@/services/serviceRequest";
+import { orderService } from "@/services/order";
 import { providerQuoteService } from "@/services/provider";
 import { ServiceRequest, ProviderQuote } from "@/types/serviceRequest.types";
+import { ServiceOrder } from "@/types/order.types";
 import { getErrorMessage } from "@/utils/errorHandler";
 
 const urgencyColors: Record<string, string> = {
@@ -21,6 +23,7 @@ const urgencyColors: Record<string, string> = {
 
 export default function ProviderRequestsPage() {
   const [requests, setRequests] = useState<ServiceRequest[]>([]);
+  const [customOrders, setCustomOrders] = useState<ServiceOrder[]>([]);
   const [myQuotes, setMyQuotes] = useState<ProviderQuote[]>([]);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({ total: 0, accepted: 0, pending: 0, acceptanceRate: 0 });
@@ -35,8 +38,12 @@ export default function ProviderRequestsPage() {
     setLoading(true);
     try {
       if (activeView === "browse") {
-        const res = await serviceRequestService.browse({ city: filters.city || undefined });
-        setRequests(res.data.data.items);
+        const [srRes, customRes] = await Promise.all([
+          serviceRequestService.browse({ city: filters.city || undefined }),
+          orderService.getBroadcastCustom(),
+        ]);
+        setRequests(srRes.data.data.items);
+        setCustomOrders(customRes.data.data.items || []);
       } else {
         const res = await providerQuoteService.getMyQuotes();
         setMyQuotes(res.data.data.items);

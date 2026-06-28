@@ -54,6 +54,25 @@ export class ServiceOrderRepository implements IServiceOrderRepository {
     return { items, total, page, limit };
   }
 
+  async findBroadcastCustom(page = 1, limit = 20): Promise<PaginatedOrders> {
+    const query = {
+      deliveryModel: "custom",
+      status: { $in: ["broadcast_open", "receiving_quotations"] },
+      $or: [{ providerId: null }, { providerId: { $exists: false } }],
+    } as Record<string, unknown>;
+    const [items, total] = await Promise.all([
+      ServiceOrderModel.find(query)
+        .populate("customerId", "name email phone")
+        .populate("categoryId", "name icon")
+        .sort({ createdAt: -1 })
+        .skip((page - 1) * limit)
+        .limit(limit)
+        .exec(),
+      ServiceOrderModel.countDocuments(query).exec(),
+    ]);
+    return { items: items as IServiceOrder[], total, page, limit };
+  }
+
   async findAll(filter: Record<string, unknown> = {}, page = 1, limit = 20): Promise<PaginatedOrders> {
     const [items, total] = await Promise.all([
       ServiceOrderModel.find(filter)

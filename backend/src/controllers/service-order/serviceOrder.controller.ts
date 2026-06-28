@@ -150,6 +150,15 @@ export class ServiceOrderController {
     } catch (err) { next(err); }
   }
 
+  async getBroadcastCustomOrders(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      const page = Number(req.query.page) || 1;
+      const limit = Number(req.query.limit) || 20;
+      const data = await this.queryService.getBroadcastCustomOrders(page, limit);
+      sendSuccess(res, data);
+    } catch (err) { next(err); }
+  }
+
   async getOrderById(req: AuthRequest, res: Response, next: NextFunction) {
     try {
       const data = await this.queryService.getOrderById(req.params.id as string, req.user!.id);

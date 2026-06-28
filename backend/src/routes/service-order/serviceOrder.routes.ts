@@ -56,6 +56,7 @@ export function createServiceOrderRouter(controller: ServiceOrderController): Ro
 
   // ── Provider: My orders ─────────────────────────────────────────────────────
   router.get("/provider", ...providerGuard, controller.getProviderOrders.bind(controller));
+  router.get("/broadcast/custom", ...providerGuard, controller.getBroadcastCustomOrders.bind(controller));
 
   // ── Shared: Get by ID / Cancel ──────────────────────────────────────────────
   router.get("/:id", ...authGuard, controller.getOrderById.bind(controller));

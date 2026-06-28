@@ -76,6 +76,9 @@ export const orderService = {
   getProviderOrders: (query?: OrderListQuery) =>
     api.get<ApiResponse<PaginatedOrders>>(API_ENDPOINTS.ORDERS_PROVIDER, { params: query }),
 
+  getBroadcastCustom: (page = 1, limit = 20) =>
+    api.get<ApiResponse<PaginatedOrders>>(API_ENDPOINTS.ORDERS_BROADCAST_CUSTOM, { params: { page, limit } }),
+
   getById: (id: string) =>
     api.get<ApiResponse<ServiceOrder>>(API_ENDPOINTS.ORDER_BY_ID(id)),
 };
