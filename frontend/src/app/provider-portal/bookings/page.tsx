@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import Link from "next/link";
 import {
   Loader2, CheckCircle2, XCircle, Clock, Zap, Calendar, MapPin,
   FileText, AlertCircle, Filter, Send, Play, IndianRupee, Receipt,
-  CreditCard, Ban,
+  CreditCard, Ban, ChevronRight,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { ProviderPortalShell } from "@/components/provider/ProviderPortalShell";
@@ -460,6 +461,12 @@ export default function ProviderBookingsPage() {
                       <p className="text-[11px] font-semibold text-amber-700">Respond within 30 minutes</p>
                     </div>
                   )}
+
+                  {/* View details link */}
+                  <Link href={`/provider-portal/bookings/${order._id}`}
+                    className="mt-3 inline-flex items-center gap-1 text-[11px] font-semibold text-indigo-600 hover:text-indigo-800 transition">
+                    View Details <ChevronRight size={11} />
+                  </Link>
                 </div>
 
                 {/* Actions */}
