@@ -82,6 +82,7 @@ export class ProviderQuoteService implements IProviderQuoteService {
       providerId: quote.providerId,
       categoryId: request.categoryId,
       deliveryModel: "custom",
+      subMode: "service_request",
       status: "quotation_accepted",
       statusHistory: [
         { status: "broadcast_open", at: request.createdAt },

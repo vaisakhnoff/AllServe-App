@@ -114,7 +114,10 @@ export default function ProviderBookingsPage() {
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {orders.map((order) => {
             const statusCfg = STATUS_CONFIG[order.status] || { label: order.status, dot: "bg-slate-300", bg: "bg-slate-50 text-slate-600 border-slate-200" };
-            const badge = MODEL_BADGES[order.deliveryModel];
+            const isServiceRequest = order.subMode === "service_request";
+            const badge = isServiceRequest
+              ? { label: "Service Request", emoji: "📋", color: "bg-orange-50 text-orange-700 border-orange-200" }
+              : MODEL_BADGES[order.deliveryModel];
             const isUrgent = order.status === "awaiting_provider_response" && order.subMode === "instant";
 
             return (
