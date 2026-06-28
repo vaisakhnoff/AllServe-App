@@ -1,11 +1,10 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import Link from "next/link";
 import {
   Loader2, CheckCircle2, XCircle, Clock, Zap, Calendar, MapPin,
   FileText, AlertCircle, Filter, Send, Play, IndianRupee, Receipt,
-  Eye, ChevronRight, CreditCard, Ban,
+  CreditCard, Ban,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { ProviderPortalShell } from "@/components/provider/ProviderPortalShell";
@@ -348,30 +347,7 @@ export default function ProviderBookingsPage() {
 
                 {/* Actions */}
                 {actions.length > 0 && (
-                  <div className="border-t border-slate-100 px-5 py-3 mt-auto">
-                    <div className="flex flex-wrap gap-2">
-                      {actions.map((action) => {
-                        const Icon = action.icon;
-                        return (
-                          <button key={action.label} onClick={action.onClick} disabled={actionLoading === order._id}
-                            className={`inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-[11px] font-bold transition disabled:opacity-50 ${VARIANT_STYLES[action.variant]}`}>
-                            {actionLoading === order._id ? <Loader2 size={11} className="animate-spin" /> : <Icon size={11} />}
-                            {action.label}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-
-                {/* View detail link */}
-                <Link href={`/provider-portal/bookings/${order._id}`}
-                  className="absolute inset-0 rounded-2xl" aria-label="View booking details">
-                  <span className="sr-only">View details</span>
-                </Link>
-                {/* Make action buttons clickable above the link */}
-                {actions.length > 0 && (
-                  <div className="relative z-10 border-t border-slate-100 px-5 py-3 mt-auto -mt-[1px]">
+                  <div className="relative z-10 border-t border-slate-100 px-5 py-3 mt-auto">
                     <div className="flex flex-wrap gap-2">
                       {actions.map((action) => {
                         const Icon = action.icon;
