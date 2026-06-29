@@ -10,14 +10,18 @@ export class ServiceOrderQueryService implements IServiceOrderQueryService {
   async getCustomerOrders(customerId: string, query: OrderQuery): Promise<PaginatedOrders> {
     const filter: Record<string, unknown> = {};
     if (query.deliveryModel) filter.deliveryModel = query.deliveryModel;
-    if (query.status) filter.status = query.status;
+    if (query.status) {
+      filter.status = query.status.includes(",") ? { $in: query.status.split(",") } : query.status;
+    }
     return this.repo.findByCustomer(customerId, filter, query.page, query.limit);
   }
 
   async getProviderOrders(providerId: string, query: OrderQuery): Promise<PaginatedOrders> {
     const filter: Record<string, unknown> = {};
     if (query.deliveryModel) filter.deliveryModel = query.deliveryModel;
-    if (query.status) filter.status = query.status;
+    if (query.status) {
+      filter.status = query.status.includes(",") ? { $in: query.status.split(",") } : query.status;
+    }
     return this.repo.findByProvider(providerId, filter, query.page, query.limit);
   }
 

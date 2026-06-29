@@ -134,12 +134,7 @@ export default function UnifiedBookingsPage() {
     }
   };
 
-  const stats = {
-    all: total,
-    pending: orders.filter((o) => ["awaiting_provider_response", "quotation_submitted", "quotation_accepted"].includes(o.status)).length,
-    active: orders.filter((o) => ["in_progress", "accepted"].includes(o.status)).length,
-    completed: orders.filter((o) => ["completed", "work_completed"].includes(o.status)).length,
-  };
+
 
   return (
     <ProviderPortalShell>
@@ -163,9 +158,6 @@ export default function UnifiedBookingsPage() {
           >
             <div className="text-xl mb-1">{mode.icon}</div>
             <p className="text-xs font-bold">{mode.label}</p>
-            <p className="text-[10px] text-opacity-70 mt-1">
-              {mode.value === "all" ? stats.all : stats[mode.value as keyof typeof stats]}
-            </p>
           </button>
         ))}
       </div>
