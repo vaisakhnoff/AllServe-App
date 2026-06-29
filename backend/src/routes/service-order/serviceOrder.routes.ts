@@ -34,8 +34,8 @@ export function createServiceOrderRouter(controller: ServiceOrderController): Ro
   router.patch("/:id/accept", ...providerGuard, controller.acceptOrder.bind(controller));
   router.patch("/:id/reject", ...providerGuard, controller.rejectOrder.bind(controller));
 
-  router.patch("/:id/start", ...providerGuard, controller.startWork.bind(controller));
-  router.patch("/:id/complete", ...providerGuard, controller.completeWork.bind(controller));
+  router.patch("/:id/start", ...providerGuard, controller.directStartWork.bind(controller));
+  router.patch("/:id/complete", ...providerGuard, controller.directCompleteWork.bind(controller));
 
   // ── Inspection Lifecycle (Provider) ─────────────────────────────────────────
   router.patch("/:id/inspection/accept", ...providerGuard, controller.acceptInspection.bind(controller));
@@ -64,8 +64,8 @@ export function createServiceOrderRouter(controller: ServiceOrderController): Ro
   // ── Custom Order Lifecycle ───────────────────────────────────────────────────
   router.patch("/:id/custom/accept", ...providerGuard, controller.acceptCustomOrder.bind(controller));
   router.patch("/:id/custom/reject", ...providerGuard, controller.rejectCustomOrder.bind(controller));
-  router.patch("/:id/custom/start", ...providerGuard, controller.startWork.bind(controller));
-  router.patch("/:id/custom/complete", ...providerGuard, controller.completeWork.bind(controller));
+  router.patch("/:id/custom/start", ...providerGuard, controller.customStartWork.bind(controller));
+  router.patch("/:id/custom/complete", ...providerGuard, controller.customCompleteWork.bind(controller));
   router.patch("/:id/custom/drop/provider", ...providerGuard, controller.dropCustomByProvider.bind(controller));
   router.patch("/:id/custom/drop/customer", ...userGuard, controller.dropCustomByCustomer.bind(controller));
 

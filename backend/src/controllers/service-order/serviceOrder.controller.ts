@@ -197,14 +197,30 @@ export class ServiceOrderController {
     } catch (err) { next(err); }
   }
 
-  async startWork(req: AuthRequest, res: Response, next: NextFunction) {
+  // ── Direct Order Lifecycle ──────────────────────────────────────────────────
+  async directStartWork(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      const data = await this.directService.startWork(req.params.id as string, req.user!.id);
+      sendSuccess(res, data, "Work started");
+    } catch (err) { next(err); }
+  }
+
+  async directCompleteWork(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      const data = await this.directService.completeWork(req.params.id as string, req.user!.id);
+      sendSuccess(res, data, "Work completed");
+    } catch (err) { next(err); }
+  }
+
+  // ── Custom Order Lifecycle ──────────────────────────────────────────────────
+  async customStartWork(req: AuthRequest, res: Response, next: NextFunction) {
     try {
       const data = await this.customOrderLifecycleService.startWork(req.params.id as string, req.user!.id);
       sendSuccess(res, data, "Work started");
     } catch (err) { next(err); }
   }
 
-  async completeWork(req: AuthRequest, res: Response, next: NextFunction) {
+  async customCompleteWork(req: AuthRequest, res: Response, next: NextFunction) {
     try {
       const data = await this.customOrderLifecycleService.completeWork(req.params.id as string, req.user!.id);
       sendSuccess(res, data, "Work completed");
