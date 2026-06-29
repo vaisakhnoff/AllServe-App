@@ -36,6 +36,7 @@ export type CustomStatus =
   | "awaiting_provider_response"
   | "quotation_submitted"
   | "quotation_accepted"
+  | "modification_requested"
   | "awaiting_advance"
   | "in_progress"
   | "work_completed"
@@ -125,7 +126,7 @@ const ALL_STATUSES: string[] = [
   "cancelled_with_refund", "cancelled",
   "inspection_accepted", "inspection_completed", "quotation_submitted", "quotation_accepted",
   "dropped_by_provider", "dropped_by_customer",
-  "awaiting_advance",
+  "awaiting_advance", "modification_requested",
 ];
 
 const serviceOrderSchema = new Schema<IServiceOrder>(

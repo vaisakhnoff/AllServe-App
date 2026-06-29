@@ -78,7 +78,7 @@ export class BookingService implements IBookingService {
     const booking = await this.repo.findById(bookingId);
     if (!booking) throw new NotFoundError("Booking not found");
     if (String(booking.userId) !== userId) throw new ForbiddenError("Unauthorized");
-    if (["cancelled", "completed", "rejected"].includes(booking.bookingStatus)) {
+    if (["cancelled", "completed", "rejected", "accepted", "in_progress"].includes(booking.bookingStatus)) {
       throw new BadRequestError("Cannot reschedule this booking");
     }
 
@@ -117,14 +117,17 @@ export class BookingService implements IBookingService {
     });
   }
 
-  async updateStatus(bookingId: string, providerId: string, status: "in_progress" | "completed") {
+  async updateStatus(bookingId: string, providerId: string, status: "accepted" | "in_progress" | "completed") {
     const booking = await this.repo.findById(bookingId);
     if (!booking) throw new NotFoundError("Booking not found");
     if (extractId(booking.providerId) !== providerId) {
       throw new ForbiddenError("Unauthorized");
     }
-    if (status === "in_progress" && booking.bookingStatus !== "confirmed") {
-      throw new BadRequestError("Can only start confirmed bookings");
+    if (status === "accepted" && booking.bookingStatus !== "confirmed") {
+      throw new BadRequestError("Can only accept confirmed bookings");
+    }
+    if (status === "in_progress" && !(["confirmed", "accepted"] as string[]).includes(booking.bookingStatus)) {
+      throw new BadRequestError("Can only start confirmed or accepted bookings");
     }
     if (status === "completed" && booking.bookingStatus !== "in_progress") {
       throw new BadRequestError("Can only complete in-progress bookings");
@@ -141,8 +144,9 @@ export class BookingService implements IBookingService {
     const isProvider = extractId(booking.providerId)   === userId;
     if (!isUser && !isProvider) throw new ForbiddenError("Unauthorized");
 
-    if (booking.bookingStatus !== "confirmed") {
-      throw new BadRequestError("Only confirmed bookings can be cancelled");
+    const cancellableStatuses = ["confirmed", "accepted"];
+    if (!cancellableStatuses.includes(booking.bookingStatus)) {
+      throw new BadRequestError("Only confirmed or accepted bookings can be cancelled");
     }
 
     // Deadline: end of the day BEFORE the service date (23:59:59 of booking.date - 1 day)
