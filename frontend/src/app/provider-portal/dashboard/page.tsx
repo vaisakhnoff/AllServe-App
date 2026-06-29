@@ -56,7 +56,7 @@ export default function ProviderDashboardPage() {
         </div>
         <div className="flex gap-3">
           <Link href="/provider-portal/services" className="btn btn-primary px-5 py-3"><Plus size={16} /> Add Service</Link>
-          <Link href="/provider-portal/bookings" className="btn btn-ghost px-5 py-3">View Requests</Link>
+          <Link href="/provider-portal/bookings-unified" className="btn btn-ghost px-5 py-3">View Requests</Link>
         </div>
       </div>
 
@@ -80,7 +80,7 @@ export default function ProviderDashboardPage() {
         <section className="premium-card p-6">
           <div className="mb-5 flex items-center justify-between">
             <h2 className="text-xl font-black">Latest bookings</h2>
-            <Link href="/provider-portal/bookings" className="text-sm font-bold text-indigo-600">View all</Link>
+            <Link href="/provider-portal/bookings-unified" className="text-sm font-bold text-indigo-600">View all</Link>
           </div>
           <div className="overflow-hidden rounded-2xl border border-slate-200">
             <div className="p-6 text-center text-sm font-semibold text-slate-500">

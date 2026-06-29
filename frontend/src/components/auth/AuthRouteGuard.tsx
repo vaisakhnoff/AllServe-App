@@ -32,7 +32,7 @@ const PROVIDER_APPROVED_ROUTES = [
   "/provider-portal/profile",
   "/provider-portal/services",
   "/provider-portal/slots",
-  "/provider-portal/bookings",
+  "/provider-portal/bookings-unified",
   "/provider-portal/earnings",
   "/provider-portal/messages",
   "/provider-portal/settings",

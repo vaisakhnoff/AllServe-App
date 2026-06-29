@@ -279,7 +279,7 @@ export default function ProviderBookingDetailPage() {
 
   return (
     <ProviderPortalShell>
-      <button onClick={() => router.push("/provider-portal/bookings")} className="group mb-6 inline-flex items-center gap-1.5 text-sm font-semibold text-slate-500 hover:text-indigo-600 transition">
+      <button onClick={() => router.push("/provider-portal/bookings-unified")} className="group mb-6 inline-flex items-center gap-1.5 text-sm font-semibold text-slate-500 hover:text-indigo-600 transition">
         <ArrowLeft size={15} className="transition-transform group-hover:-translate-x-0.5" /> Back to bookings
       </button>
 
