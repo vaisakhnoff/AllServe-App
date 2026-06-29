@@ -83,6 +83,31 @@ function InvoiceFormModal({ orderId, onClose, onSuccess }: { orderId: string; on
   const [form, setForm] = useState({ labour: "", material: "", additional: "", discount: "", remark: "" });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
+  const [isLocked, setIsLocked] = useState(false);
+  const [initialFetchLoading, setInitialFetchLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchPrefill = async () => {
+      try {
+        const res = await invoiceService.getPrefill(orderId);
+        const data = res.data.data;
+        if (data.fromQuotation) {
+          setIsLocked(true);
+          setForm((prev) => ({
+            ...prev,
+            labour: String(data.labourCharge || 0),
+            material: String(data.materialCost || 0),
+            additional: "0",
+          }));
+        }
+      } catch (err) {
+        console.error("Failed to fetch prefill data", err);
+      } finally {
+        setInitialFetchLoading(false);
+      }
+    };
+    fetchPrefill();
+  }, [orderId]);
 
   const validate = () => {
     const e: Record<string, string> = {};
@@ -114,14 +139,26 @@ function InvoiceFormModal({ orderId, onClose, onSuccess }: { orderId: string; on
       <div className="w-full max-w-lg rounded-3xl bg-white p-8 shadow-2xl" onClick={(e) => e.stopPropagation()}>
         <h2 className="text-xl font-[800] text-slate-900 mb-1">Generate Invoice</h2>
         <p className="text-sm text-slate-500 mb-6">Breakdown of charges for this service</p>
-        <div className="space-y-4">
+        
+        {initialFetchLoading ? (
+          <div className="flex h-32 items-center justify-center">
+            <Loader2 className="animate-spin text-indigo-500" size={24} />
+          </div>
+        ) : (
+          <>
+            {isLocked && (
+              <div className="mb-4 rounded-xl bg-blue-50 p-3 text-xs font-semibold text-blue-700">
+                Labour and Material costs are locked from the accepted quotation. You may only add additional charges if necessary.
+              </div>
+            )}
+            <div className="space-y-4">
           <div>
             <label className="block text-xs font-bold text-slate-600 mb-1.5">Labour Charge (₹) *</label>
-            <input type="number" value={form.labour} onChange={(e) => setForm({ ...form, labour: e.target.value })} className={`w-full rounded-xl border px-4 py-3 text-sm font-medium outline-none transition focus:ring-2 focus:ring-indigo-100 ${errors.labour ? "border-red-300 bg-red-50" : "border-slate-200 focus:border-indigo-400"}`} placeholder="e.g. 500" />
+            <input type="number" value={form.labour} disabled={isLocked} onChange={(e) => setForm({ ...form, labour: e.target.value })} className={`w-full rounded-xl border px-4 py-3 text-sm font-medium outline-none transition focus:ring-2 focus:ring-indigo-100 ${errors.labour ? "border-red-300 bg-red-50" : "border-slate-200 focus:border-indigo-400"} ${isLocked ? "bg-slate-50 text-slate-500 cursor-not-allowed" : ""}`} placeholder="e.g. 500" />
             {errors.labour && <p className="mt-1 text-xs text-red-500">{errors.labour}</p>}
           </div>
           <div className="grid grid-cols-3 gap-3">
-            <div><label className="block text-xs font-bold text-slate-600 mb-1.5">Material (₹)</label><input type="number" value={form.material} onChange={(e) => setForm({ ...form, material: e.target.value })} className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm font-medium outline-none focus:border-indigo-400" placeholder="0" /></div>
+            <div><label className="block text-xs font-bold text-slate-600 mb-1.5">Material (₹)</label><input type="number" value={form.material} disabled={isLocked} onChange={(e) => setForm({ ...form, material: e.target.value })} className={`w-full rounded-xl border border-slate-200 px-4 py-3 text-sm font-medium outline-none focus:border-indigo-400 ${isLocked ? "bg-slate-50 text-slate-500 cursor-not-allowed" : ""}`} placeholder="0" /></div>
             <div><label className="block text-xs font-bold text-slate-600 mb-1.5">Additional (₹)</label><input type="number" value={form.additional} onChange={(e) => setForm({ ...form, additional: e.target.value })} className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm font-medium outline-none focus:border-indigo-400" placeholder="0" /></div>
             <div><label className="block text-xs font-bold text-slate-600 mb-1.5">Discount (₹)</label><input type="number" value={form.discount} onChange={(e) => setForm({ ...form, discount: e.target.value })} className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm font-medium outline-none focus:border-indigo-400" placeholder="0" /></div>
           </div>
@@ -136,6 +173,8 @@ function InvoiceFormModal({ orderId, onClose, onSuccess }: { orderId: string; on
             {loading ? <Loader2 size={14} className="animate-spin" /> : <Receipt size={14} />} Generate
           </button>
         </div>
+        </>
+        )}
       </div>
     </div>
   );
