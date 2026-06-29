@@ -3,6 +3,7 @@ import { AuthRequest } from "../../shared/interfaces/AuthRequest";
 import { sendSuccess } from "../../shared/utils/response";
 import { StatusCodes } from "../../shared/constants/statusCodes";
 import { IDirectRequestService, IInspectionRequestService, ICustomRequestService, IServiceOrderQueryService } from "../../interfaces/service-order/IServiceOrderService";
+import { CustomOrderLifecycleService } from "../../services/customOrderLifecycle.service";
 import {
   createDirectInstantSchema,
   createDirectScheduledSchema,
@@ -18,6 +19,7 @@ export class ServiceOrderController {
     private readonly directService: IDirectRequestService,
     private readonly inspectionService: IInspectionRequestService,
     private readonly customService: ICustomRequestService,
+    private readonly customOrderLifecycleService: CustomOrderLifecycleService,
     private readonly queryService: IServiceOrderQueryService
   ) {}
 
@@ -133,6 +135,20 @@ export class ServiceOrderController {
     } catch (err) { next(err); }
   }
 
+  async acceptCustomOrder(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      const data = await this.customOrderLifecycleService.acceptCustom(req.params.id as string, req.user!.id);
+      sendSuccess(res, data, "Custom order accepted");
+    } catch (err) { next(err); }
+  }
+
+  async rejectCustomOrder(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      const data = await this.customOrderLifecycleService.rejectCustom(req.params.id as string, req.user!.id);
+      sendSuccess(res, data, "Custom order rejected");
+    } catch (err) { next(err); }
+  }
+
   // ── Query ───────────────────────────────────────────────────────────────────
   async getMyOrders(req: AuthRequest, res: Response, next: NextFunction) {
     try {
@@ -146,15 +162,6 @@ export class ServiceOrderController {
     try {
       const query = orderQuerySchema.parse(req.query);
       const data = await this.queryService.getProviderOrders(req.user!.id, query);
-      sendSuccess(res, data);
-    } catch (err) { next(err); }
-  }
-
-  async getBroadcastCustomOrders(req: AuthRequest, res: Response, next: NextFunction) {
-    try {
-      const page = Number(req.query.page) || 1;
-      const limit = Number(req.query.limit) || 20;
-      const data = await this.queryService.getBroadcastCustomOrders(page, limit);
       sendSuccess(res, data);
     } catch (err) { next(err); }
   }
@@ -174,18 +181,33 @@ export class ServiceOrderController {
     } catch (err) { next(err); }
   }
 
+  async dropCustomByProvider(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      const reason = req.body?.reason || "No reason provided";
+      const data = await this.customOrderLifecycleService.dropByProvider(req.params.id as string, req.user!.id, reason);
+      sendSuccess(res, data, "Order dropped");
+    } catch (err) { next(err); }
+  }
+
+  async dropCustomByCustomer(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      const reason = req.body?.reason || "No reason provided";
+      const data = await this.customOrderLifecycleService.dropByCustomer(req.params.id as string, req.user!.id, reason);
+      sendSuccess(res, data, "Order cancelled");
+    } catch (err) { next(err); }
+  }
+
   async startWork(req: AuthRequest, res: Response, next: NextFunction) {
-  try {
-    const data = await this.directService.startWork(req.params.id as string, req.user!.id);
-    sendSuccess(res, data, "Work started");
-  } catch (err) { next(err); }
-}
+    try {
+      const data = await this.customOrderLifecycleService.startWork(req.params.id as string, req.user!.id);
+      sendSuccess(res, data, "Work started");
+    } catch (err) { next(err); }
+  }
 
-async completeWork(req: AuthRequest, res: Response, next: NextFunction) {
-  try {
-    const data = await this.directService.completeWork(req.params.id as string, req.user!.id);
-    sendSuccess(res, data, "Work completed");
-  } catch (err) { next(err); }
-}
-
+  async completeWork(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      const data = await this.customOrderLifecycleService.completeWork(req.params.id as string, req.user!.id);
+      sendSuccess(res, data, "Work completed");
+    } catch (err) { next(err); }
+  }
 }

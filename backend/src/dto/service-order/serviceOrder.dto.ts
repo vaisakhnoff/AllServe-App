@@ -21,6 +21,7 @@ export const createDirectInstantSchema = z.object({
   providerId: objectIdField,
   description: z.string().trim().min(5).max(2000),
   address: addressSchema,
+  contactPhone: z.string().trim().regex(/^[6-9]\d{9}$/, "Enter a valid 10-digit mobile number"),
   exactLocation: locationSchema,
   images: z.array(z.string()).max(5).default([]),
 });
@@ -33,6 +34,7 @@ export const createDirectScheduledSchema = z.object({
   preferredDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be YYYY-MM-DD"),
   preferredTime: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Time must be HH:mm"),
   address: addressSchema,
+  contactPhone: z.string().trim().regex(/^[6-9]\d{9}$/, "Enter a valid 10-digit mobile number"),
   exactLocation: locationSchema,
   images: z.array(z.string()).max(5).default([]),
 });
@@ -43,6 +45,7 @@ export const createInspectionSchema = z.object({
   providerId: objectIdField,
   description: z.string().trim().min(10).max(3000),
   address: addressSchema,
+  contactPhone: z.string().trim().regex(/^[6-9]\d{9}$/, "Enter a valid 10-digit mobile number"),
   exactLocation: locationSchema,
   images: z.array(z.string()).max(10).default([]),
 });
@@ -57,8 +60,10 @@ export const createCustomSchema = z.object({
   budget: z.number().positive().optional(),
   budgetType: z.enum(["fixed", "flexible", "quote_needed"]).default("quote_needed"),
   address: addressSchema,
+  contactPhone: z.string().trim().regex(/^[6-9]\d{9}$/, "Enter a valid 10-digit mobile number"),
   exactLocation: locationSchema,
   images: z.array(z.string()).max(10).default([]),
+  intakeResponses: z.record(z.string(), z.string()).optional(),
 });
 
 // ── Customer Choice (after rejection/timeout) ─────────────────────────────────

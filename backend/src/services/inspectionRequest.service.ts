@@ -37,6 +37,7 @@ export class InspectionRequestService implements IInspectionRequestService {
       images: dto.images || [],
       address: dto.address,
       exactLocation: dto.exactLocation,
+      contactPhone: dto.contactPhone,
       platformFee: service.inspectionFee || 0,
       platformFeeStatus: "paid",
       quoteCount: 0,

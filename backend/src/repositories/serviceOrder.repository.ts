@@ -113,14 +113,6 @@ export class ServiceOrderRepository implements IServiceOrderRepository {
     }).exec();
   }
 
-  async findExpiredCustomRequests(now: Date): Promise<IServiceOrder[]> {
-    return ServiceOrderModel.find({
-      deliveryModel: "custom",
-      status: { $in: ["broadcast_open", "receiving_quotations"] },
-      expiresAt: { $lte: now },
-    }).exec();
-  }
-
   async incrementQuoteCount(id: string): Promise<void> {
     await ServiceOrderModel.findByIdAndUpdate(id, { $inc: { quoteCount: 1 } }).exec();
   }

@@ -80,6 +80,14 @@ const serviceBaseSchema = z.object({
   location: locationSchema,
   availabilityStatus: z.enum(["available", "unavailable"]).default("available"),
   tags: z.array(tagSchema).max(20, "You can add at most 20 tags").default([]),
+  intakeFields: z.array(z.object({
+    id: z.string().min(1),
+    label: z.string().min(1).max(200),
+    type: z.enum(["text", "textarea", "number", "select", "date", "file"]),
+    required: z.boolean().default(false),
+    placeholder: z.string().max(200).optional(),
+    options: z.array(z.string().max(100)).max(20).optional(),
+  })).max(15).default([]),
   status: z.enum(["active", "inactive"]).default("active"),
 });
 

@@ -25,27 +25,10 @@ export class OrderTimerService {
   }
 
   /**
-   * Check and expire custom requests that have passed their expiry date.
-   */
-  async expireCustomRequests(): Promise<number> {
-    const now = new Date();
-    const expired = await this.orderRepo.findExpiredCustomRequests(now);
-
-    for (const order of expired) {
-      await this.orderRepo.updateStatus(String(order._id), "expired");
-    }
-
-    return expired.length;
-  }
-
-  /**
    * Run all expiry checks. Call this from a cron job.
    */
-  async runAll(): Promise<{ instantExpired: number; customExpired: number }> {
-    const [instantExpired, customExpired] = await Promise.all([
-      this.expireInstantRequests(),
-      this.expireCustomRequests(),
-    ]);
-    return { instantExpired, customExpired };
+  async runAll(): Promise<{ instantExpired: number }> {
+    const instantExpired = await this.expireInstantRequests();
+    return { instantExpired };
   }
 }

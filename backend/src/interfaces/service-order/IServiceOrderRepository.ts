@@ -18,6 +18,5 @@ export interface IServiceOrderRepository {
   updateStatus(id: string, status: ServiceOrderStatus, extra?: Partial<IServiceOrder>): Promise<IServiceOrder | null>;
   update(id: string, data: Partial<IServiceOrder>): Promise<IServiceOrder | null>;
   findExpiredInstantRequests(now: Date): Promise<IServiceOrder[]>;
-  findExpiredCustomRequests(now: Date): Promise<IServiceOrder[]>;
   incrementQuoteCount(id: string): Promise<void>;
 }

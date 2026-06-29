@@ -27,6 +27,17 @@ export interface IServiceLocation {
   pincode?: string;
 }
 
+export type IntakeFieldType = "text" | "textarea" | "number" | "select" | "date" | "file";
+
+export interface IIntakeField {
+  id: string;
+  label: string;
+  type: IntakeFieldType;
+  required: boolean;
+  placeholder?: string;
+  options?: string[]; // for select type
+}
+
 export interface IService extends Document {
   providerId: mongoose.Types.ObjectId;
   categoryId: mongoose.Types.ObjectId;
@@ -89,6 +100,14 @@ export interface IService extends Document {
   location?: IServiceLocation;
   availabilityStatus: AvailabilityStatus;
   tags: string[];
+
+  /**
+   * Custom service intake fields — defines what information the provider
+   * needs from the customer when requesting this service.
+   * Only relevant for deliveryModel: "custom"
+   */
+  intakeFields?: IIntakeField[];
+
   /** Provider-controlled activation toggle. */
   status: ServiceStatus;
   /** Admin-controlled block flag. */
@@ -149,6 +168,14 @@ const serviceSchema = new Schema<IService>(
       default: "available",
     },
     tags: { type: [String], default: [] },
+    intakeFields: [{
+      id: { type: String, required: true },
+      label: { type: String, required: true },
+      type: { type: String, enum: ["text", "textarea", "number", "select", "date", "file"], required: true },
+      required: { type: Boolean, default: false },
+      placeholder: { type: String },
+      options: [{ type: String }],
+    }],
     status: {
       type: String,
       enum: ["active", "inactive"],

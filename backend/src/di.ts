@@ -10,8 +10,6 @@ import { AdminRepository }           from "./repositories/admin.repository";
 import { SlotRepository }            from "./repositories/slot.repository";
 import { BookingRepository }         from "./repositories/booking.repository";
 import { ConversationRepository, MessageRepository } from "./repositories/messaging.repository";
-import { ServiceRequestRepository }  from "./repositories/serviceRequest.repository";
-import { ProviderQuoteRepository }   from "./repositories/providerQuote.repository";
 import { ProviderScheduleRepository } from "./repositories/providerSchedule.repository";
 import { ProviderLeaveRepository }    from "./repositories/providerLeave.repository";
 import { ServiceOrderRepository }     from "./repositories/serviceOrder.repository";
@@ -30,14 +28,13 @@ import { HomeService }               from "./services/home.service";
 import { SlotService }               from "./services/slot.service";
 import { BookingService }            from "./services/booking.service";
 import { MessagingService }          from "./services/messaging.service";
-import { ServiceRequestService }     from "./services/serviceRequest.service";
-import { ProviderQuoteService }      from "./services/providerQuote.service";
 import { ProviderStatusService }     from "./services/providerStatus.service";
 import { ProviderScheduleService }   from "./services/providerSchedule.service";
 import { ProviderLeaveService }      from "./services/providerLeave.service";
 import { DirectRequestService }      from "./services/directRequest.service";
 import { InspectionRequestService }  from "./services/inspectionRequest.service";
 import { CustomRequestService }      from "./services/customRequest.service";
+import { CustomOrderLifecycleService } from "./services/customOrderLifecycle.service";
 import { ServiceOrderQueryService }  from "./services/serviceOrderQuery.service";
 import { QuotationService }          from "./services/quotation.service";
 import { InvoiceService }            from "./services/invoice.service";
@@ -55,8 +52,6 @@ import { HomeController }            from "./controllers/home/home.controller";
 import { SlotController }            from "./controllers/slot/slot.controller";
 import { BookingController }         from "./controllers/booking/booking.controller";
 import { MessagingController }       from "./controllers/messaging/messaging.controller";
-import { ServiceRequestController }  from "./controllers/service-request/serviceRequest.controller";
-import { ProviderQuoteController }   from "./controllers/provider-quote/providerQuote.controller";
 import { ProviderStatusController }  from "./controllers/provider-status/providerStatus.controller";
 import { ProviderScheduleController } from "./controllers/provider-schedule/providerSchedule.controller";
 import { ProviderLeaveController }   from "./controllers/provider-leave/providerLeave.controller";
@@ -65,7 +60,7 @@ import { QuotationController }       from "./controllers/quotation/quotation.con
 import { InvoiceController }         from "./controllers/invoice/invoice.controller";
 
 // =============================================================================
-// 1. Repositories 
+// 1. Repositories
 // =============================================================================
 
 const authRepository            = new AuthRepository();
@@ -78,8 +73,6 @@ const slotRepository            = new SlotRepository();
 const bookingRepository         = new BookingRepository();
 const conversationRepository    = new ConversationRepository();
 const messageRepository         = new MessageRepository();
-const serviceRequestRepository  = new ServiceRequestRepository();
-const providerQuoteRepository   = new ProviderQuoteRepository();
 const providerScheduleRepository = new ProviderScheduleRepository();
 const providerLeaveRepository    = new ProviderLeaveRepository();
 const serviceOrderRepository     = new ServiceOrderRepository();
@@ -87,7 +80,7 @@ const quotationRepository        = new QuotationRepository();
 const invoiceRepository          = new InvoiceRepository();
 
 // =============================================================================
-// 2. Services - inject repository interfaces 
+// 2. Services - inject repository interfaces
 // =============================================================================
 
 export const authService            = new AuthService(authRepository);
@@ -99,14 +92,13 @@ export const adminService           = new AdminService(adminRepository);
 export const slotService            = new SlotService(slotRepository);
 export const bookingService         = new BookingService(bookingRepository, slotRepository);
 export const messagingService       = new MessagingService(conversationRepository, messageRepository);
-export const serviceRequestService  = new ServiceRequestService(serviceRequestRepository);
-export const providerQuoteService   = new ProviderQuoteService(providerQuoteRepository, serviceRequestRepository);
 export const providerStatusService  = new ProviderStatusService(providerRepository);
 export const providerScheduleService = new ProviderScheduleService(providerScheduleRepository, providerLeaveRepository);
 export const providerLeaveService   = new ProviderLeaveService(providerLeaveRepository);
 export const directRequestService   = new DirectRequestService(serviceOrderRepository, providerRepository);
 export const inspectionRequestService = new InspectionRequestService(serviceOrderRepository);
 export const customRequestService   = new CustomRequestService(serviceOrderRepository);
+export const customOrderLifecycleService = new CustomOrderLifecycleService(serviceOrderRepository, providerRepository);
 export const serviceOrderQueryService = new ServiceOrderQueryService(serviceOrderRepository);
 export const quotationNewService    = new QuotationService(quotationRepository, serviceOrderRepository);
 export const invoiceNewService      = new InvoiceService(invoiceRepository, serviceOrderRepository);
@@ -131,12 +123,10 @@ export const homeController            = new HomeController(homeService);
 export const slotController            = new SlotController(slotService);
 export const bookingController         = new BookingController(bookingService);
 export const messagingController       = new MessagingController(messagingService);
-export const serviceRequestController  = new ServiceRequestController(serviceRequestService);
-export const providerQuoteController   = new ProviderQuoteController(providerQuoteService);
 export const providerStatusController  = new ProviderStatusController(providerStatusService);
 export const providerScheduleController = new ProviderScheduleController(providerScheduleService);
 export const providerLeaveController   = new ProviderLeaveController(providerLeaveService);
-export const serviceOrderController2   = new ServiceOrderController(directRequestService, inspectionRequestService, customRequestService, serviceOrderQueryService);
+export const serviceOrderController2   = new ServiceOrderController(directRequestService, inspectionRequestService, customRequestService, customOrderLifecycleService, serviceOrderQueryService);
 export const quotationNewController    = new QuotationController(quotationNewService);
 export const invoiceNewController      = new InvoiceController(invoiceNewService);
 

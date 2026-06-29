@@ -56,11 +56,18 @@ export function createServiceOrderRouter(controller: ServiceOrderController): Ro
 
   // ── Provider: My orders ─────────────────────────────────────────────────────
   router.get("/provider", ...providerGuard, controller.getProviderOrders.bind(controller));
-  router.get("/broadcast/custom", ...providerGuard, controller.getBroadcastCustomOrders.bind(controller));
 
   // ── Shared: Get by ID / Cancel ──────────────────────────────────────────────
   router.get("/:id", ...authGuard, controller.getOrderById.bind(controller));
   router.patch("/:id/cancel", ...userGuard, controller.cancelOrder.bind(controller));
+
+  // ── Custom Order Lifecycle ───────────────────────────────────────────────────
+  router.patch("/:id/custom/accept", ...providerGuard, controller.acceptCustomOrder.bind(controller));
+  router.patch("/:id/custom/reject", ...providerGuard, controller.rejectCustomOrder.bind(controller));
+  router.patch("/:id/custom/start", ...providerGuard, controller.startWork.bind(controller));
+  router.patch("/:id/custom/complete", ...providerGuard, controller.completeWork.bind(controller));
+  router.patch("/:id/custom/drop/provider", ...providerGuard, controller.dropCustomByProvider.bind(controller));
+  router.patch("/:id/custom/drop/customer", ...userGuard, controller.dropCustomByCustomer.bind(controller));
 
   return router;
 }

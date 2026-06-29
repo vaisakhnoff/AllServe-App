@@ -31,7 +31,7 @@ export class InvoiceService implements IInvoiceService {
     const validStatuses: Record<string, string[]> = {
       direct: ["work_completed"],
       inspection_required: ["work_completed"],
-      custom: ["in_progress"],
+      custom: ["work_completed"],
     };
     const allowed = validStatuses[order.deliveryModel] || [];
     if (!allowed.includes(order.status)) {

@@ -56,6 +56,7 @@ export const mapService = (service: IService) => {
     subCategory: service.subCategory ?? null,
     status: service.status,
     isBlocked: service.isBlocked ?? false,
+    intakeFields: service.intakeFields ?? [],
     createdAt: service.createdAt,
     updatedAt: service.updatedAt,
   };

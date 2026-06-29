@@ -23,30 +23,29 @@ export class QuotationService implements IQuotationService {
     if (!order) throw new NotFoundError("Order not found");
 
     // Validate order accepts quotations
-    const validStatuses = ["inspection_completed", "broadcast_open", "receiving_quotations"];
-    if (!validStatuses.includes(order.status)) {
-      throw new BadRequestError("This order is not accepting quotations");
+    // - inspection_required: must be in inspection_completed
+    // - custom: must be in quotation_submitted (provider accepted the request)
+    const validStatuses: Record<string, string[]> = {
+      inspection_required: ["inspection_completed"],
+      custom: ["quotation_submitted", "modification_requested"],
+    };
+    const allowedForModel = validStatuses[order.deliveryModel] ?? [];
+    if (!allowedForModel.includes(order.status)) {
+      throw new BadRequestError("This order is not accepting quotations in its current status");
     }
 
-    // For inspection: only the assigned provider can submit
-    if (order.deliveryModel === "inspection_required") {
-      const orderProviderId = order.providerId && typeof order.providerId === "object" && "_id" in (order.providerId as unknown as Record<string, unknown>)
-        ? String((order.providerId as unknown as { _id: unknown })._id)
-        : String(order.providerId);
-      if (orderProviderId !== providerId) {
-        throw new ForbiddenError("Only the assigned provider can submit a quotation for inspection orders");
-      }
-      // Check for existing active quotation
-      const existing = await this.repo.findByOrderAndProvider(dto.orderId, providerId);
-      if (existing && ["submitted", "modification_requested"].includes(existing.status)) {
-        throw new ConflictError("You already have an active quotation for this order");
-      }
+    // Only the assigned provider can submit for both inspection and custom flows
+    const orderProviderId = order.providerId && typeof order.providerId === "object" && "_id" in (order.providerId as unknown as Record<string, unknown>)
+      ? String((order.providerId as unknown as { _id: unknown })._id)
+      : String(order.providerId);
+    if (orderProviderId !== providerId) {
+      throw new ForbiddenError("Only the assigned provider can submit a quotation for this order");
     }
 
-    // For custom: check for existing quotation from this provider
-    if (order.deliveryModel === "custom") {
-      const existing = await this.repo.findByOrderAndProvider(dto.orderId, providerId);
-      if (existing) throw new ConflictError("You have already submitted a quotation for this order");
+    // Check for existing active quotation (prevent duplicate)
+    const existing = await this.repo.findByOrderAndProvider(dto.orderId, providerId);
+    if (existing && ["submitted", "modification_requested"].includes(existing.status)) {
+      throw new ConflictError("You already have an active quotation for this order");
     }
 
     const totalAmount = dto.labourCharge + dto.materialCost + dto.additionalCharges;
@@ -75,10 +74,9 @@ export class QuotationService implements IQuotationService {
 
     // Update order status
     await this.orderRepo.incrementQuoteCount(dto.orderId);
-    if (order.deliveryModel === "inspection_required" && order.status === "inspection_completed") {
+    // Both inspection and custom: move to quotation_submitted when first quote arrives
+    if (order.status === "inspection_completed" || order.status === "quotation_submitted") {
       await this.orderRepo.updateStatus(dto.orderId, "quotation_submitted");
-    } else if (order.deliveryModel === "custom" && order.status === "broadcast_open") {
-      await this.orderRepo.updateStatus(dto.orderId, "receiving_quotations");
     }
 
     return quotation;
@@ -98,14 +96,9 @@ export class QuotationService implements IQuotationService {
     // Accept this quotation
     await this.repo.updateStatus(quotationId, "accepted");
 
-    // Reject all other quotations for this order (custom flow)
-    if (order.deliveryModel === "custom") {
-      await this.repo.rejectAllExcept(this.extractId(quotation.orderId), quotationId);
-    }
-
-    // Determine next order status
+    // Determine next order status — if advance required, hold at awaiting_advance
     const needsAdvance = quotation.currentRevision.advanceRequired && quotation.currentRevision.advanceAmount > 0;
-    const nextStatus = needsAdvance ? "awaiting_advance" : "in_progress";
+    const nextStatus = needsAdvance ? "awaiting_advance" : "quotation_accepted";
 
     await this.orderRepo.updateStatus(this.extractId(order._id), nextStatus as never, {
       selectedQuotationId: quotation._id,

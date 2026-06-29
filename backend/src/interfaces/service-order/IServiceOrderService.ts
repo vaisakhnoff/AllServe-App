@@ -38,7 +38,6 @@ export interface ICustomRequestService {
 export interface IServiceOrderQueryService {
   getCustomerOrders(customerId: string, query: OrderQuery): Promise<PaginatedOrders>;
   getProviderOrders(providerId: string, query: OrderQuery): Promise<PaginatedOrders>;
-  getBroadcastCustomOrders(page?: number, limit?: number): Promise<PaginatedOrders>;
   getOrderById(id: string, actorId: string): Promise<IServiceOrder>;
   cancelOrder(id: string, actorId: string, reason?: string): Promise<IServiceOrder>;
 }

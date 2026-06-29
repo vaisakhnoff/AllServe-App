@@ -21,10 +21,6 @@ export class ServiceOrderQueryService implements IServiceOrderQueryService {
     return this.repo.findByProvider(providerId, filter, query.page, query.limit);
   }
 
-  async getBroadcastCustomOrders(page = 1, limit = 20): Promise<PaginatedOrders> {
-    return this.repo.findBroadcastCustom(page, limit);
-  }
-
   async getOrderById(id: string, actorId: string): Promise<IServiceOrder> {
     const order = await this.repo.findById(id);
     if (!order) throw new NotFoundError("Order not found");
@@ -55,8 +51,8 @@ export class ServiceOrderQueryService implements IServiceOrderQueryService {
     // Determine if cancellation is allowed based on delivery model and status
     const cancellableStatuses: Record<string, string[]> = {
       direct: ["awaiting_provider_response", "accepted"],
-      inspection_required: ["inspection_pending", "quotation_submitted"],
-      custom: ["broadcast_open", "receiving_quotations"],
+      inspection_required: ["inspection_accepted", "inspection_completed", "quotation_submitted"],
+      custom: ["awaiting_provider_response", "quotation_submitted", "quotation_accepted"],
     };
 
     const allowed = cancellableStatuses[order.deliveryModel] || [];

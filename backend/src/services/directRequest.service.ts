@@ -41,6 +41,7 @@ export class DirectRequestService implements IDirectRequestService {
       images: dto.images || [],
       address: dto.address,
       exactLocation: dto.exactLocation,
+      contactPhone: dto.contactPhone,
       responseDeadline,
       platformFee: 0, // TODO: compute from category settings
       platformFeeStatus: "paid",
@@ -74,6 +75,7 @@ export class DirectRequestService implements IDirectRequestService {
       images: dto.images || [],
       address: dto.address,
       exactLocation: dto.exactLocation,
+      contactPhone: dto.contactPhone,
       preferredDate: dto.preferredDate,
       preferredTime: dto.preferredTime,
       platformFee: 0,
@@ -182,6 +184,14 @@ async startWork(orderId: string, providerId: string): Promise<IServiceOrder> {
   if (this.extractId(order.providerId) !== providerId) throw new ForbiddenError("Unauthorized");
   const validStartStatuses = ["accepted", "quotation_accepted"];
   if (!validStartStatuses.includes(order.status)) throw new BadRequestError("Order must be accepted before starting work");
+
+  // For scheduled orders, don't allow starting before the preferred date
+  if (order.subMode === "scheduled" && order.preferredDate) {
+    const today = new Date().toISOString().slice(0, 10);
+    if (today < order.preferredDate) {
+      throw new BadRequestError(`This is scheduled for ${order.preferredDate}. You cannot start work before that date.`);
+    }
+  }
 
   const updated = await this.orderRepo.updateStatus(orderId, "in_progress");
 

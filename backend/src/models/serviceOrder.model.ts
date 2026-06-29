@@ -33,15 +33,17 @@ export type InspectionStatus =
   | "cancelled";
 
 export type CustomStatus =
-  | "broadcast_open"
-  | "receiving_quotations"
+  | "awaiting_provider_response"
+  | "quotation_submitted"
   | "quotation_accepted"
   | "awaiting_advance"
   | "in_progress"
-  | "awaiting_final_payment"
+  | "work_completed"
+  | "awaiting_payment"
   | "completed"
-  | "expired"
-  | "cancelled";
+  | "cancelled"
+  | "dropped_by_provider"
+  | "dropped_by_customer";
 
 export type ServiceOrderStatus = DirectStatus | InspectionStatus | CustomStatus;
 
@@ -108,6 +110,8 @@ export interface IServiceOrder extends Document {
   customerChoice?: CustomerChoice;
   dropReason?: string;
   estimatedStartDate?: string;
+  intakeResponses?: Record<string, string>;
+  contactPhone?: string;
   reroutedFromOrderId?: mongoose.Types.ObjectId;
 
   createdAt: Date;
@@ -121,8 +125,7 @@ const ALL_STATUSES: string[] = [
   "cancelled_with_refund", "cancelled",
   "inspection_accepted", "inspection_completed", "quotation_submitted", "quotation_accepted",
   "dropped_by_provider", "dropped_by_customer",
-  "awaiting_advance", "awaiting_final_payment",
-  "broadcast_open", "receiving_quotations", "expired",
+  "awaiting_advance",
 ];
 
 const serviceOrderSchema = new Schema<IServiceOrder>(
@@ -196,6 +199,8 @@ const serviceOrderSchema = new Schema<IServiceOrder>(
     customerChoice: { type: String, enum: ["reroute", "refund"] },
     dropReason: { type: String, trim: true },
     estimatedStartDate: { type: String },
+    intakeResponses: { type: Schema.Types.Mixed },
+    contactPhone: { type: String, trim: true },
     reroutedFromOrderId: { type: Schema.Types.ObjectId, ref: "ServiceOrder" },
   },
   { timestamps: true }

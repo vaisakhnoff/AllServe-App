@@ -7,7 +7,7 @@ export function startOrderExpiryCron(timerService: OrderTimerService) {
   cron.schedule("* * * * *", async () => {
     try {
       const result = await timerService.runAll();
-      if (result.instantExpired > 0 || result.customExpired > 0) {
+      if (result.instantExpired > 0) {
         logger.info("Order expiry cron ran", result);
       }
     } catch (error) {
