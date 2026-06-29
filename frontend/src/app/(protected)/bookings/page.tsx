@@ -115,11 +115,11 @@ const MODEL_LABELS: Record<OrderDeliveryModel, { label: string; emoji: string }>
 
 const STATUS_FILTERS = [
   { value: "", label: "All" },
-  { value: "awaiting_provider_response", label: "Waiting" },
+  { value: "awaiting_provider_response,accepted,inspection_accepted,inspection_completed,quotation_submitted,quotation_accepted", label: "Waiting" },
   { value: "in_progress", label: "In Progress" },
-  { value: "awaiting_payment", label: "Pay Now" },
+  { value: "work_completed,awaiting_payment", label: "Pay Now" },
   { value: "completed", label: "Completed" },
-  { value: "cancelled", label: "Cancelled" },
+  { value: "cancelled,cancelled_with_refund,dropped_by_provider,dropped_by_customer,rejected_by_provider,provider_unresponsive", label: "Cancelled" },
 ];
 
 const MODEL_FILTERS: { value: OrderDeliveryModel | ""; label: string; emoji: string }[] = [

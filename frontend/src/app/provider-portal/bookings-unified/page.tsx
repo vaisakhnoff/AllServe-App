@@ -68,9 +68,9 @@ export default function UnifiedBookingsPage() {
 
   // Map view mode to status filters
   const getStatusForMode = (mode: ViewMode): string | undefined => {
-    if (mode === "pending") return "awaiting_provider_response,quotation_submitted,quotation_accepted,inspection_accepted";
-    if (mode === "active") return "accepted,in_progress,inspection_completed";
-    if (mode === "completed") return "completed,work_completed";
+    if (mode === "pending") return "awaiting_provider_response,quotation_submitted,quotation_accepted,inspection_accepted,inspection_completed,accepted";
+    if (mode === "active") return "in_progress";
+    if (mode === "completed") return "work_completed,awaiting_payment,completed";
     return undefined;
   };
 
