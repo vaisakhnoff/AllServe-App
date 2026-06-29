@@ -4,6 +4,7 @@ import { sendSuccess } from "../../shared/utils/response";
 import { StatusCodes } from "../../shared/constants/statusCodes";
 import { IInvoiceService } from "../../interfaces/invoice/IInvoiceService";
 import { createInvoiceSchema } from "../../dto/invoice/invoice.dto";
+import { QuotationModel } from "../../models/quotation.model";
 
 export class InvoiceController {
   constructor(private readonly service: IInvoiceService) {}
@@ -34,6 +35,39 @@ export class InvoiceController {
     try {
       const data = await this.service.getByOrderId(req.params.orderId as string);
       sendSuccess(res, data);
+    } catch (err) { next(err); }
+  }
+
+  /**
+   * GET /invoices/prefill/:orderId
+   * Returns the pre-filled invoice data from the accepted quotation.
+   * For direct orders returns null (provider fills manually).
+   * Frontend uses this to show locked amounts before generating an invoice.
+   */
+  async getPrefill(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      const { orderId } = req.params as { orderId: string };
+
+      // Find the accepted quotation for this order
+      const quotation = await QuotationModel.findOne({ orderId, status: "accepted" }).lean();
+      if (!quotation) {
+        // Direct orders — no pre-fill needed
+        sendSuccess(res, null, "No quotation pre-fill (direct order)");
+        return;
+      }
+
+      const rev = quotation.currentRevision;
+      sendSuccess(res, {
+        fromQuotation: true,
+        quotationId: quotation._id,
+        labourCharge: rev.labourCharge,
+        materialCost: rev.materialCost,
+        additionalCharges: rev.additionalCharges,
+        estimatedDurationDays: rev.estimatedDurationDays,
+        notes: rev.notes,
+        termsAndConditions: rev.termsAndConditions,
+        totalAmount: quotation.totalAmount,
+      }, "Invoice pre-fill data");
     } catch (err) { next(err); }
   }
 }

@@ -126,6 +126,7 @@ export const API_ENDPOINTS = {
   // ── Invoices ──
   INVOICES: "/invoices",
   INVOICE_BY_ORDER: (orderId: string) => `/invoices/order/${orderId}`,
+  INVOICE_PREFILL: (orderId: string) => `/invoices/prefill/${orderId}`,
   INVOICE_PAY_ONLINE: (id: string) => `/invoices/${id}/pay-online`,
   INVOICE_MARK_CASH: (id: string) => `/invoices/${id}/mark-cash`,
 } as const;

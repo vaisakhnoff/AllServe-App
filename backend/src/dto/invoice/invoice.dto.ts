@@ -4,7 +4,11 @@ const objectIdField = z.string().regex(/^[0-9a-fA-F]{24}$/, "Invalid id");
 
 export const createInvoiceSchema = z.object({
   orderId: objectIdField,
-  labourCharge: z.number().min(0, "Labour charge cannot be negative"),
+  // For direct orders: provider fills all amounts manually.
+  // For inspection/custom orders: labourCharge and materialCost are auto-populated
+  // from the accepted quotation and ignored if provided. Only additionalCharges and
+  // discount need to be supplied.
+  labourCharge: z.number().min(0, "Labour charge cannot be negative").default(0),
   materialCost: z.number().min(0).default(0),
   additionalCharges: z.number().min(0).default(0),
   discount: z.number().min(0).default(0),
@@ -15,12 +19,6 @@ export const createInvoiceSchema = z.object({
     discount: z.string().trim().max(500).optional(),
   }).optional(),
   overallRemark: z.string().trim().max(1000).optional(),
-}).refine(
-  (data) => {
-    const subtotal = data.labourCharge + data.materialCost + data.additionalCharges;
-    return data.discount <= subtotal;
-  },
-  { message: "Discount cannot exceed the subtotal", path: ["discount"] }
-);
+});
 
 export type CreateInvoiceDto = z.infer<typeof createInvoiceSchema>;

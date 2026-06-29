@@ -7,6 +7,24 @@ export const invoiceService = {
   generate: (dto: CreateInvoiceDto) =>
     api.post<ApiResponse<Invoice>>(API_ENDPOINTS.INVOICES, dto),
 
+  /**
+   * Fetch pre-filled invoice data from the accepted quotation.
+   * Returns null for direct orders (provider fills manually).
+   * Use this to populate the invoice form before calling generate().
+   */
+  getPrefill: (orderId: string) =>
+    api.get<ApiResponse<{
+      fromQuotation: boolean;
+      quotationId: string;
+      labourCharge: number;
+      materialCost: number;
+      additionalCharges: number;
+      estimatedDurationDays: number;
+      notes?: string;
+      termsAndConditions?: string;
+      totalAmount: number;
+    } | null>>(API_ENDPOINTS.INVOICE_PREFILL(orderId)),
+
   payOnline: (id: string) =>
     api.patch<ApiResponse<Invoice>>(API_ENDPOINTS.INVOICE_PAY_ONLINE(id)),
 

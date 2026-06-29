@@ -4,6 +4,7 @@ import { IServiceOrderRepository } from "../interfaces/service-order/IServiceOrd
 import { IInvoice } from "../models/invoice.model";
 import { IServiceOrder } from "../models/serviceOrder.model";
 import { CategoryModel } from "../models/category.model";
+import { QuotationModel } from "../models/quotation.model";
 import { CreateInvoiceDto } from "../dto/invoice/invoice.dto";
 import { NotFoundError, BadRequestError, ForbiddenError, ConflictError } from "../shared/errors/HttpErrors";
 
@@ -42,8 +43,38 @@ export class InvoiceService implements IInvoiceService {
     const existing = await this.repo.findByOrderId(dto.orderId);
     if (existing) throw new ConflictError("Invoice already exists for this order");
 
-    // Compute total and commission
-    const total = dto.labourCharge + dto.materialCost + dto.additionalCharges - dto.discount;
+    // ── For inspection/custom orders: amounts are fixed by the accepted quotation ──
+    // Provider can only add extra charges on top; base amounts come from the quote.
+    let labourCharge = dto.labourCharge;
+    let materialCost = dto.materialCost;
+    let quotationAdditionalCharges = 0;
+    let quotationNotes: CreateInvoiceDto["lineItemNotes"] = {};
+
+    if (order.deliveryModel !== "direct" && order.selectedQuotationId) {
+      const quotation = await QuotationModel.findById(order.selectedQuotationId).lean();
+      if (!quotation) {
+        throw new NotFoundError("Accepted quotation not found — cannot generate invoice");
+      }
+      if (quotation.status !== "accepted") {
+        throw new BadRequestError("Quotation is not in accepted state");
+      }
+
+      // Lock base amounts from quotation — provider cannot change these
+      labourCharge = quotation.currentRevision.labourCharge;
+      materialCost = quotation.currentRevision.materialCost;
+      quotationAdditionalCharges = quotation.currentRevision.additionalCharges;
+
+      // Carry over notes from quotation as defaults
+      quotationNotes = {
+        labour: `Agreed in quotation #${quotation.revisionHistory.length}`,
+        material: `Agreed in quotation #${quotation.revisionHistory.length}`,
+      };
+    }
+
+    // additionalCharges from DTO is EXTRA charges on top of what was quoted
+    const totalAdditionalCharges = quotationAdditionalCharges + (dto.additionalCharges ?? 0);
+    const total = labourCharge + materialCost + totalAdditionalCharges - (dto.discount ?? 0);
+
     const category = await CategoryModel.findById(order.categoryId).lean();
     const commissionRate = category?.commissionRate ?? 15;
     const platformCommission = Math.round((total * commissionRate) / 100);
@@ -54,12 +85,12 @@ export class InvoiceService implements IInvoiceService {
       orderId: dto.orderId as unknown as IInvoice["orderId"],
       providerId: providerId as unknown as IInvoice["providerId"],
       customerId: orderCustomerId as unknown as IInvoice["customerId"],
-      labourCharge: dto.labourCharge,
-      materialCost: dto.materialCost,
-      additionalCharges: dto.additionalCharges,
-      discount: dto.discount,
+      labourCharge,
+      materialCost,
+      additionalCharges: totalAdditionalCharges,
+      discount: dto.discount ?? 0,
       total,
-      lineItemNotes: dto.lineItemNotes,
+      lineItemNotes: { ...quotationNotes, ...dto.lineItemNotes },
       overallRemark: dto.overallRemark,
       paymentStatus: "pending",
       platformCommission,

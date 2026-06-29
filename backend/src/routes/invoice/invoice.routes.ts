@@ -31,6 +31,9 @@ export function createInvoiceRouter(controller: InvoiceController): Router {
   // ── Customer: Pay online ────────────────────────────────────────────────────
   router.patch("/:id/pay-online", ...userGuard, controller.payOnline.bind(controller));
 
+  // ── Provider: Get pre-fill data from accepted quotation ──────────────────────
+  router.get("/prefill/:orderId", ...providerGuard, controller.getPrefill.bind(controller));
+
   // ── Shared: Get invoice by order ────────────────────────────────────────────
   router.get("/order/:orderId", ...authGuard, controller.getByOrder.bind(controller));
 
