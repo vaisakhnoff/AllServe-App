@@ -123,7 +123,23 @@ export class DirectRequestService implements IDirectRequestService {
       respondedAt: new Date(),
     });
 
-    
+    // If it's an instant order, set the provider to busy immediately upon acceptance
+    // so they don't receive other instant orders while heading to this one.
+    if (order.subMode === "instant") {
+      await this.providerRepo.updateAccount(providerId, {
+        engagementStatus: "busy",
+        lastStatusChangeAt: new Date(),
+      } as Record<string, unknown>);
+
+      try {
+        const { getIo } = await import("../socket/io");
+        getIo().to(`provider:${providerId}`).emit("provider:status-changed", {
+          providerId,
+          onlineStatus: "online",
+          engagementStatus: "busy",
+        });
+      } catch {}
+    }
 
     return updated!;
   }
