@@ -51,7 +51,7 @@ export class BookingController {
   async updateStatus(req: AuthRequest, res: Response, next: NextFunction) {
     try {
       const { status } = updateStatusSchema.parse(req.body);
-      const data = await this.service.updateStatus(req.params.id as string, req.user!.id, status as "in_progress" | "completed");
+      const data = await this.service.updateStatus(req.params.id as string, req.user!.id, status as "accepted" | "in_progress" | "completed");
       sendSuccess(res, data, Messages.BOOKING_STATUS_UPDATED);
     } catch (err) { next(err); }
   }

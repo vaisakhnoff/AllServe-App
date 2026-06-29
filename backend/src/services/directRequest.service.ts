@@ -3,9 +3,26 @@ import { IServiceOrderRepository } from "../interfaces/service-order/IServiceOrd
 import { IProviderRepository } from "../interfaces/provider/IProviderRepository";
 import { IServiceOrder } from "../models/serviceOrder.model";
 import { ServiceModel } from "../models/service.model";
+import { CategoryModel } from "../models/category.model";
 import { CreateDirectInstantDto, CreateDirectScheduledDto, CustomerChoiceDto } from "../dto/service-order/serviceOrder.dto";
 import { NotFoundError, BadRequestError, ForbiddenError } from "../shared/errors/HttpErrors";
 import { nanoid } from "nanoid";
+
+/**
+ * Compute upfront platform booking fee.
+ * = service.price * (category.commissionRate / 100)
+ * Defaults to 15% if category not found or price is 0.
+ */
+async function computePlatformFee(servicePrice: number, categoryId: unknown): Promise<number> {
+  if (!servicePrice || servicePrice <= 0) return 0;
+  try {
+    const category = await CategoryModel.findById(categoryId).lean();
+    const rate = category?.commissionRate ?? 15;
+    return Math.round((servicePrice * rate) / 100);
+  } catch {
+    return Math.round((servicePrice * 15) / 100);
+  }
+}
 
 export class DirectRequestService implements IDirectRequestService {
   constructor(
@@ -26,6 +43,7 @@ export class DirectRequestService implements IDirectRequestService {
     if (provider.engagementStatus !== "available") throw new BadRequestError("Provider is currently busy");
 
     const responseDeadline = new Date(Date.now() + 30 * 60 * 1000); // 30 minutes
+    const platformFee = await computePlatformFee(service.price, service.categoryId);
 
     const order = await this.orderRepo.create({
       orderId: `ORD-${nanoid(8).toUpperCase()}`,
@@ -43,8 +61,8 @@ export class DirectRequestService implements IDirectRequestService {
       exactLocation: dto.exactLocation,
       contactPhone: dto.contactPhone,
       responseDeadline,
-      platformFee: 0, // TODO: compute from category settings
-      platformFeeStatus: "paid",
+      platformFee,
+      platformFeeStatus: "pending",
       quoteCount: 0,
     });
 
@@ -60,6 +78,8 @@ export class DirectRequestService implements IDirectRequestService {
 
     const provider = await this.providerRepo.findById(dto.providerId);
     if (!provider) throw new NotFoundError("Provider not found");
+
+    const platformFee = await computePlatformFee(service.price, service.categoryId);
 
     const order = await this.orderRepo.create({
       orderId: `ORD-${nanoid(8).toUpperCase()}`,
@@ -78,8 +98,8 @@ export class DirectRequestService implements IDirectRequestService {
       contactPhone: dto.contactPhone,
       preferredDate: dto.preferredDate,
       preferredTime: dto.preferredTime,
-      platformFee: 0,
-      platformFeeStatus: "paid",
+      platformFee,
+      platformFeeStatus: "pending",
       quoteCount: 0,
     });
 

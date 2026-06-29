@@ -7,6 +7,23 @@ import { NotFoundError, BadRequestError } from "../shared/errors/HttpErrors";
 import { nanoid } from "nanoid";
 
 /**
+ * For custom orders: compute a nominal booking/listing fee.
+ * = min(budget, budget * commissionRate%) capped at ₹500.
+ * If no budget provided, fee is 0 (deferred to invoice time).
+ */
+async function computeCustomPlatformFee(budget: number | undefined, categoryId: unknown): Promise<number> {
+  if (!budget || budget <= 0) return 0;
+  try {
+    const category = await CategoryModel.findById(categoryId).lean();
+    const rate = category?.commissionRate ?? 15;
+    const fee = Math.round((budget * rate) / 100);
+    return Math.min(fee, 500); // cap at ₹500 to avoid large upfront charges
+  } catch {
+    return 0;
+  }
+}
+
+/**
  * Custom service flow (provider-specific, quotation-based):
  *   awaiting_provider_response
  *     → (provider accepts) → quotation_submitted
@@ -28,6 +45,8 @@ export class CustomRequestService implements ICustomRequestService {
       throw new BadRequestError("Custom service requests must target a specific provider");
     }
 
+    const platformFee = await computeCustomPlatformFee(dto.budget, dto.categoryId);
+
     const order = await this.orderRepo.create({
       orderId: `ORD-${nanoid(8).toUpperCase()}`,
       customerId: customerId as unknown as IServiceOrder["customerId"],
@@ -46,8 +65,8 @@ export class CustomRequestService implements ICustomRequestService {
       budget: dto.budget,
       budgetType: dto.budgetType,
       intakeResponses: dto.intakeResponses,
-      platformFee: 0,
-      platformFeeStatus: "paid",
+      platformFee,
+      platformFeeStatus: platformFee > 0 ? "pending" : "paid",
       quoteCount: 0,
     });
 

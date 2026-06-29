@@ -23,7 +23,7 @@ export const cancelBookingSchema = z.object({
 });
 
 export const updateStatusSchema = z.object({
-  status: z.enum(["in_progress", "completed"]),
+  status: z.enum(["accepted", "in_progress", "completed"]),
 });
 
 export const bookingQuerySchema = z.object({

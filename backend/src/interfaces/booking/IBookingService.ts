@@ -21,7 +21,7 @@ export interface IBookingService {
   updateStatus(
     bookingId: string,
     providerId: string,
-    status: Extract<BookingStatus, "in_progress" | "completed">
+    status: Extract<BookingStatus, "accepted" | "in_progress" | "completed">
   ): Promise<IBooking | null>;
   cancel(bookingId: string, userId: string, reason?: string): Promise<IBooking | null>;
 }

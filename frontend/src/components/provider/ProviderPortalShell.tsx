@@ -78,7 +78,7 @@ export function ProviderPortalShell({ children }: { children: React.ReactNode })
         <nav className="flex flex-1 flex-col gap-1.5">
           {navItems.map((item) => {
             const Icon = item.icon;
-            const active = pathname === item.href;
+            const active = pathname === item.href || pathname.startsWith(item.href + "/");
             return (
               <Link key={item.href} href={item.href} className={active ? "provider-sidebar-link-active" : "provider-sidebar-link"}>
                 <Icon size={18} />
