@@ -1,6 +1,17 @@
 export type ServiceStatus = "active" | "inactive";
 export type AvailabilityStatus = "available" | "unavailable";
 
+export type IntakeFieldType = "text" | "textarea" | "number" | "select" | "date" | "file";
+
+export interface IntakeField {
+  id: string;
+  label: string;
+  type: IntakeFieldType;
+  required: boolean;
+  placeholder?: string;
+  options?: string[];
+}
+
 /**
  * Determines the booking flow:
  * - direct: instant or scheduled request, provider accepts and completes work
@@ -74,6 +85,7 @@ export interface Service {
   location?: ServiceLocation | null;
   availabilityStatus: AvailabilityStatus;
   tags: string[];
+  intakeFields?: IntakeField[];
   status: ServiceStatus;
   isBlocked: boolean;
   createdAt: string;
@@ -110,6 +122,7 @@ export interface CreateServiceDto {
   location?: ServiceLocation;
   availabilityStatus?: AvailabilityStatus;
   tags?: string[];
+  intakeFields?: IntakeField[];
   status?: ServiceStatus;
 }
 

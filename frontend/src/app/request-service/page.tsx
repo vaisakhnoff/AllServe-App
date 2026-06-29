@@ -3,7 +3,7 @@
 import { useEffect, useState, useMemo } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import {
-  Zap, Calendar, Clock, MapPin, Loader2, CheckCircle2, ArrowLeft,
+  Zap, Calendar, Clock, Loader2, CheckCircle2, ArrowLeft,
   ImagePlus, Trash2, ChevronRight,
 } from "lucide-react";
 import toast from "react-hot-toast";
@@ -19,6 +19,7 @@ import { Address } from "@/types/user.types";
 import { getErrorMessage } from "@/utils/errorHandler";
 import { LoginRequiredPrompt } from "@/components/auth/LoginRequiredPrompt";
 import { Role } from "@/enums/role.enum";
+import { AddressContactStep } from "@/components/booking/AddressContactStep";
 
 type RequestMode = "instant" | "scheduled";
 
@@ -46,6 +47,9 @@ export default function RequestServicePage() {
   // Address
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [selectedAddress, setSelectedAddress] = useState<Address | null>(null);
+  const [contactPhone, setContactPhone] = useState("");
+  const [phoneError, setPhoneError] = useState("");
+  const [addressError, setAddressError] = useState("");
 
   // Submit state
   const [submitting, setSubmitting] = useState(false);
@@ -81,6 +85,8 @@ export default function RequestServicePage() {
         const addrs = r.data.data.addresses || [];
         setAddresses(addrs);
         setSelectedAddress(addrs.find((a) => a.isDefault) || addrs[0] || null);
+        // Pre-fill phone if user has one saved
+        if (r.data.data.phone) setContactPhone(r.data.data.phone.replace(/^\+91/, "").replace(/\D/g, "").slice(0, 10));
       })
       .catch(() => {});
   }, [canAccess]);
@@ -97,18 +103,30 @@ export default function RequestServicePage() {
   }, [selectedDate, providerId, serviceId, mode]);
 
   const handleSubmit = async () => {
-    if (!service || !selectedAddress) {
-      toast.error("Please select an address");
-      return;
-    }
+    let valid = true;
+
     if (!description.trim() || description.trim().length < 5) {
       toast.error("Please describe the work needed (min 5 characters)");
-      return;
+      valid = false;
     }
     if (mode === "scheduled" && (!selectedDate || !selectedTime)) {
       toast.error("Please select a date and time");
-      return;
+      valid = false;
     }
+    if (!selectedAddress) {
+      setAddressError("Please select a service address");
+      valid = false;
+    } else {
+      setAddressError("");
+    }
+    const phone = contactPhone.replace(/\D/g, "");
+    if (!/^[6-9]\d{9}$/.test(phone)) {
+      setPhoneError("Enter a valid 10-digit Indian mobile number");
+      valid = false;
+    } else {
+      setPhoneError("");
+    }
+    if (!valid || !service || !selectedAddress) return;
 
     setSubmitting(true);
     try {
@@ -127,6 +145,7 @@ export default function RequestServicePage() {
           providerId,
           description: description.trim(),
           address,
+          contactPhone: phone,
           images,
         });
       } else {
@@ -137,6 +156,7 @@ export default function RequestServicePage() {
           preferredDate: selectedDate,
           preferredTime: selectedTime,
           address,
+          contactPhone: phone,
           images,
         });
       }
@@ -360,32 +380,18 @@ export default function RequestServicePage() {
           </div>
         </section>
 
-        {/* ── Address Selection ───────────────────────────────────────── */}
-        <section className="premium-card p-5 mb-6">
-          <h3 className="text-sm font-black text-slate-900 mb-3 flex items-center gap-2">
-            <MapPin size={14} className="text-indigo-600" /> Service Location
-          </h3>
-          {addresses.length === 0 ? (
-            <p className="text-sm text-slate-500">No saved addresses. Please add one in your profile settings.</p>
-          ) : (
-            <div className="space-y-2">
-              {addresses.map((a) => (
-                <button
-                  key={a._id}
-                  onClick={() => setSelectedAddress(a)}
-                  className={`w-full text-left rounded-xl border-2 p-3 transition-all ${
-                    selectedAddress?._id === a._id
-                      ? "border-indigo-500 bg-indigo-50"
-                      : "border-slate-200 hover:border-slate-300"
-                  }`}
-                >
-                  <p className="text-sm font-bold text-slate-900">{a.street}</p>
-                  <p className="text-xs text-slate-500">{a.city}, {a.state} {a.zip}</p>
-                </button>
-              ))}
-            </div>
-          )}
-        </section>
+        {/* ── Address + Contact (shared component) ──────────────────── */}
+        <AddressContactStep
+          addresses={addresses}
+          selectedAddress={selectedAddress}
+          onSelectAddress={(a) => { setSelectedAddress(a); setAddressError(""); }}
+          contactPhone={contactPhone}
+          onPhoneChange={(v) => { setContactPhone(v); setPhoneError(""); }}
+          phoneError={phoneError}
+          addressError={addressError}
+          onAddressAdded={(addr) => setAddresses((prev) => [...prev, addr])}
+          accentColor="indigo"
+        />
 
         {/* ── Submit ──────────────────────────────────────────────────── */}
         <button

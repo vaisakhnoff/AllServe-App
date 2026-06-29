@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import {
-  Loader2, ArrowLeft, MapPin, ImagePlus, Trash2, CheckCircle2,
+  Loader2, ArrowLeft, ImagePlus, Trash2, CheckCircle2,
   ChevronRight, Home,
 } from "lucide-react";
 import toast from "react-hot-toast";
@@ -17,6 +17,7 @@ import { Address } from "@/types/user.types";
 import { getErrorMessage } from "@/utils/errorHandler";
 import { LoginRequiredPrompt } from "@/components/auth/LoginRequiredPrompt";
 import { Role } from "@/enums/role.enum";
+import { AddressContactStep } from "@/components/booking/AddressContactStep";
 
 export default function RequestInspectionPage() {
   const searchParams = useSearchParams();
@@ -33,6 +34,9 @@ export default function RequestInspectionPage() {
   const [images, setImages] = useState<string[]>([]);
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [selectedAddress, setSelectedAddress] = useState<Address | null>(null);
+  const [contactPhone, setContactPhone] = useState("");
+  const [phoneError, setPhoneError] = useState("");
+  const [addressError, setAddressError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
   const [orderId, setOrderId] = useState("");
@@ -47,13 +51,31 @@ export default function RequestInspectionPage() {
       const addrs = uRes.data.data.addresses || [];
       setAddresses(addrs);
       setSelectedAddress(addrs.find((a) => a.isDefault) || addrs[0] || null);
+      if (uRes.data.data.phone) setContactPhone(uRes.data.data.phone.replace(/^\+91/, "").replace(/\D/g, "").slice(0, 10));
     }).catch(() => toast.error("Failed to load data"))
       .finally(() => setLoading(false));
   }, [serviceId, canAccess]);
 
   const handleSubmit = async () => {
-    if (!selectedAddress) { toast.error("Select an address"); return; }
-    if (description.trim().length < 10) { toast.error("Description must be at least 10 characters"); return; }
+    let valid = true;
+    if (description.trim().length < 10) {
+      toast.error("Description must be at least 10 characters");
+      valid = false;
+    }
+    if (!selectedAddress) {
+      setAddressError("Please select a service address");
+      valid = false;
+    } else {
+      setAddressError("");
+    }
+    const phone = contactPhone.replace(/\D/g, "");
+    if (!/^[6-9]\d{9}$/.test(phone)) {
+      setPhoneError("Enter a valid 10-digit Indian mobile number");
+      valid = false;
+    } else {
+      setPhoneError("");
+    }
+    if (!valid || !selectedAddress) return;
 
     setSubmitting(true);
     try {
@@ -68,6 +90,7 @@ export default function RequestInspectionPage() {
           zip: selectedAddress.zip,
           country: selectedAddress.country,
         },
+        contactPhone: phone,
         images,
       });
       setOrderId(res.data.data.orderId);
@@ -180,20 +203,18 @@ export default function RequestInspectionPage() {
           </div>
         </section>
 
-        {/* Address */}
-        <section className="premium-card p-5 mb-6">
-          <h3 className="text-sm font-black text-slate-900 mb-3 flex items-center gap-2">
-            <MapPin size={14} className="text-indigo-600" /> Service Location
-          </h3>
-          <div className="space-y-2">
-            {addresses.map((a) => (
-              <button key={a._id} onClick={() => setSelectedAddress(a)} className={`w-full text-left rounded-xl border-2 p-3 transition ${selectedAddress?._id === a._id ? "border-indigo-500 bg-indigo-50" : "border-slate-200 hover:border-slate-300"}`}>
-                <p className="text-sm font-bold text-slate-900">{a.street}</p>
-                <p className="text-xs text-slate-500">{a.city}, {a.state} {a.zip}</p>
-              </button>
-            ))}
-          </div>
-        </section>
+        {/* Address + Contact */}
+        <AddressContactStep
+          addresses={addresses}
+          selectedAddress={selectedAddress}
+          onSelectAddress={(a) => { setSelectedAddress(a); setAddressError(""); }}
+          contactPhone={contactPhone}
+          onPhoneChange={(v) => { setContactPhone(v); setPhoneError(""); }}
+          phoneError={phoneError}
+          addressError={addressError}
+          onAddressAdded={(addr) => setAddresses((prev) => [...prev, addr])}
+          accentColor="blue"
+        />
 
         {/* Fee info */}
         {service && (

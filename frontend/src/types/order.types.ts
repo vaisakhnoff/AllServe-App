@@ -31,15 +31,17 @@ export type InspectionStatus =
   | "cancelled";
 
 export type CustomStatus =
-  | "broadcast_open"
-  | "receiving_quotations"
+  | "awaiting_provider_response"
+  | "quotation_submitted"
   | "quotation_accepted"
   | "awaiting_advance"
   | "in_progress"
-  | "awaiting_final_payment"
+  | "work_completed"
+  | "awaiting_payment"
   | "completed"
-  | "expired"
-  | "cancelled";
+  | "cancelled"
+  | "dropped_by_provider"
+  | "dropped_by_customer";
 
 export type ServiceOrderStatus = DirectStatus | InspectionStatus | CustomStatus;
 
@@ -137,8 +139,11 @@ export interface ServiceOrder {
 
   expiresAt?: string;
 
+  contactPhone?: string;
+
   customerChoice?: CustomerChoice;
   reroutedFromOrderId?: string;
+  intakeResponses?: Record<string, string>;
 
   createdAt: string;
   updatedAt: string;
@@ -217,6 +222,7 @@ export interface CreateDirectInstantDto {
   providerId: string;
   description: string;
   address: OrderAddress;
+  contactPhone: string;
   exactLocation?: { type: "Point"; coordinates: [number, number] };
   images?: string[];
 }
@@ -228,6 +234,7 @@ export interface CreateDirectScheduledDto {
   preferredDate: string;
   preferredTime: string;
   address: OrderAddress;
+  contactPhone: string;
   exactLocation?: { type: "Point"; coordinates: [number, number] };
   images?: string[];
 }
@@ -237,21 +244,24 @@ export interface CreateInspectionRequestDto {
   providerId: string;
   description: string;
   address: OrderAddress;
+  contactPhone: string;
   exactLocation?: { type: "Point"; coordinates: [number, number] };
   images?: string[];
 }
 
 export interface CreateCustomRequestDto {
   categoryId: string;
-  providerId?: string;
+  providerId: string;  // required — custom is always provider-specific
   serviceId?: string;
   title: string;
   description: string;
   budget?: number;
   budgetType?: "fixed" | "flexible" | "quote_needed";
   address: OrderAddress;
+  contactPhone: string;
   exactLocation?: { type: "Point"; coordinates: [number, number] };
   images?: string[];
+  intakeResponses?: Record<string, string>;
 }
 
 export interface CustomerChoiceDto {

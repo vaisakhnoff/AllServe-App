@@ -3,7 +3,6 @@ import { authReducer } from "@/features/auth";
 import { locationReducer } from "@/features/location";
 import { bookingReducer } from "@/features/booking";
 import { providerReducer } from "@/features/provider";
-import { serviceRequestReducer } from "@/features/serviceRequest";
 
 export const store = configureStore({
   reducer: {
@@ -11,7 +10,6 @@ export const store = configureStore({
     location: locationReducer,
     booking: bookingReducer,
     provider: providerReducer,
-    serviceRequest: serviceRequestReducer,
   },
 });
 

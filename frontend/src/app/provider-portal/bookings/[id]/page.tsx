@@ -295,8 +295,23 @@ export default function ProviderBookingDetailPage() {
               <span className={`shrink-0 rounded-full border px-3 py-1.5 text-[11px] font-bold ${statusCfg.color}`}>{statusCfg.label}</span>
             </div>
             <p className="text-sm text-slate-600 leading-relaxed mb-4">{order.description}</p>
+            {order.intakeResponses && Object.keys(order.intakeResponses).length > 0 && (
+              <div className="mb-4 rounded-xl border border-purple-100 bg-purple-50/60 p-4">
+                <p className="text-xs font-bold text-purple-800 mb-3 flex items-center gap-1.5">
+                  📋 Customer Requirements
+                </p>
+                <dl className="space-y-2">
+                  {Object.entries(order.intakeResponses).map(([key, val]) => (
+                    <div key={key}>
+                      <dt className="text-[11px] font-bold text-slate-500 uppercase tracking-wide">{key.replace(/_/g, " ")}</dt>
+                      <dd className="text-sm text-slate-800">{val}</dd>
+                    </div>
+                  ))}
+                </dl>
+              </div>
+            )}
             <div className="flex flex-wrap gap-4 text-[12px] text-slate-500">
-              <span className="flex items-center gap-1.5"><MapPin size={12} /> {order.address.city}, {order.address.state} {order.address.zip}</span>
+              <span className="flex items-center gap-1.5"><MapPin size={12} /> {order.address.street ? `${order.address.street}, ` : ""}{order.address.city}, {order.address.state} {order.address.zip}</span>
               {order.preferredDate && <span className="flex items-center gap-1.5"><Calendar size={12} /> {order.preferredDate} {order.preferredTime}</span>}
               <span className="flex items-center gap-1.5"><Clock size={12} /> {new Date(order.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</span>
             </div>
@@ -309,6 +324,83 @@ export default function ProviderBookingDetailPage() {
               </div>
             )}
           </section>
+
+          {/* Customer Contact & Location */}
+          {(() => {
+            const customer = typeof order.customerId === "object" ? order.customerId : null;
+            return (
+              <section className="rounded-2xl border border-emerald-100 bg-emerald-50/40 p-5 space-y-4">
+                <h2 className="text-[14px] font-bold text-slate-900 flex items-center gap-2">
+                  <span className="text-base">👤</span> Customer Contact
+                </h2>
+
+                {/* Name + contact */}
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {customer && (
+                    <div className="rounded-xl bg-white border border-slate-100 p-3.5">
+                      <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wide mb-1">Customer</p>
+                      <p className="text-sm font-bold text-slate-900">{customer.name}</p>
+                      {customer.email && (
+                        <a href={`mailto:${customer.email}`} className="text-xs text-indigo-600 hover:underline block mt-0.5">
+                          {customer.email}
+                        </a>
+                      )}
+                    </div>
+                  )}
+
+                  <div className="rounded-xl bg-white border border-slate-100 p-3.5">
+                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wide mb-1">Contact Number</p>
+                    {order.contactPhone ? (
+                      <a
+                        href={`tel:+91${order.contactPhone}`}
+                        className="text-sm font-black text-slate-900 hover:text-indigo-600 flex items-center gap-1.5"
+                      >
+                        📞 +91 {order.contactPhone}
+                      </a>
+                    ) : customer?.phone ? (
+                      <a
+                        href={`tel:${customer.phone}`}
+                        className="text-sm font-black text-slate-900 hover:text-indigo-600 flex items-center gap-1.5"
+                      >
+                        📞 {customer.phone}
+                      </a>
+                    ) : (
+                      <p className="text-xs text-slate-400 italic">Not provided</p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Full address */}
+                <div className="rounded-xl bg-white border border-slate-100 p-3.5">
+                  <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wide mb-2">
+                    Service Address
+                  </p>
+                  <div className="flex items-start gap-2">
+                    <MapPin size={14} className="text-slate-400 shrink-0 mt-0.5" />
+                    <div>
+                      {order.address.street && (
+                        <p className="text-sm font-bold text-slate-900">{order.address.street}</p>
+                      )}
+                      <p className="text-sm text-slate-700">
+                        {order.address.city}, {order.address.state} – {order.address.zip}
+                      </p>
+                      <p className="text-xs text-slate-500">{order.address.country}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {order.preferredDate && (
+                  <div className="rounded-xl bg-white border border-slate-100 p-3.5">
+                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wide mb-1">Preferred Schedule</p>
+                    <p className="text-sm font-bold text-slate-900">
+                      📅 {order.preferredDate}
+                      {order.preferredTime && ` at ${order.preferredTime}`}
+                    </p>
+                  </div>
+                )}
+              </section>
+            );
+          })()}
 
           {/* Timeline */}
           {order.statusHistory && order.statusHistory.length > 0 && (
@@ -354,21 +446,45 @@ export default function ProviderBookingDetailPage() {
             <h3 className="text-[14px] font-bold text-slate-900 mb-5">Actions</h3>
             <div className="space-y-3">
               {/* Direct: Accept/Reject */}
-              {order.status === "awaiting_provider_response" && (order.deliveryModel === "direct" || order.deliveryModel === "custom") && (<>
+              {order.status === "awaiting_provider_response" && (order.deliveryModel === "direct") && (<>
                 <button onClick={() => setShowConfirm({ title: "Accept Booking", message: "You'll be committing to this service request.", label: "Accept", variant: "success", action: () => orderService.accept(id) })} className="w-full rounded-xl bg-emerald-600 py-3.5 text-sm font-bold text-white hover:bg-emerald-700 flex items-center justify-center gap-2"><CheckCircle2 size={15} /> Accept Booking</button>
                 <button onClick={() => setShowConfirm({ title: "Reject Booking", message: "The customer will be notified and can choose another provider.", label: "Reject", variant: "danger", action: () => orderService.reject(id) })} className="w-full rounded-xl border border-red-200 bg-red-50 py-3.5 text-sm font-bold text-red-600 hover:bg-red-100 flex items-center justify-center gap-2"><XCircle size={15} /> Reject</button>
               </>)}
-              {order.status === "accepted" && (order.deliveryModel === "direct" || order.deliveryModel === "custom") && (
+              {order.status === "accepted" && order.deliveryModel === "direct" && (
                 <button onClick={() => setShowConfirm({ title: "Start Work", message: "Your status will change to busy.", label: "Start", variant: "success", action: () => orderService.startWork(id) })} className="w-full rounded-xl bg-blue-600 py-3.5 text-sm font-bold text-white hover:bg-blue-700 flex items-center justify-center gap-2"><Play size={15} /> Start Work</button>
               )}
-              {order.status === "in_progress" && (order.deliveryModel === "direct" || order.deliveryModel === "custom") && (
+              {order.status === "in_progress" && order.deliveryModel === "direct" && (
                 <button onClick={() => setShowConfirm({ title: "Finish Work", message: "Mark this job as completed. You can then generate an invoice.", label: "Finish", variant: "success", action: () => orderService.completeWork(id) })} className="w-full rounded-xl bg-emerald-600 py-3.5 text-sm font-bold text-white hover:bg-emerald-700 flex items-center justify-center gap-2"><CheckCircle2 size={15} /> Finish Work</button>
+              )}
+
+              {/* Custom order flow: accept → send quote → user accepts → start → finish → invoice */}
+              {order.status === "awaiting_provider_response" && order.deliveryModel === "custom" && (<>
+                <div className="rounded-xl border border-purple-100 bg-purple-50 p-3 mb-1">
+                  <p className="text-xs font-semibold text-purple-800">
+                    Review the customer&apos;s requirements below, then accept to send a quotation.
+                  </p>
+                </div>
+                <button onClick={() => setShowConfirm({ title: "Accept Request", message: "You'll be committing to review this job and send a quotation.", label: "Accept", variant: "success", action: () => orderService.acceptCustom(id) })} className="w-full rounded-xl bg-emerald-600 py-3.5 text-sm font-bold text-white hover:bg-emerald-700 flex items-center justify-center gap-2"><CheckCircle2 size={15} /> Accept & Quote</button>
+                <button onClick={() => setShowConfirm({ title: "Decline Request", message: "The customer will be notified you declined.", label: "Decline", variant: "danger", action: () => orderService.rejectCustom(id) })} className="w-full rounded-xl border border-red-200 bg-red-50 py-3.5 text-sm font-bold text-red-600 hover:bg-red-100 flex items-center justify-center gap-2"><XCircle size={15} /> Decline</button>
+              </>)}
+              {order.status === "quotation_submitted" && order.deliveryModel === "custom" && (<>
+                <div className="rounded-xl border border-blue-100 bg-blue-50 p-3 mb-1">
+                  <p className="text-xs font-semibold text-blue-800">
+                    Send your quotation to the customer. They&apos;ll accept or request changes.
+                  </p>
+                </div>
+                <button onClick={() => setShowQuotation(true)} className="w-full rounded-xl bg-blue-600 py-3.5 text-sm font-bold text-white hover:bg-blue-700 flex items-center justify-center gap-2"><Send size={15} /> Send Quotation</button>
+                <button onClick={() => setShowDrop(true)} className="w-full rounded-xl border border-red-200 bg-red-50 py-3.5 text-sm font-bold text-red-600 hover:bg-red-100 flex items-center justify-center gap-2"><Ban size={15} /> Drop Request</button>
+              </>)}
+              {order.status === "quotation_accepted" && order.deliveryModel === "custom" && (
+                <button onClick={() => setShowConfirm({ title: "Start Work", message: "Customer accepted your quote. Begin the project.", label: "Start", variant: "success", action: () => orderService.customStartWork(id) })} className="w-full rounded-xl bg-blue-600 py-3.5 text-sm font-bold text-white hover:bg-blue-700 flex items-center justify-center gap-2"><Play size={15} /> Start Work</button>
+              )}
+              {order.status === "in_progress" && order.deliveryModel === "custom" && (
+                <button onClick={() => setShowConfirm({ title: "Finish Work", message: "Mark as done. You can then generate an invoice.", label: "Finish", variant: "success", action: () => orderService.customCompleteWork(id) })} className="w-full rounded-xl bg-emerald-600 py-3.5 text-sm font-bold text-white hover:bg-emerald-700 flex items-center justify-center gap-2"><CheckCircle2 size={15} /> Finish Work</button>
               )}
               {order.status === "work_completed" && !invoice && (
                 <button onClick={() => setShowInvoice(true)} className="w-full rounded-xl bg-indigo-600 py-3.5 text-sm font-bold text-white hover:bg-indigo-700 flex items-center justify-center gap-2"><Receipt size={15} /> Generate Invoice</button>
               )}
-
-              {/* Inspection flow */}
               {order.status === "awaiting_provider_response" && order.deliveryModel === "inspection_required" && (<>
                 <button onClick={() => setShowConfirm({ title: "Accept Inspection", message: "You're committing to visit and inspect this job.", label: "Accept", variant: "success", action: () => orderService.acceptInspection(id) })} className="w-full rounded-xl bg-emerald-600 py-3.5 text-sm font-bold text-white hover:bg-emerald-700 flex items-center justify-center gap-2"><CheckCircle2 size={15} /> Accept Inspection</button>
                 <button onClick={() => setShowConfirm({ title: "Reject", message: "Customer will be notified.", label: "Reject", variant: "danger", action: () => orderService.rejectInspection(id) })} className="w-full rounded-xl border border-red-200 bg-red-50 py-3.5 text-sm font-bold text-red-600 hover:bg-red-100 flex items-center justify-center gap-2"><XCircle size={15} /> Reject</button>

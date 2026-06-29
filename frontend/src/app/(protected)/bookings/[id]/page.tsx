@@ -101,6 +101,19 @@ export default function BookingDetailPage() {
               <span className={`shrink-0 rounded-full px-3 py-1.5 text-[11px] font-bold ${statusCfg.bg}`}>{statusCfg.label}</span>
             </div>
             <p className="text-[14px] leading-relaxed text-[var(--text-secondary)]">{order.description}</p>
+            {order.intakeResponses && Object.keys(order.intakeResponses).length > 0 && (
+              <div className="mt-4 rounded-2xl border border-purple-100 bg-purple-50/60 p-4">
+                <p className="text-[12px] font-bold text-purple-800 mb-3">📋 Your Requirements</p>
+                <dl className="space-y-2">
+                  {Object.entries(order.intakeResponses).map(([key, val]) => (
+                    <div key={key}>
+                      <dt className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">{key.replace(/_/g, " ")}</dt>
+                      <dd className="text-[13px] text-slate-800">{val}</dd>
+                    </div>
+                  ))}
+                </dl>
+              </div>
+            )}
             <div className="mt-4 flex flex-wrap gap-4 text-[12px] text-[var(--text-muted)]">
               <span className="flex items-center gap-1"><MapPin size={12} /> {order.address.city}, {order.address.state}</span>
               {order.preferredDate && <span className="flex items-center gap-1"><Calendar size={12} /> {order.preferredDate} {order.preferredTime}</span>}

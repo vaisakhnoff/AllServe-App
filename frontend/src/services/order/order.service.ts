@@ -46,6 +46,25 @@ export const orderService = {
   completeWork: (id: string) =>
     api.patch<ApiResponse<ServiceOrder>>(API_ENDPOINTS.ORDER_COMPLETE(id)),
 
+  // ── Custom Order Lifecycle ────────────────────────────────────────────────
+  acceptCustom: (id: string) =>
+    api.patch<ApiResponse<ServiceOrder>>(`/orders/${id}/custom/accept`),
+
+  rejectCustom: (id: string) =>
+    api.patch<ApiResponse<ServiceOrder>>(`/orders/${id}/custom/reject`),
+
+  customStartWork: (id: string) =>
+    api.patch<ApiResponse<ServiceOrder>>(`/orders/${id}/custom/start`),
+
+  customCompleteWork: (id: string) =>
+    api.patch<ApiResponse<ServiceOrder>>(`/orders/${id}/custom/complete`),
+
+  customDropByProvider: (id: string, reason: string) =>
+    api.patch<ApiResponse<ServiceOrder>>(`/orders/${id}/custom/drop/provider`, { reason }),
+
+  customDropByCustomer: (id: string, reason: string) =>
+    api.patch<ApiResponse<ServiceOrder>>(`/orders/${id}/custom/drop/customer`, { reason }),
+
   // ── Inspection Lifecycle ────────────────────────────────────────────────
   acceptInspection: (id: string) =>
     api.patch<ApiResponse<ServiceOrder>>(API_ENDPOINTS.ORDER_INSPECTION_ACCEPT(id)),
@@ -75,9 +94,6 @@ export const orderService = {
 
   getProviderOrders: (query?: OrderListQuery) =>
     api.get<ApiResponse<PaginatedOrders>>(API_ENDPOINTS.ORDERS_PROVIDER, { params: query }),
-
-  getBroadcastCustom: (page = 1, limit = 20) =>
-    api.get<ApiResponse<PaginatedOrders>>(API_ENDPOINTS.ORDERS_BROADCAST_CUSTOM, { params: { page, limit } }),
 
   getById: (id: string) =>
     api.get<ApiResponse<ServiceOrder>>(API_ENDPOINTS.ORDER_BY_ID(id)),

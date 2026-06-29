@@ -1,10 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Loader2, X, Plus, ImagePlus, Trash2, Lock, Info } from "lucide-react";
+import { Loader2, X, Plus, ImagePlus, Trash2, Lock, Info, GripVertical, ChevronDown } from "lucide-react";
 import {
   AvailabilityStatus,
   CreateServiceDto,
+  IntakeField,
+  IntakeFieldType,
   PricingModel,
   Service,
   ServiceStatus,
@@ -91,6 +93,7 @@ export function ServiceFormModal({
   const [images, setImages] = useState<string[]>([]);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [intakeFields, setIntakeFields] = useState<IntakeField[]>([]);
 
   // When service type changes, reset pricing model to first valid option
   const handleServiceTypeChange = (t: ServiceType) => {
@@ -131,6 +134,7 @@ export function ServiceFormModal({
     setTags(initial?.tags ?? []);
     setTagInput("");
     setImages(initial?.images ?? []);
+    setIntakeFields(initial?.intakeFields ?? []);
   }, [open, initial, lockedCategory]);
 
   const isEdit = Boolean(initial);
@@ -209,6 +213,7 @@ export function ServiceFormModal({
       availabilityStatus,
       status,
       tags,
+      intakeFields: serviceType === "custom" ? intakeFields : [],
     };
 
     try {
@@ -560,6 +565,202 @@ export function ServiceFormModal({
                 {errors.estimatedProjectDays && (
                   <p className="mt-1 text-xs text-red-500">{errors.estimatedProjectDays}</p>
                 )}
+              </div>
+            </div>
+          )}
+
+          {/* ── Intake fields builder (custom only) ─────────────────── */}
+          {serviceType === "custom" && (
+            <div className="rounded-xl border border-purple-200 bg-purple-50/40 p-4 space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="text-base">📋</span>
+                  <div>
+                    <p className="text-xs font-bold text-purple-800">Customer Intake Form</p>
+                    <p className="text-[11px] text-purple-600">
+                      Fields the customer must fill when requesting this service
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const newField: IntakeField = {
+                      id: `field_${Date.now()}`,
+                      label: "",
+                      type: "text",
+                      required: false,
+                    };
+                    setIntakeFields((prev) => [...prev, newField]);
+                  }}
+                  className="inline-flex items-center gap-1 rounded-lg bg-purple-600 px-2.5 py-1.5 text-[11px] font-bold text-white hover:bg-purple-700 transition-colors"
+                >
+                  <Plus size={12} /> Add Field
+                </button>
+              </div>
+
+              {intakeFields.length === 0 && (
+                <p className="text-center text-[11px] text-purple-500 py-3 border border-dashed border-purple-200 rounded-lg">
+                  No fields yet — customers will only see the title and description fields. Add fields to collect specific information.
+                </p>
+              )}
+
+              <div className="space-y-3">
+                {intakeFields.map((field, idx) => (
+                  <div
+                    key={field.id}
+                    className="rounded-xl border border-slate-200 bg-white p-4 space-y-3"
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-[11px] font-bold text-slate-400">Field {idx + 1}</span>
+                      <button
+                        type="button"
+                        onClick={() => setIntakeFields((prev) => prev.filter((_, i) => i !== idx))}
+                        className="text-slate-400 hover:text-red-500 transition-colors"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      {/* Label */}
+                      <div className="sm:col-span-2">
+                        <label className="block text-[11px] font-bold text-slate-600 mb-1">
+                          Label *
+                        </label>
+                        <input
+                          type="text"
+                          value={field.label}
+                          onChange={(e) =>
+                            setIntakeFields((prev) =>
+                              prev.map((f, i) => i === idx ? { ...f, label: e.target.value } : f)
+                            )
+                          }
+                          placeholder="e.g. Preferred colour, Room size, Special notes"
+                          className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs outline-none focus:border-purple-400"
+                        />
+                      </div>
+
+                      {/* Type */}
+                      <div>
+                        <label className="block text-[11px] font-bold text-slate-600 mb-1">
+                          Field Type
+                        </label>
+                        <select
+                          value={field.type}
+                          onChange={(e) =>
+                            setIntakeFields((prev) =>
+                              prev.map((f, i) =>
+                                i === idx
+                                  ? { ...f, type: e.target.value as IntakeFieldType, options: e.target.value === "select" ? [""] : undefined }
+                                  : f
+                              )
+                            )
+                          }
+                          className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs outline-none focus:border-purple-400"
+                        >
+                          <option value="text">Short text</option>
+                          <option value="textarea">Long text</option>
+                          <option value="number">Number</option>
+                          <option value="select">Dropdown (select)</option>
+                          <option value="date">Date</option>
+                        </select>
+                      </div>
+
+                      {/* Placeholder */}
+                      <div>
+                        <label className="block text-[11px] font-bold text-slate-600 mb-1">
+                          Placeholder (optional)
+                        </label>
+                        <input
+                          type="text"
+                          value={field.placeholder ?? ""}
+                          onChange={(e) =>
+                            setIntakeFields((prev) =>
+                              prev.map((f, i) => i === idx ? { ...f, placeholder: e.target.value } : f)
+                            )
+                          }
+                          placeholder="e.g. Enter size in sq.ft"
+                          className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs outline-none focus:border-purple-400"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Options (select only) */}
+                    {field.type === "select" && (
+                      <div>
+                        <label className="block text-[11px] font-bold text-slate-600 mb-1.5">
+                          Options
+                        </label>
+                        <div className="space-y-2">
+                          {(field.options ?? []).map((opt, oIdx) => (
+                            <div key={oIdx} className="flex gap-2">
+                              <input
+                                type="text"
+                                value={opt}
+                                onChange={(e) =>
+                                  setIntakeFields((prev) =>
+                                    prev.map((f, i) => {
+                                      if (i !== idx) return f;
+                                      const opts = [...(f.options ?? [])];
+                                      opts[oIdx] = e.target.value;
+                                      return { ...f, options: opts };
+                                    })
+                                  )
+                                }
+                                placeholder={`Option ${oIdx + 1}`}
+                                className="flex-1 rounded-lg border border-slate-200 px-3 py-1.5 text-xs outline-none focus:border-purple-400"
+                              />
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setIntakeFields((prev) =>
+                                    prev.map((f, i) => {
+                                      if (i !== idx) return f;
+                                      const opts = (f.options ?? []).filter((_, oi) => oi !== oIdx);
+                                      return { ...f, options: opts };
+                                    })
+                                  )
+                                }
+                                className="text-slate-400 hover:text-red-500"
+                              >
+                                <X size={12} />
+                              </button>
+                            </div>
+                          ))}
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setIntakeFields((prev) =>
+                                prev.map((f, i) =>
+                                  i === idx ? { ...f, options: [...(f.options ?? []), ""] } : f
+                                )
+                              )
+                            }
+                            className="text-[11px] font-semibold text-purple-600 hover:text-purple-700"
+                          >
+                            + Add option
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Required toggle */}
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={field.required}
+                        onChange={(e) =>
+                          setIntakeFields((prev) =>
+                            prev.map((f, i) => i === idx ? { ...f, required: e.target.checked } : f)
+                          )
+                        }
+                        className="h-4 w-4 rounded border-slate-300 accent-purple-600"
+                      />
+                      <span className="text-[11px] font-semibold text-slate-700">Required field</span>
+                    </label>
+                  </div>
+                ))}
               </div>
             </div>
           )}

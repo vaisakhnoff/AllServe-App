@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   Bell, CalendarCheck, Home, LogOut, MessageSquare,
-  Sparkles, User, Zap, FileText, PlusCircle, Menu, X,
+  Sparkles, User, Zap, Menu, X,
   ChevronDown, Heart,
 } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -18,9 +18,7 @@ import { LocationPicker } from "./LocationPicker";
 
 const navItems = [
   { label: "Dashboard", href: ROUTES.DASHBOARD, icon: Home },
-  { label: "Bookings", href: "/bookings", icon: CalendarCheck },
-  { label: "My Requests", href: "/my-requests", icon: FileText },
-  { label: "Post Request", href: "/post-request", icon: PlusCircle },
+  { label: "My Bookings", href: "/bookings", icon: CalendarCheck },
   { label: "Messages", href: "/messages", icon: MessageSquare, badge: 3 },
   { label: "Favourites", href: "/favourites", icon: Heart },
   { label: "Profile", href: ROUTES.PROFILE, icon: User },
@@ -189,7 +187,6 @@ export function UserShell({ children }: { children: React.ReactNode }) {
                             { label: "My profile", icon: User, href: ROUTES.PROFILE },
                             { label: "My bookings", icon: CalendarCheck, href: "/bookings" },
                             { label: "Messages", icon: MessageSquare, href: "/messages" },
-                            { label: "My requests", icon: FileText, href: "/my-requests" },
                           ].map((item) => (
                             <Link
                               key={item.label}

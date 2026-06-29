@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import {
   Search, ShieldCheck, ShieldX, Loader2, Clock, MapPin,
-  Image as ImageIcon, Briefcase, ChevronLeft, ChevronRight,
+  Image as ImageIcon, Briefcase, ChevronLeft, ChevronRight, X,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { adminService } from "@/services/admin";
@@ -14,6 +14,52 @@ const STATUS_BADGE: Record<ServiceStatus, string> = {
   active: "bg-emerald-50 text-emerald-700",
   inactive: "bg-slate-100 text-slate-600",
 };
+
+// ── Block Confirm Modal ───────────────────────────────────────────────────────
+function BlockConfirmModal({
+  serviceName,
+  onConfirm,
+  onClose,
+  loading,
+}: {
+  serviceName: string;
+  onConfirm: () => void;
+  onClose: () => void;
+  loading: boolean;
+}) {
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm px-4"
+      onClick={onClose}
+    >
+      <div
+        className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-start justify-between mb-4">
+          <div>
+            <h3 className="text-lg font-[800] text-slate-900">Block Service</h3>
+            <p className="mt-1 text-sm text-slate-600">
+              Block <span className="font-bold">&ldquo;{serviceName}&rdquo;</span>? The provider will no longer be able to edit it.
+            </p>
+          </div>
+          <button onClick={onClose} disabled={loading} className="flex h-8 w-8 items-center justify-center rounded-full hover:bg-slate-100">
+            <X size={16} className="text-slate-400" />
+          </button>
+        </div>
+        <div className="flex gap-3">
+          <button onClick={onClose} disabled={loading} className="flex-1 rounded-xl border border-slate-200 py-2.5 text-sm font-bold text-slate-600 hover:bg-slate-50 disabled:opacity-50">
+            Cancel
+          </button>
+          <button onClick={onConfirm} disabled={loading} className="flex-1 rounded-xl bg-red-600 py-2.5 text-sm font-bold text-white hover:bg-red-700 disabled:opacity-50 flex items-center justify-center gap-2">
+            {loading && <Loader2 size={14} className="animate-spin" />}
+            Block
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 const PAGE_SIZE = 12;
 
@@ -27,6 +73,7 @@ export default function AdminServicesPage() {
   const [statusFilter, setStatusFilter] = useState<"" | ServiceStatus>("");
   const [blockedFilter, setBlockedFilter] = useState<"" | "true" | "false">("");
   const [actingId, setActingId] = useState<string | null>(null);
+  const [blockTarget, setBlockTarget] = useState<Service | null>(null);
 
   const fetch = useCallback(async () => {
     setLoading(true);
@@ -65,10 +112,15 @@ export default function AdminServicesPage() {
   }, [page, statusFilter, blockedFilter, debouncedSearch, fetch]);
 
   const handleBlock = async (svc: Service) => {
-    if (!confirm(`Block "${svc.name}"? The provider will no longer be able to edit it.`)) return;
-    setActingId(svc.id);
+    setBlockTarget(svc);
+  };
+
+  const confirmBlock = async () => {
+    if (!blockTarget) return;
+    setActingId(blockTarget.id);
+    setBlockTarget(null);
     try {
-      await adminService.blockService(svc.id);
+      await adminService.blockService(blockTarget.id);
       toast.success("Service blocked");
       await fetch();
     } catch (err) {
@@ -255,6 +307,14 @@ export default function AdminServicesPage() {
             Next <ChevronRight size={14} />
           </button>
         </div>
+      )}
+      {blockTarget && (
+        <BlockConfirmModal
+          serviceName={blockTarget.name}
+          onConfirm={confirmBlock}
+          onClose={() => setBlockTarget(null)}
+          loading={actingId === blockTarget.id}
+        />
       )}
     </div>
   );

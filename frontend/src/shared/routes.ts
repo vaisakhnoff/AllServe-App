@@ -15,10 +15,6 @@ export const ROUTES = {
   ADMIN_CATEGORIES: "/admin/categories",
   PROVIDER_PORTAL_FORGOT_PASSWORD: "/provider-portal/forgot-password",
   PROVIDER_PORTAL_RESET_PASSWORD: "/provider-portal/reset-password",
-  POST_REQUEST: "/post-request",
-  MY_REQUESTS: "/my-requests",
-  REQUEST_DETAILS: (id: string) => `/my-requests/${id}`,
-  PROVIDER_REQUESTS: "/provider-portal/requests",
 } as const;
 
 export const API_ENDPOINTS = {
@@ -81,23 +77,6 @@ export const API_ENDPOINTS = {
   CATEGORIES: "/category",
   CATEGORY_BY_ID: (id: string) => `/category/${id}`,
 
-  // Service Requests (Marketplace)
-  SERVICE_REQUESTS: "/service-requests",
-  SERVICE_REQUESTS_MY: "/service-requests/my",
-  SERVICE_REQUESTS_STATS: "/service-requests/stats",
-  SERVICE_REQUEST_BY_ID: (id: string) => `/service-requests/${id}`,
-  SERVICE_REQUEST_CANCEL: (id: string) => `/service-requests/${id}/cancel`,
-  SERVICE_REQUESTS_BROWSE: "/service-requests/provider/browse",
-
-  // Provider Quotes (Marketplace)
-  PROVIDER_QUOTES: "/provider-quotes",
-  PROVIDER_QUOTES_MY: "/provider-quotes/my",
-  PROVIDER_QUOTES_STATS: "/provider-quotes/stats",
-  PROVIDER_QUOTES_FOR_REQUEST: (requestId: string) => `/provider-quotes/request/${requestId}`,
-  PROVIDER_QUOTE_UPDATE: (id: string) => `/provider-quotes/${id}`,
-  PROVIDER_QUOTE_WITHDRAW: (id: string) => `/provider-quotes/${id}/withdraw`,
-  PROVIDER_QUOTE_ACCEPT: (id: string) => `/provider-quotes/${id}/accept`,
-
   // ── Provider Status ──
   PROVIDER_STATUS: "/provider-status",
   PROVIDER_STATUS_TOGGLE: "/provider-status/online",
@@ -117,7 +96,6 @@ export const API_ENDPOINTS = {
   ORDERS_CUSTOM: "/orders/custom",
   ORDERS_MY: "/orders/my",
   ORDERS_PROVIDER: "/orders/provider",
-  ORDERS_BROADCAST_CUSTOM: "/orders/broadcast/custom",
   ORDER_BY_ID: (id: string) => `/orders/${id}`,
   ORDER_ACCEPT: (id: string) => `/orders/${id}/accept`,
   ORDER_REJECT: (id: string) => `/orders/${id}/reject`,

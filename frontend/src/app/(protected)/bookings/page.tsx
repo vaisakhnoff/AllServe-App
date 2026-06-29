@@ -5,13 +5,86 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import {
   Loader2, Calendar, MapPin, Clock, ArrowUpRight, Package, Zap,
-  ChevronRight, Ban,
+  ChevronRight, Ban, X,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { orderService } from "@/services/order";
 import { ServiceOrder, OrderDeliveryModel } from "@/types/order.types";
 import { getErrorMessage } from "@/utils/errorHandler";
 
+// ── Drop Reason Modal ─────────────────────────────────────────────────────────
+function DropModal({
+  onConfirm,
+  onClose,
+  loading,
+}: {
+  onConfirm: (reason: string) => void;
+  onClose: () => void;
+  loading: boolean;
+}) {
+  const [reason, setReason] = useState("");
+  const [error, setError] = useState("");
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm px-4"
+      onClick={onClose}
+    >
+      <div
+        className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-start justify-between mb-4">
+          <div>
+            <h3 className="text-lg font-[800] text-slate-900">Drop Service</h3>
+            <p className="mt-1 text-sm text-slate-500">Please tell us why you&apos;re dropping this service.</p>
+          </div>
+          <button
+            onClick={onClose}
+            disabled={loading}
+            className="flex h-8 w-8 items-center justify-center rounded-full hover:bg-slate-100 transition-colors"
+          >
+            <X size={16} className="text-slate-400" />
+          </button>
+        </div>
+
+        <textarea
+          value={reason}
+          onChange={(e) => { setReason(e.target.value); setError(""); }}
+          rows={3}
+          placeholder="Why do you want to drop this service?"
+          className={`w-full rounded-xl border px-4 py-3 text-sm outline-none resize-none transition focus:ring-2 focus:ring-red-100 ${
+            error ? "border-red-300 bg-red-50" : "border-slate-200 focus:border-red-400"
+          }`}
+        />
+        {error && <p className="mt-1 text-xs font-medium text-red-500">{error}</p>}
+
+        <div className="flex gap-3 mt-4">
+          <button
+            onClick={onClose}
+            disabled={loading}
+            className="flex-1 rounded-xl border border-slate-200 py-2.5 text-sm font-bold text-slate-600 hover:bg-slate-50 disabled:opacity-50"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={() => {
+              if (!reason.trim()) { setError("Reason is required"); return; }
+              onConfirm(reason.trim());
+            }}
+            disabled={loading}
+            className="flex-1 rounded-xl bg-red-600 py-2.5 text-sm font-bold text-white hover:bg-red-700 disabled:opacity-50 flex items-center justify-center gap-2"
+          >
+            {loading && <Loader2 size={14} className="animate-spin" />}
+            Drop Service
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Status & model config ─────────────────────────────────────────────────────
 const STATUS_CONFIG: Record<string, { label: string; dot: string; bg: string }> = {
   awaiting_provider_response: { label: "Waiting for provider", dot: "bg-amber-400", bg: "bg-amber-50 text-amber-700" },
   accepted: { label: "Accepted", dot: "bg-emerald-400", bg: "bg-emerald-50 text-emerald-700" },
@@ -31,15 +104,13 @@ const STATUS_CONFIG: Record<string, { label: string; dot: string; bg: string }> 
   dropped_by_customer: { label: "Dropped", dot: "bg-slate-300", bg: "bg-slate-100 text-slate-500" },
   awaiting_advance: { label: "Advance pending", dot: "bg-amber-400", bg: "bg-amber-50 text-amber-700" },
   awaiting_final_payment: { label: "Payment pending", dot: "bg-indigo-400", bg: "bg-indigo-50 text-indigo-700" },
-  broadcast_open: { label: "Receiving quotes", dot: "bg-purple-400", bg: "bg-purple-50 text-purple-700" },
-  receiving_quotations: { label: "Receiving quotes", dot: "bg-purple-400", bg: "bg-purple-50 text-purple-700" },
   expired: { label: "Expired", dot: "bg-slate-300", bg: "bg-slate-100 text-slate-500" },
 };
 
 const MODEL_LABELS: Record<OrderDeliveryModel, { label: string; emoji: string }> = {
   direct: { label: "Direct", emoji: "⚡" },
-  inspection_required: { label: "Inspection", emoji: "🏠" },
-  custom: { label: "Custom", emoji: "🎨" },
+  inspection_required: { label: "Inspection", emoji: "🔍" },
+  custom: { label: "Custom", emoji: "📋" },
 };
 
 const STATUS_FILTERS = [
@@ -51,36 +122,58 @@ const STATUS_FILTERS = [
   { value: "cancelled", label: "Cancelled" },
 ];
 
+const MODEL_FILTERS: { value: OrderDeliveryModel | ""; label: string; emoji: string }[] = [
+  { value: "", label: "All Types", emoji: "📦" },
+  { value: "direct", label: "Direct", emoji: "⚡" },
+  { value: "inspection_required", label: "Inspection", emoji: "🔍" },
+  { value: "custom", label: "Custom", emoji: "📋" },
+];
+
 export default function BookingsPage() {
   const [orders, setOrders] = useState<ServiceOrder[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState("");
+  const [modelFilter, setModelFilter] = useState<OrderDeliveryModel | "">("");
   const [page, setPage] = useState(1);
+
+  // Drop modal state
+  const [dropOrderId, setDropOrderId] = useState<string | null>(null);
+  const [dropLoading, setDropLoading] = useState(false);
 
   const fetchOrders = useCallback(async () => {
     setLoading(true);
     try {
       const res = await orderService.getMyOrders({
         ...(statusFilter ? { status: statusFilter } : {}),
-        page, limit: 20,
+        ...(modelFilter ? { deliveryModel: modelFilter } : {}),
+        page,
+        limit: 20,
       });
       setOrders(res.data.data.items);
       setTotal(res.data.data.total);
-    } catch (err) { toast.error(getErrorMessage(err) || "Failed to load bookings"); }
-    finally { setLoading(false); }
-  }, [statusFilter, page]);
+    } catch (err) {
+      toast.error(getErrorMessage(err) || "Failed to load bookings");
+    } finally {
+      setLoading(false);
+    }
+  }, [statusFilter, modelFilter, page]);
 
   useEffect(() => { fetchOrders(); }, [fetchOrders]);
 
-  const handleDrop = async (orderId: string) => {
-    const reason = prompt("Why do you want to drop this service?");
-    if (!reason?.trim()) return;
+  const handleDrop = async (reason: string) => {
+    if (!dropOrderId) return;
+    setDropLoading(true);
     try {
-      await orderService.dropByCustomer(orderId, reason.trim());
+      await orderService.dropByCustomer(dropOrderId, reason);
       toast.success("Service dropped");
+      setDropOrderId(null);
       fetchOrders();
-    } catch (err) { toast.error(getErrorMessage(err) || "Failed"); }
+    } catch (err) {
+      toast.error(getErrorMessage(err) || "Failed to drop service");
+    } finally {
+      setDropLoading(false);
+    }
   };
 
   return (
@@ -91,8 +184,10 @@ export default function BookingsPage() {
           <h1 className="text-[2rem] font-[800] tracking-[-0.03em] text-[var(--text-primary)]">My Bookings</h1>
           <p className="mt-1 text-[15px] text-[var(--text-secondary)]">{total} orders</p>
         </div>
-        <Link href="/dashboard"
-          className="group inline-flex items-center gap-2 rounded-full bg-[#141414] py-2.5 pl-5 pr-2.5 text-sm font-bold text-white transition hover:bg-black">
+        <Link
+          href="/dashboard"
+          className="group inline-flex items-center gap-2 rounded-full bg-[#141414] py-2.5 pl-5 pr-2.5 text-sm font-bold text-white transition hover:bg-black"
+        >
           <Zap size={14} /> New booking
           <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[var(--primary)] text-white transition group-hover:rotate-[-45deg]">
             <ArrowUpRight size={13} />
@@ -101,15 +196,35 @@ export default function BookingsPage() {
       </div>
 
       {/* Status filter pills */}
-      <div className="mb-6 flex flex-wrap gap-2">
+      <div className="mb-3 flex flex-wrap gap-2">
         {STATUS_FILTERS.map((s) => (
-          <button key={s.value || "all"} onClick={() => { setStatusFilter(s.value); setPage(1); }}
+          <button
+            key={s.value || "all"}
+            onClick={() => { setStatusFilter(s.value); setPage(1); }}
             className={`rounded-full px-4 py-2 text-[13px] font-semibold transition ${
               statusFilter === s.value
                 ? "bg-[#141414] text-white shadow-sm"
                 : "bg-white border border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--text-muted)]"
-            }`}>
+            }`}
+          >
             {s.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Delivery model filter pills */}
+      <div className="mb-6 flex flex-wrap gap-2">
+        {MODEL_FILTERS.map((m) => (
+          <button
+            key={m.value || "all"}
+            onClick={() => { setModelFilter(m.value); setPage(1); }}
+            className={`rounded-full px-4 py-2 text-[13px] font-semibold transition ${
+              modelFilter === m.value
+                ? "bg-indigo-600 text-white shadow-sm"
+                : "bg-white border border-[var(--border)] text-[var(--text-secondary)] hover:border-indigo-200"
+            }`}
+          >
+            {m.emoji} {m.label}
           </button>
         ))}
       </div>
@@ -140,7 +255,12 @@ export default function BookingsPage() {
             const hasPayment = order.status === "awaiting_payment";
 
             return (
-              <motion.div key={order._id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.03 * i, duration: 0.25 }}>
+              <motion.div
+                key={order._id}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.03 * i, duration: 0.25 }}
+              >
                 <Link href={`/bookings/${order._id}`} className="block">
                   <div className={`group rounded-2xl border bg-white p-5 transition-all hover:-translate-y-0.5 hover:shadow-lg ${
                     needsChoice ? "border-amber-200 bg-amber-50/30" : hasPayment ? "border-indigo-200 bg-indigo-50/20" : "border-[var(--border)]"
@@ -184,11 +304,13 @@ export default function BookingsPage() {
                   </div>
                 </Link>
 
-                {/* Drop button (outside the link) */}
+                {/* Drop button (outside the Link, opens modal) */}
                 {canDrop && (
                   <div className="mt-1 px-5">
-                    <button onClick={() => handleDrop(order._id)}
-                      className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-red-500 hover:text-red-700 transition">
+                    <button
+                      onClick={() => setDropOrderId(order._id)}
+                      className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-red-500 hover:text-red-700 transition"
+                    >
                       <Ban size={11} /> Drop this service
                     </button>
                   </div>
@@ -202,12 +324,31 @@ export default function BookingsPage() {
       {/* Pagination */}
       {total > 20 && (
         <div className="mt-8 flex items-center justify-center gap-3">
-          <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1}
-            className="rounded-xl border border-[var(--border)] px-4 py-2.5 text-sm font-semibold text-[var(--text-secondary)] disabled:opacity-40 hover:bg-[var(--surface-2)] transition">Previous</button>
+          <button
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            disabled={page === 1}
+            className="rounded-xl border border-[var(--border)] px-4 py-2.5 text-sm font-semibold text-[var(--text-secondary)] disabled:opacity-40 hover:bg-[var(--surface-2)] transition"
+          >
+            Previous
+          </button>
           <span className="text-sm font-medium text-[var(--text-muted)]">Page {page} of {Math.ceil(total / 20)}</span>
-          <button onClick={() => setPage((p) => p + 1)} disabled={page >= Math.ceil(total / 20)}
-            className="rounded-xl border border-[var(--border)] px-4 py-2.5 text-sm font-semibold text-[var(--text-secondary)] disabled:opacity-40 hover:bg-[var(--surface-2)] transition">Next</button>
+          <button
+            onClick={() => setPage((p) => p + 1)}
+            disabled={page >= Math.ceil(total / 20)}
+            className="rounded-xl border border-[var(--border)] px-4 py-2.5 text-sm font-semibold text-[var(--text-secondary)] disabled:opacity-40 hover:bg-[var(--surface-2)] transition"
+          >
+            Next
+          </button>
         </div>
+      )}
+
+      {/* Drop Modal */}
+      {dropOrderId && (
+        <DropModal
+          onConfirm={handleDrop}
+          onClose={() => setDropOrderId(null)}
+          loading={dropLoading}
+        />
       )}
     </div>
   );
