@@ -20,7 +20,7 @@ export class UnauthorizedError extends AppError {
   }
 }
 
-/**
+/** 
  * 403 — Forbidden / insufficient role
  */
 export class ForbiddenError extends AppError {

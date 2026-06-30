@@ -9,14 +9,10 @@ import { validateLoginForm } from "@/utils/validation";
 import { getErrorMessage } from "@/utils/errorHandler";
 import { logger } from "@/utils/logger";
 import { ROUTES } from "@/shared/routes";
-import { LoginDto } from "@/types/auth.types";
+import { LoginDto, LoginField, LoginFieldErrors, LoginTouchedFields, OAuthErrorCode } from "@/types/auth.types";
 import { Globe, Eye, EyeOff } from "lucide-react";
 import { UI_MESSAGES } from "@/shared/messages";
 
-type LoginField = keyof LoginDto;
-type LoginFieldErrors = Partial<Record<LoginField, string>>;
-type LoginTouchedFields = Partial<Record<LoginField, boolean>>;
-type OAuthErrorCode = "auth_failed" | "wrong_platform";
 
 const getOAuthErrorMessage = (code: string | null) => {
   const messages: Partial<Record<OAuthErrorCode, string>> = {

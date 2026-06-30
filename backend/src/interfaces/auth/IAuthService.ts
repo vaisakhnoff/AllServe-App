@@ -24,4 +24,5 @@ export interface IAuthService {
   resetPassword(email: string, otp: string, newPassword: string): Promise<{ message: string }>;
   refreshToken(token: string): Promise<{ accessToken: string }>;
   logout(token: string): Promise<void>;
+  findOrCreateOAuthUser(email: string, displayName: string): Promise<any>;
 }

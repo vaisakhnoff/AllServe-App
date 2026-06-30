@@ -1,4 +1,4 @@
-import { IServiceOrderRepository } from "../interfaces/service-order/IServiceOrderRepository";
+import { IServiceOrderRepository } from "../../interfaces/service-order/IServiceOrderRepository";
 
 /**
  * Handles expiration of time-sensitive orders:

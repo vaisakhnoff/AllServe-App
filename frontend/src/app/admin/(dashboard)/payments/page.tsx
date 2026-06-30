@@ -4,16 +4,7 @@ import React, { useState } from "react";
 import { Search, Filter, Download, ArrowUpRight, ArrowDownRight } from "lucide-react";
 import { DataTable, ColumnDef } from "@/components/common/DataTable";
 
-type Payment = {
-  id: string;
-  bookingId: string;
-  amount: string;
-  date: string;
-  method: string;
-  status: string;
-  type: string;
-};
-
+import { Payment } from "@/types/payment.types";
 const columns: ColumnDef<Payment>[] = [
   {
     header: "Transaction Details",

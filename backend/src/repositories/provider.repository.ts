@@ -18,6 +18,18 @@ export class ProviderRepository
     return this.model.findById(id).populate("categoryId", "name icon").exec();
   }
 
+  async findByEmail(email: string): Promise<IProviderAccount | null> {
+    return this.model.findOne({ email }).exec();
+  }
+
+  async createAccount(data: Partial<IProviderAccount>): Promise<IProviderAccount> {
+    return this.model.create(data);
+  }
+
+  async verifyEmail(email: string): Promise<void> {
+    await this.model.findOneAndUpdate({ email }, { isVerified: true }).exec();
+  }
+
   async updateAccount(
     id: string,
     data: Partial<IProviderAccount>

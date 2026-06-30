@@ -1,6 +1,6 @@
-import { ICategoryService } from "../interfaces/category/ICategoryService";
-import { IProviderService } from "../interfaces/provider/IProviderService";
-import { HomeData, IHomeService } from "../interfaces/home/IHomeService";
+import { ICategoryService } from "../../interfaces/category/ICategoryService";
+import { IProviderService } from "../../interfaces/provider/IProviderService";
+import { HomeData, IHomeService } from "../../interfaces/home/IHomeService";
 
 export class HomeService implements IHomeService {
   constructor(

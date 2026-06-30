@@ -80,7 +80,7 @@ export default function ProviderProfilePage() {
       setShowOldPwd(false); setShowNewPwd(false); setShowConfirmPwd(false);
       showSuccess(UI_MESSAGES.PASSWORD_UPDATED);
       toast.success(UI_MESSAGES.PASSWORD_UPDATED);
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error(err?.response?.data?.message || "Failed to update password");
     }
   };

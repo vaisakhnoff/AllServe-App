@@ -1,19 +1,19 @@
 import { Types } from "mongoose";
 import bcrypt from "bcryptjs";
-import { IProviderRepository } from "../interfaces/provider/IProviderRepository";
-import { IProviderService } from "../interfaces/provider/IProviderService";
-import { IServiceRepository } from "../interfaces/service/IServiceRepository";
+import { IProviderRepository } from "../../interfaces/provider/IProviderRepository";
+import { IProviderService } from "../../interfaces/provider/IProviderService";
+import { IServiceRepository } from "../../interfaces/service/IServiceRepository";
 import { 
   ProviderApplicationDto, 
   UpdateProviderProfileDto, 
   ProviderQuery,
-} from "../dto/provider/provider.dto";
-import { IProviderAccount } from "../models/providerAccount.model";
-import { ApplicationStatus } from "../shared/enums/application-status.enum";
-import { escapeRegex } from "../shared/utils/search";
-import { Messages } from "../shared/constants/messages";
-import { mapProviderListItem, mapProviderDetails, mapApplication, mapProviderProfile, resolveLocation } from "../mappers/provider.mapper";
-import { NotFoundError, BadRequestError } from "../shared/errors/HttpErrors";
+} from "../../dto/provider/provider.dto";
+import { IProviderAccount } from "../../models/providerAccount.model";
+import { ApplicationStatus } from "../../shared/enums/application-status.enum";
+import { escapeRegex } from "../../shared/utils/search";
+import { Messages } from "../../shared/constants/messages";
+import { mapProviderListItem, mapProviderDetails, mapApplication, mapProviderProfile, resolveLocation } from "../../mappers/provider.mapper";
+import { NotFoundError, BadRequestError } from "../../shared/errors/HttpErrors";
 
 
 

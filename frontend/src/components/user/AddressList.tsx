@@ -151,7 +151,7 @@ export const AddressList: React.FC<Props> = ({ addresses, onAdd, onUpdate, onDel
               placeholder="Street Address"
               value={form.street}
               error={getFieldError("street")}
-              onChange={(e: any) => handleFieldChange("street", e.target.value)}
+              onChange={(e: unknown) => handleFieldChange("street", e.target.value)}
               onBlur={() => handleFieldBlur("street")}
             />
             <div className="flex gap-3">
@@ -160,7 +160,7 @@ export const AddressList: React.FC<Props> = ({ addresses, onAdd, onUpdate, onDel
                 placeholder="City"
                 value={form.city}
                 error={getFieldError("city")}
-                onChange={(e: any) => handleFieldChange("city", e.target.value)}
+                onChange={(e: unknown) => handleFieldChange("city", e.target.value)}
                 onBlur={() => handleFieldBlur("city")}
               />
               <Input
@@ -168,7 +168,7 @@ export const AddressList: React.FC<Props> = ({ addresses, onAdd, onUpdate, onDel
                 placeholder="State"
                 value={form.state}
                 error={getFieldError("state")}
-                onChange={(e: any) => handleFieldChange("state", e.target.value)}
+                onChange={(e: unknown) => handleFieldChange("state", e.target.value)}
                 onBlur={() => handleFieldBlur("state")}
               />
             </div>
@@ -178,14 +178,14 @@ export const AddressList: React.FC<Props> = ({ addresses, onAdd, onUpdate, onDel
                 placeholder="Zip Code"
                 value={form.zip}
                 error={getFieldError("zip")}
-                onChange={(e: any) => handleFieldChange("zip", e.target.value.replace(/\D/g, "").slice(0, 6))}
+                onChange={(e: unknown) => handleFieldChange("zip", e.target.value.replace(/\D/g, "").slice(0, 6))}
                 onBlur={() => handleFieldBlur("zip")}
               />
               <div className="flex-1 flex flex-col">
                 <select
                   id="country"
                   value={form.country}
-                  onChange={(e: any) => handleFieldChange("country", e.target.value)}
+                  onChange={(e: unknown) => handleFieldChange("country", e.target.value)}
                   onBlur={() => handleFieldBlur("country")}
                   className="input"
                   style={{ height: 46 }}
@@ -202,7 +202,7 @@ export const AddressList: React.FC<Props> = ({ addresses, onAdd, onUpdate, onDel
             </div>
             {!editingId && (
               <label className="flex items-center gap-2 text-sm text-gray-300 cursor-pointer">
-                <input type="checkbox" checked={form.isDefault} onChange={(e: any) => setForm({ ...form, isDefault: e.target.checked })} className="rounded bg-gray-900 border-gray-700" />
+                <input type="checkbox" checked={form.isDefault} onChange={(e: unknown) => setForm({ ...form, isDefault: e.target.checked })} className="rounded bg-gray-900 border-gray-700" />
                 Set as default address
               </label>
             )}

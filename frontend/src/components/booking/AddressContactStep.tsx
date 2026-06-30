@@ -23,7 +23,7 @@
  */
 
 import { useState } from "react";
-import { MapPin, Phone, Plus, X, ChevronDown, ChevronUp, CheckCircle2, AlertCircle } from "lucide-react";
+import { MapPin, Phone, Plus,   ChevronUp, CheckCircle2, AlertCircle } from "lucide-react";
 import { Address, AddressDto } from "@/types/user.types";
 import { userService } from "@/services/user";
 import toast from "react-hot-toast";

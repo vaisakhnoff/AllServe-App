@@ -1,7 +1,9 @@
-import { IServiceOrderRepository } from "../interfaces/service-order/IServiceOrderRepository";
-import { IProviderRepository } from "../interfaces/provider/IProviderRepository";
-import { IServiceOrder } from "../models/serviceOrder.model";
-import { NotFoundError, BadRequestError, ForbiddenError } from "../shared/errors/HttpErrors";
+import { IServiceOrderRepository } from "../../interfaces/service-order/IServiceOrderRepository";
+import { IProviderRepository } from "../../interfaces/provider/IProviderRepository";
+import { IServiceOrder } from "../../models/serviceOrder.model";
+import { NotFoundError, BadRequestError, ForbiddenError } from "../../shared/errors/HttpErrors";
+import { extractId } from "../../shared/utils/extractId";
+import { ICustomOrderLifecycleService } from "../../interfaces/service-order/IServiceOrderService";
 
 /**
  * Custom order lifecycle — quotation-based flow:
@@ -20,18 +22,11 @@ import { NotFoundError, BadRequestError, ForbiddenError } from "../shared/errors
  *     ↓ (invoice generated + paid)
  *   awaiting_payment → completed
  */
-export class CustomOrderLifecycleService {
+export class CustomOrderLifecycleService implements ICustomOrderLifecycleService {
   constructor(
     private readonly orderRepo: IServiceOrderRepository,
     private readonly providerRepo: IProviderRepository
-  ) {}
-
-  private extractId(ref: unknown): string {
-    if (ref && typeof ref === "object" && "_id" in (ref as Record<string, unknown>)) {
-      return String((ref as Record<string, unknown>)._id);
-    }
-    return String(ref);
-  }
+  ) { }
 
   /**
    * Provider accepts the custom service request.
@@ -42,7 +37,7 @@ export class CustomOrderLifecycleService {
     const order = await this.orderRepo.findById(orderId);
     if (!order) throw new NotFoundError("Order not found");
     if (order.deliveryModel !== "custom") throw new BadRequestError("Not a custom order");
-    if (this.extractId(order.providerId) !== providerId) throw new ForbiddenError("Unauthorized");
+    if (extractId(order.providerId) !== providerId) throw new ForbiddenError("Unauthorized");
     if (order.status !== "awaiting_provider_response") {
       throw new BadRequestError(`Cannot accept in status '${order.status}'`);
     }
@@ -59,7 +54,7 @@ export class CustomOrderLifecycleService {
     const order = await this.orderRepo.findById(orderId);
     if (!order) throw new NotFoundError("Order not found");
     if (order.deliveryModel !== "custom") throw new BadRequestError("Not a custom order");
-    if (this.extractId(order.providerId) !== providerId) throw new ForbiddenError("Unauthorized");
+    if (extractId(order.providerId) !== providerId) throw new ForbiddenError("Unauthorized");
     if (order.status !== "awaiting_provider_response") {
       throw new BadRequestError(`Cannot reject in status '${order.status}'`);
     }
@@ -77,7 +72,7 @@ export class CustomOrderLifecycleService {
     const order = await this.orderRepo.findById(orderId);
     if (!order) throw new NotFoundError("Order not found");
     if (order.deliveryModel !== "custom") throw new BadRequestError("Not a custom order");
-    if (this.extractId(order.providerId) !== providerId) throw new ForbiddenError("Unauthorized");
+    if (extractId(order.providerId) !== providerId) throw new ForbiddenError("Unauthorized");
 
     if (!["quotation_accepted", "awaiting_advance"].includes(order.status)) {
       throw new BadRequestError(
@@ -93,13 +88,13 @@ export class CustomOrderLifecycleService {
     } as Record<string, unknown>);
 
     try {
-      const { getIo } = await import("../socket/io");
+      const { getIo } = await import("../../socket/io");
       getIo().to(`provider:${providerId}`).emit("provider:status-changed", {
         providerId,
         onlineStatus: "online",
         engagementStatus: "busy",
       });
-    } catch {}
+    } catch { /* ignore */ }
 
     return updated!;
   }
@@ -111,7 +106,7 @@ export class CustomOrderLifecycleService {
     const order = await this.orderRepo.findById(orderId);
     if (!order) throw new NotFoundError("Order not found");
     if (order.deliveryModel !== "custom") throw new BadRequestError("Not a custom order");
-    if (this.extractId(order.providerId) !== providerId) throw new ForbiddenError("Unauthorized");
+    if (extractId(order.providerId) !== providerId) throw new ForbiddenError("Unauthorized");
     if (order.status !== "in_progress") {
       throw new BadRequestError("Order must be in progress to mark as complete");
     }
@@ -124,13 +119,13 @@ export class CustomOrderLifecycleService {
     } as Record<string, unknown>);
 
     try {
-      const { getIo } = await import("../socket/io");
+      const { getIo } = await import("../../socket/io");
       getIo().to(`provider:${providerId}`).emit("provider:status-changed", {
         providerId,
         onlineStatus: "online",
         engagementStatus: "available",
       });
-    } catch {}
+    } catch { /* ignore */ }
 
     return updated!;
   }
@@ -142,7 +137,7 @@ export class CustomOrderLifecycleService {
     const order = await this.orderRepo.findById(orderId);
     if (!order) throw new NotFoundError("Order not found");
     if (order.deliveryModel !== "custom") throw new BadRequestError("Not a custom order");
-    if (this.extractId(order.providerId) !== providerId) throw new ForbiddenError("Unauthorized");
+    if (extractId(order.providerId) !== providerId) throw new ForbiddenError("Unauthorized");
 
     const droppable = [
       "awaiting_provider_response",
@@ -166,13 +161,13 @@ export class CustomOrderLifecycleService {
       } as Record<string, unknown>);
 
       try {
-        const { getIo } = await import("../socket/io");
+        const { getIo } = await import("../../socket/io");
         getIo().to(`provider:${providerId}`).emit("provider:status-changed", {
           providerId,
           onlineStatus: "online",
           engagementStatus: "available",
         });
-      } catch {}
+      } catch { /* ignore */ }
     }
 
     return updated!;
@@ -185,7 +180,7 @@ export class CustomOrderLifecycleService {
     const order = await this.orderRepo.findById(orderId);
     if (!order) throw new NotFoundError("Order not found");
     if (order.deliveryModel !== "custom") throw new BadRequestError("Not a custom order");
-    if (this.extractId(order.customerId) !== customerId) throw new ForbiddenError("Unauthorized");
+    if (extractId(order.customerId) !== customerId) throw new ForbiddenError("Unauthorized");
 
     const droppable = [
       "awaiting_provider_response",

@@ -2,6 +2,9 @@ import { IProviderAccount } from "../../models/providerAccount.model";
 
 export interface IProviderRepository {
   findById(id: string): Promise<IProviderAccount | null>;
+  findByEmail(email: string): Promise<IProviderAccount | null>;
+  createAccount(data: Partial<IProviderAccount>): Promise<IProviderAccount>;
+  verifyEmail(email: string): Promise<void>;
   updateAccount(id: string, data: Partial<IProviderAccount>): Promise<IProviderAccount | null>;
   findApprovedProviders(filter: Partial<Record<string, unknown>>, limit?: number): Promise<IProviderAccount[]>;
   findApprovedProviderById(id: string): Promise<IProviderAccount | null>;

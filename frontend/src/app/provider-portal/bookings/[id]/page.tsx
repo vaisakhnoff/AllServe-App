@@ -91,7 +91,7 @@ function InvoiceFormModal({ orderId, onClose, onSuccess }: { orderId: string; on
       try {
         const res = await invoiceService.getPrefill(orderId);
         const data = res.data.data;
-        if (data.fromQuotation) {
+        if (data && data.fromQuotation) {
           setIsLocked(true);
           setForm((prev) => ({
             ...prev,

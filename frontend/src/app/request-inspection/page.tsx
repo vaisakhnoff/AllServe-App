@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import {
-  Loader2, ArrowLeft, ImagePlus, Trash2, CheckCircle2,
+  Loader2, ArrowLeft, ImagePlus, Trash2, 
   ChevronRight, Home,
 } from "lucide-react";
 import toast from "react-hot-toast";

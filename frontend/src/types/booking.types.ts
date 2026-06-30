@@ -45,3 +45,6 @@ export interface BookingListResponse {
   items: Booking[];
   total: number;
 }
+
+export type BookingStep = "checkout" | "success";
+export type RequestMode = "instant" | "scheduled";

@@ -113,7 +113,7 @@ export default function ProviderApplicationPage() {
         ...prev,
         name: user.name,
         email: user.email,
-        phone: (user as any).phone || "",
+        phone: (user as unknown).phone || "",
       }));
     }
   }, [user, isAuthenticated, role, applicationStatus, router]);

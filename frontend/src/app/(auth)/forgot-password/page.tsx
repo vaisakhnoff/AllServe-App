@@ -9,7 +9,7 @@ import { getErrorMessage } from "@/utils/errorHandler";
 import { ROUTES } from "@/shared/routes";
 import { Mail, CheckCircle2 } from "lucide-react";
 import { validateForgotPasswordEmail } from "@/utils/validation";
-import { UI_MESSAGES } from "@/shared/messages";
+
 
 export default function ForgotPasswordPage() {
   const router = useRouter();

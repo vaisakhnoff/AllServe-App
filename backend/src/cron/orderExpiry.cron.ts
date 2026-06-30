@@ -1,5 +1,5 @@
 import cron from "node-cron";
-import { OrderTimerService } from "../services/orderTimer.service";
+import { OrderTimerService } from "../services/service-order/orderTimer.service";
 import { logger } from "../shared/logger/logger";
 
 export function startOrderExpiryCron(timerService: OrderTimerService) {

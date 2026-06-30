@@ -1,8 +1,8 @@
-import { IConversationRepository, IMessageRepository } from "../interfaces/messaging/IMessagingRepository";
-import { IMessagingService } from "../interfaces/messaging/IMessagingService";
-import { IConversation, IMessage } from "../models/messaging.model";
-import { SenderRole } from "../dto/messaging/messaging.dto";
-import { NotFoundError, ForbiddenError } from "../shared/errors/HttpErrors";
+import { IConversationRepository, IMessageRepository } from "../../interfaces/messaging/IMessagingRepository";
+import { IMessagingService } from "../../interfaces/messaging/IMessagingService";
+import { IConversation, IMessage } from "../../models/messaging.model";
+import { SenderRole } from "../../dto/messaging/messaging.dto";
+import { NotFoundError, ForbiddenError } from "../../shared/errors/HttpErrors";
 
 export interface PaginatedConversationResponse { 
   items: IConversation[];

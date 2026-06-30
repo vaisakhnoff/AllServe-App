@@ -204,7 +204,7 @@ export default function ProviderSlotsPage() {
     if (editForm.date !== editingSlot.date) dto.date = editForm.date;
     if (editForm.startTime !== editingSlot.startTime) dto.startTime = editForm.startTime;
     if (editForm.endTime !== editingSlot.endTime) dto.endTime = editForm.endTime;
-    if (editForm.slotStatus !== editingSlot.slotStatus) dto.slotStatus = editForm.slotStatus as any;
+    if (editForm.slotStatus !== editingSlot.slotStatus) dto.slotStatus = editForm.slotStatus as unknown;
     if (!Object.keys(dto).length) { setModal(null); return; }
     setSaving(true);
     try {
@@ -385,7 +385,7 @@ export default function ProviderSlotsPage() {
                   <div><label className="mb-1 block text-xs font-bold text-slate-600">Start</label><input type="time" value={form.startTime} onChange={(e) => setForm({ ...form, startTime: e.target.value })} className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-indigo-400" required /></div>
                   <div><label className="mb-1 block text-xs font-bold text-slate-600">End</label><input type="time" value={form.endTime} onChange={(e) => setForm({ ...form, endTime: e.target.value })} className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-indigo-400" required /></div>
                 </div>
-                <div><label className="mb-1 block text-xs font-bold text-slate-600">Status</label><select value={form.slotStatus} onChange={(e) => setForm({ ...form, slotStatus: e.target.value as any })} className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none"><option value="available">Available</option><option value="blocked">Blocked</option></select></div>
+                <div><label className="mb-1 block text-xs font-bold text-slate-600">Status</label><select value={form.slotStatus} onChange={(e) => setForm({ ...form, slotStatus: e.target.value as unknown })} className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none"><option value="available">Available</option><option value="blocked">Blocked</option></select></div>
                 <button type="submit" disabled={saving} className="btn btn-primary w-full py-2.5 text-sm mt-2">{saving ? <Loader2 size={14} className="animate-spin" /> : "Create Slot"}</button>
               </form>
             )}
@@ -420,7 +420,7 @@ export default function ProviderSlotsPage() {
             {/* Recurring */}
             {modal === "recurring" && (
               <form onSubmit={handleRecurring} className="space-y-3">
-                <div><label className="mb-1 block text-xs font-bold text-slate-600">Pattern</label><select value={recurForm.pattern} onChange={(e) => setRecurForm({ ...recurForm, pattern: e.target.value as any })} className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none">
+                <div><label className="mb-1 block text-xs font-bold text-slate-600">Pattern</label><select value={recurForm.pattern} onChange={(e) => setRecurForm({ ...recurForm, pattern: e.target.value as unknown })} className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none">
                   <option value="daily">Daily</option><option value="weekdays">Weekdays (Mon-Fri)</option><option value="weekends">Weekends</option><option value="weekly">Weekly (same day)</option><option value="custom">Custom Days</option>
                 </select></div>
                 {recurForm.pattern === "custom" && (

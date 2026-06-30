@@ -1,34 +1,19 @@
-import { IDirectRequestService } from "../interfaces/service-order/IServiceOrderService";
-import { IServiceOrderRepository } from "../interfaces/service-order/IServiceOrderRepository";
-import { IProviderRepository } from "../interfaces/provider/IProviderRepository";
-import { IServiceOrder } from "../models/serviceOrder.model";
-import { ServiceModel } from "../models/service.model";
-import { CategoryModel } from "../models/category.model";
-import { CreateDirectInstantDto, CreateDirectScheduledDto, CustomerChoiceDto } from "../dto/service-order/serviceOrder.dto";
-import { NotFoundError, BadRequestError, ForbiddenError } from "../shared/errors/HttpErrors";
+import { IDirectRequestService } from "../../interfaces/service-order/IServiceOrderService";
+import { IServiceOrderRepository } from "../../interfaces/service-order/IServiceOrderRepository";
+import { IProviderRepository } from "../../interfaces/provider/IProviderRepository";
+import { IServiceOrder } from "../../models/serviceOrder.model";
+import { ServiceModel } from "../../models/service.model";
+import { CreateDirectInstantDto, CreateDirectScheduledDto, CustomerChoiceDto } from "../../dto/service-order/serviceOrder.dto";
+import { NotFoundError, BadRequestError, ForbiddenError } from "../../shared/errors/HttpErrors";
 import { nanoid } from "nanoid";
-
-/**
- * Compute upfront platform booking fee.
- * = service.price * (category.commissionRate / 100)
- * Defaults to 15% if category not found or price is 0.
- */
-async function computePlatformFee(servicePrice: number, categoryId: unknown): Promise<number> {
-  if (!servicePrice || servicePrice <= 0) return 0;
-  try {
-    const category = await CategoryModel.findById(categoryId).lean();
-    const rate = category?.commissionRate ?? 15;
-    return Math.round((servicePrice * rate) / 100);
-  } catch {
-    return Math.round((servicePrice * 15) / 100);
-  }
-}
+import { computePlatformFee } from "../../shared/utils/platformFee";
+import { extractId } from "../../shared/utils/extractId";
 
 export class DirectRequestService implements IDirectRequestService {
   constructor(
     private readonly orderRepo: IServiceOrderRepository,
     private readonly providerRepo: IProviderRepository
-  ) {}
+  ) { }
 
   async createInstantRequest(customerId: string, dto: CreateDirectInstantDto): Promise<IServiceOrder> {
     const service = await ServiceModel.findById(dto.serviceId).lean();
@@ -106,17 +91,10 @@ export class DirectRequestService implements IDirectRequestService {
     return order;
   }
 
-  private extractId(ref: unknown): string {
-    if (ref && typeof ref === "object" && "_id" in (ref as Record<string, unknown>)) {
-      return String((ref as Record<string, unknown>)._id);
-    }
-    return String(ref);
-  }
-
   async acceptRequest(orderId: string, providerId: string): Promise<IServiceOrder> {
     const order = await this.orderRepo.findById(orderId);
     if (!order) throw new NotFoundError("Order not found");
-    if (this.extractId(order.providerId) !== providerId) throw new ForbiddenError("Unauthorized");
+    if (extractId(order.providerId) !== providerId) throw new ForbiddenError("Unauthorized");
     if (order.status !== "awaiting_provider_response") throw new BadRequestError("Order cannot be accepted in current state");
 
     const updated = await this.orderRepo.updateStatus(orderId, "accepted", {
@@ -132,13 +110,13 @@ export class DirectRequestService implements IDirectRequestService {
       } as Record<string, unknown>);
 
       try {
-        const { getIo } = await import("../socket/io");
+        const { getIo } = await import("../../socket/io");
         getIo().to(`provider:${providerId}`).emit("provider:status-changed", {
           providerId,
           onlineStatus: "online",
           engagementStatus: "busy",
         });
-      } catch {}
+      } catch { /* ignore */ }
     }
 
     return updated!;
@@ -147,7 +125,7 @@ export class DirectRequestService implements IDirectRequestService {
   async rejectRequest(orderId: string, providerId: string): Promise<IServiceOrder> {
     const order = await this.orderRepo.findById(orderId);
     if (!order) throw new NotFoundError("Order not found");
-    if (this.extractId(order.providerId) !== providerId) throw new ForbiddenError("Unauthorized");
+    if (extractId(order.providerId) !== providerId) throw new ForbiddenError("Unauthorized");
     if (order.status !== "awaiting_provider_response") throw new BadRequestError("Order cannot be rejected in current state");
 
     const updated = await this.orderRepo.updateStatus(orderId, "rejected_by_provider", {
@@ -160,7 +138,7 @@ export class DirectRequestService implements IDirectRequestService {
   async handleCustomerChoice(orderId: string, customerId: string, dto: CustomerChoiceDto): Promise<IServiceOrder> {
     const order = await this.orderRepo.findById(orderId);
     if (!order) throw new NotFoundError("Order not found");
-    if (this.extractId(order.customerId) !== customerId) throw new ForbiddenError("Unauthorized");
+    if (extractId(order.customerId) !== customerId) throw new ForbiddenError("Unauthorized");
     if (!["rejected_by_provider", "provider_unresponsive"].includes(order.status)) {
       throw new BadRequestError("Customer choice is not available for this order");
     }
@@ -214,68 +192,68 @@ export class DirectRequestService implements IDirectRequestService {
     return newOrder;
   }
 
-async startWork(orderId: string, providerId: string): Promise<IServiceOrder> {
-  const order = await this.orderRepo.findById(orderId);
-  if (!order) throw new NotFoundError("Order not found");
-  if (this.extractId(order.providerId) !== providerId) throw new ForbiddenError("Unauthorized");
-  const validStartStatuses = ["accepted", "quotation_accepted"];
-  if (!validStartStatuses.includes(order.status)) throw new BadRequestError("Order must be accepted before starting work");
+  async startWork(orderId: string, providerId: string): Promise<IServiceOrder> {
+    const order = await this.orderRepo.findById(orderId);
+    if (!order) throw new NotFoundError("Order not found");
+    if (extractId(order.providerId) !== providerId) throw new ForbiddenError("Unauthorized");
+    const validStartStatuses = ["accepted", "quotation_accepted"];
+    if (!validStartStatuses.includes(order.status)) throw new BadRequestError("Order must be accepted before starting work");
 
-  // For scheduled orders, don't allow starting before the preferred date
-  if (order.subMode === "scheduled" && order.preferredDate) {
-    const today = new Date().toISOString().slice(0, 10);
-    if (today < order.preferredDate) {
-      throw new BadRequestError(`This is scheduled for ${order.preferredDate}. You cannot start work before that date.`);
+    // For scheduled orders, don't allow starting before the preferred date
+    if (order.subMode === "scheduled" && order.preferredDate) {
+      const today = new Date().toISOString().slice(0, 10);
+      if (today < order.preferredDate) {
+        throw new BadRequestError(`This is scheduled for ${order.preferredDate}. You cannot start work before that date.`);
+      }
     }
+
+    const updated = await this.orderRepo.updateStatus(orderId, "in_progress");
+
+    // Set provider busy
+    await this.providerRepo.updateAccount(providerId, {
+      engagementStatus: "busy",
+      lastStatusChangeAt: new Date(),
+    } as Record<string, unknown>);
+
+    // Emit socket event
+    try {
+      const { getIo } = await import("../../socket/io");
+      getIo().to(`provider:${providerId}`).emit("provider:status-changed", {
+        providerId,
+        onlineStatus: "online",
+        engagementStatus: "busy",
+      });
+    } catch { /* ignore */ }
+
+    return updated!;
   }
 
-  const updated = await this.orderRepo.updateStatus(orderId, "in_progress");
+  async completeWork(orderId: string, providerId: string): Promise<IServiceOrder> {
+    const order = await this.orderRepo.findById(orderId);
+    if (!order) throw new NotFoundError("Order not found");
+    if (extractId(order.providerId) !== providerId) throw new ForbiddenError("Unauthorized");
+    if (order.status !== "in_progress") throw new BadRequestError("Order must be in progress to mark as complete");
 
-  // Set provider busy
-  await this.providerRepo.updateAccount(providerId, {
-    engagementStatus: "busy",
-    lastStatusChangeAt: new Date(),
-  } as Record<string, unknown>);
+    const updated = await this.orderRepo.updateStatus(orderId, "work_completed");
 
-  // Emit socket event
-  try {
-    const { getIo } = await import("../socket/io");
-    getIo().to(`provider:${providerId}`).emit("provider:status-changed", {
-      providerId,
-      onlineStatus: "online",
-      engagementStatus: "busy",
-    });
-  } catch {}
-
-  return updated!;
-}
-
-async completeWork(orderId: string, providerId: string): Promise<IServiceOrder> {
-  const order = await this.orderRepo.findById(orderId);
-  if (!order) throw new NotFoundError("Order not found");
-  if (this.extractId(order.providerId) !== providerId) throw new ForbiddenError("Unauthorized");
-  if (order.status !== "in_progress") throw new BadRequestError("Order must be in progress to mark as complete");
-
-  const updated = await this.orderRepo.updateStatus(orderId, "work_completed");
-
-  // Set provider available again
-  await this.providerRepo.updateAccount(providerId, {
-    engagementStatus: "available",
-    lastStatusChangeAt: new Date(),
-  } as Record<string, unknown>);
-
-  // Emit socket event
-  try {
-    const { getIo } = await import("../socket/io");
-    getIo().to(`provider:${providerId}`).emit("provider:status-changed", {
-      providerId,
-      onlineStatus: "online",
+    // Set provider available again
+    await this.providerRepo.updateAccount(providerId, {
       engagementStatus: "available",
-    });
-  } catch {}
+      lastStatusChangeAt: new Date(),
+    } as Record<string, unknown>);
 
-  return updated!;
-}
+    // Emit socket event
+    try {
+      const { getIo } = await import("../../socket/io");
+      getIo().to(`provider:${providerId}`).emit("provider:status-changed", {
+        providerId,
+        onlineStatus: "online",
+        engagementStatus: "available",
+      });
+    } catch { /* ignore */ }
+
+    return updated!;
+  }
 
 
 }

@@ -16,7 +16,6 @@ const startServer = async () => {
     const io = setupSocket(server, messagingService, conversationRepository);
     setIo(io);
 
-    // Start cron jobs
     startOrderExpiryCron(orderTimerService);
 
     server.listen(env.PORT, () => {

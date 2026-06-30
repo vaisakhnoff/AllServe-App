@@ -2,14 +2,14 @@
 
 import { useEffect, useState } from "react";
 import {
-  Loader2, Receipt, IndianRupee, Banknote, CheckCircle2,
+  Loader2, Receipt,  Banknote, CheckCircle2,
   Clock, FileText, Send,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { ProviderPortalShell } from "@/components/provider/ProviderPortalShell";
 import { orderService } from "@/services/order";
 import { invoiceService } from "@/services/invoice";
-import { ServiceOrder, Invoice } from "@/types/order.types";
+import { ServiceOrder, } from "@/types/order.types";
 import { getErrorMessage } from "@/utils/errorHandler";
 
 export default function ProviderInvoicesPage() {

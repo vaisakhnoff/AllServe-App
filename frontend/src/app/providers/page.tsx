@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useSelector } from "react-redux";
 import { motion } from "framer-motion";
-import { Search, Star, BadgeCheck, MapPin, ArrowUpRight, Loader2 } from "lucide-react";
+import { Search, Star, BadgeCheck,  ArrowUpRight, Loader2 } from "lucide-react";
 import toast from "react-hot-toast";
 import { providerService } from "@/services/provider";
 import { categoryService } from "@/services/category";

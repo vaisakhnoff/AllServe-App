@@ -1,10 +1,10 @@
-import { IBookingRepository } from "../interfaces/booking/IBookingRepository";
-import { ISlotRepository } from "../interfaces/slot/ISlotRepository";
-import { IBookingService } from "../interfaces/booking/IBookingService";
-import { CreateBookingDto, RescheduleBookingDto, BookingQuery, AdminBookingQuery } from "../dto/booking/booking.dto";
-import { ServiceModel } from "../models/service.model";
-import { IBooking } from "../models/booking.model";
-import { NotFoundError, BadRequestError, ForbiddenError, ConflictError } from "../shared/errors/HttpErrors";
+import { IBookingRepository } from "../../interfaces/booking/IBookingRepository";
+import { ISlotRepository } from "../../interfaces/slot/ISlotRepository";
+import { IBookingService } from "../../interfaces/booking/IBookingService";
+import { CreateBookingDto, RescheduleBookingDto, BookingQuery, AdminBookingQuery } from "../../dto/booking/booking.dto";
+import { ServiceModel } from "../../models/service.model";
+import { IBooking } from "../../models/booking.model";
+import { NotFoundError, BadRequestError, ForbiddenError, ConflictError } from "../../shared/errors/HttpErrors";
 
 function extractId(ref: unknown): string {
   if (ref && typeof ref === "object" && "_id" in ref) return String((ref as { _id: unknown })._id);

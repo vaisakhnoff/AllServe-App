@@ -1,7 +1,4 @@
-/**
- * Frontend UI messages — mirrors backend Messages constants for consistent copy.
- * Use these instead of raw string literals for all user-facing text.
- */
+
 export const UI_MESSAGES = {
   // Generic
   SOMETHING_WENT_WRONG: "Something went wrong. Please try again.",

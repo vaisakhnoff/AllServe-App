@@ -17,6 +17,13 @@ interface Suggestion {
   context?: string;
 }
 
+let cachedIndianCities: ICity[] | null = null;
+function getIndianCities() {
+  if (cachedIndianCities) return cachedIndianCities;
+  try { cachedIndianCities = City.getCitiesOfCountry("IN") || []; } catch { cachedIndianCities = []; }
+  return cachedIndianCities;
+}
+
 export function LocationPicker() {
   const dispatch = useDispatch();
   const location = useSelector((state: RootState) => state.location);
@@ -28,9 +35,7 @@ export function LocationPicker() {
   const [gpsConfirm, setGpsConfirm] = useState<{ lat: number; lng: number; city: string } | null>(null);
 
   // Pre-load Indian cities once for instant prefix-search fallback
-  const indianCities = useMemo<ICity[]>(() => {
-    try { return City.getCitiesOfCountry("IN") || []; } catch { return []; }
-  }, []);
+  const indianCities = getIndianCities();
 
   useEffect(() => {
     const q = search.trim();
@@ -76,7 +81,7 @@ export function LocationPicker() {
 
       // OSM results → Suggestion[]
       const osmSuggestions: Suggestion[] = (Array.isArray(osmResults) ? osmResults : [])
-        .map((r: any) => {
+        .map((r: unknown) => {
           const addr = r.address || {};
           const primary = addr.village || addr.town || addr.city || addr.county || addr.suburb || addr.neighbourhood || r.display_name?.split(",")[0]?.trim() || "";
           const ctxParts = [addr.state_district || addr.county, addr.state].filter(Boolean);

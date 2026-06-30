@@ -17,28 +17,28 @@ import { QuotationRepository }        from "./repositories/quotation.repository"
 import { InvoiceRepository }          from "./repositories/invoice.repository";
 
 // ── Services ──────────────────────────────────────────────────────────────────
-import { AuthService }               from "./services/auth.service";
-import { UserService }               from "./services/user.service";
-import { ProviderService }           from "./services/provider.service";
-import { ProviderAuthService }       from "./services/providerAuth.service";
-import { CategoryService }           from "./services/category.service";
-import { ServiceService }            from "./services/service.service";
-import { AdminService }              from "./services/admin.service";
-import { HomeService }               from "./services/home.service";
-import { SlotService }               from "./services/slot.service";
-import { BookingService }            from "./services/booking.service";
-import { MessagingService }          from "./services/messaging.service";
-import { ProviderStatusService }     from "./services/providerStatus.service";
-import { ProviderScheduleService }   from "./services/providerSchedule.service";
-import { ProviderLeaveService }      from "./services/providerLeave.service";
-import { DirectRequestService }      from "./services/directRequest.service";
-import { InspectionRequestService }  from "./services/inspectionRequest.service";
-import { CustomRequestService }      from "./services/customRequest.service";
-import { CustomOrderLifecycleService } from "./services/customOrderLifecycle.service";
-import { ServiceOrderQueryService }  from "./services/serviceOrderQuery.service";
-import { QuotationService }          from "./services/quotation.service";
-import { InvoiceService }            from "./services/invoice.service";
-import { OrderTimerService }         from "./services/orderTimer.service";
+import { AuthService }               from "./services/auth/auth.service";
+import { UserService }               from "./services/user/user.service";
+import { ProviderService }           from "./services/provider/provider.service";
+import { ProviderAuthService }       from "./services/provider/providerAuth.service";
+import { CategoryService }           from "./services/category/category.service";
+import { ServiceService }            from "./services/service/service.service";
+import { AdminService }              from "./services/admin/admin.service";
+import { HomeService }               from "./services/home/home.service";
+import { SlotService }               from "./services/slot/slot.service";
+import { BookingService }            from "./services/booking/booking.service";
+import { MessagingService }          from "./services/messaging/messaging.service";
+import { ProviderStatusService }     from "./services/provider/providerStatus.service";
+import { ProviderScheduleService }   from "./services/provider/providerSchedule.service";
+import { ProviderLeaveService }      from "./services/provider/providerLeave.service";
+import { DirectRequestService }      from "./services/service-order/directRequest.service";
+import { InspectionRequestService }  from "./services/service-order/inspectionRequest.service";
+import { CustomRequestService }      from "./services/service-order/customRequest.service";
+import { CustomOrderLifecycleService } from "./services/service-order/customOrderLifecycle.service";
+import { ServiceOrderQueryService }  from "./services/service-order/serviceOrderQuery.service";
+import { QuotationService }          from "./services/quotation/quotation.service";
+import { InvoiceService }            from "./services/invoice/invoice.service";
+import { OrderTimerService }         from "./services/service-order/orderTimer.service";
 
 // ── Controllers ───────────────────────────────────────────────────────────────
 import { AuthController }            from "./controllers/auth/auth.controller";

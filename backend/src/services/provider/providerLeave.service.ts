@@ -1,9 +1,9 @@
-import { IProviderLeaveService } from "../interfaces/provider-leave/IProviderLeaveService";
-import { IProviderLeaveRepository } from "../interfaces/provider-leave/IProviderLeaveRepository";
-import { IProviderLeave } from "../models/providerLeave.model";
-import { AddLeaveDto } from "../dto/provider-leave/providerLeave.dto";
-import { BookingModel } from "../models/booking.model";
-import { BadRequestError, ConflictError, NotFoundError } from "../shared/errors/HttpErrors";
+import { IProviderLeaveService } from "../../interfaces/provider-leave/IProviderLeaveService";
+import { IProviderLeaveRepository } from "../../interfaces/provider-leave/IProviderLeaveRepository";
+import { IProviderLeave } from "../../models/providerLeave.model";
+import { AddLeaveDto } from "../../dto/provider-leave/providerLeave.dto";
+import { BookingModel } from "../../models/booking.model";
+import { BadRequestError, ConflictError, NotFoundError } from "../../shared/errors/HttpErrors";
 
 export class ProviderLeaveService implements IProviderLeaveService {
   constructor(private readonly repo: IProviderLeaveRepository) {}

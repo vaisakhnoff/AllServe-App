@@ -21,8 +21,7 @@ import { LoginRequiredPrompt } from "@/components/auth/LoginRequiredPrompt";
 import { Role } from "@/enums/role.enum";
 import { AddressContactStep } from "@/components/booking/AddressContactStep";
 
-type RequestMode = "instant" | "scheduled";
-
+import { RequestMode } from "@/types/booking.types";
 export default function RequestServicePage() {
   const searchParams = useSearchParams();
   const router = useRouter();

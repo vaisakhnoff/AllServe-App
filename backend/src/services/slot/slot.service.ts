@@ -1,8 +1,8 @@
-import { ISlotRepository } from "../interfaces/slot/ISlotRepository";
-import { ISlotService, BulkCreateResult } from "../interfaces/slot/ISlotService";
-import { CreateSlotDto, UpdateSlotDto, BulkCreateDto, RecurringSlotDto, BlockRangeDto } from "../dto/slot/slot.dto";
-import { ISlot } from "../models/slot.model";
-import { NotFoundError, BadRequestError, ConflictError, InternalServerError } from "../shared/errors/HttpErrors";
+import { ISlotRepository } from "../../interfaces/slot/ISlotRepository";
+import { ISlotService, BulkCreateResult } from "../../interfaces/slot/ISlotService";
+import { CreateSlotDto, UpdateSlotDto, BulkCreateDto, RecurringSlotDto, BlockRangeDto } from "../../dto/slot/slot.dto";
+import { ISlot } from "../../models/slot.model";
+import { NotFoundError, BadRequestError, ConflictError, InternalServerError } from "../../shared/errors/HttpErrors";
 
 export class SlotService implements ISlotService {
   constructor(private readonly repo: ISlotRepository) {}

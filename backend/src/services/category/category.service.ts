@@ -1,10 +1,10 @@
-import { ICategoryRepository } from "../interfaces/category/ICategoryRepository";
-import { ICategoryService } from "../interfaces/category/ICategoryService";
-import { CategoryDto, CategoryQuery, PaginatedCategoryResponse } from "../dto/category/category.dto";
-import { escapeRegex } from "../shared/utils/search";
-import { Messages } from "../shared/constants/messages";
-import { mapCategory } from "../mappers/category.mapper";
-import { NotFoundError, ConflictError } from "../shared/errors/HttpErrors";
+import { ICategoryRepository } from "../../interfaces/category/ICategoryRepository";
+import { ICategoryService } from "../../interfaces/category/ICategoryService";
+import { CategoryDto, CategoryQuery, PaginatedCategoryResponse } from "../../dto/category/category.dto";
+import { escapeRegex } from "../../shared/utils/search";
+import { Messages } from "../../shared/constants/messages";
+import { mapCategory } from "../../mappers/category.mapper";
+import { NotFoundError, ConflictError } from "../../shared/errors/HttpErrors";
 
 export class CategoryService implements ICategoryService {
   constructor(private readonly repo: ICategoryRepository) {}

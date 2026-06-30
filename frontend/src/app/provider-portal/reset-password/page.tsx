@@ -8,15 +8,10 @@ import { providerAuthService } from "@/services/auth";
 import { getErrorMessage } from "@/utils/errorHandler";
 import { validatePasswordStrength, doPasswordsMatch } from "@/utils/validation";
 import { UI_MESSAGES } from "@/shared/messages";
+import { ResetPasswordFormErrors } from "@/types/auth.types";
 
-interface FormErrors {
-  otp?: string;
-  newPassword?: string;
-  confirmPassword?: string;
-}
-
-function validateForm(otp: string, newPassword: string, confirmPassword: string): FormErrors {
-  const errors: FormErrors = {};
+function validateForm(otp: string, newPassword: string, confirmPassword: string): ResetPasswordFormErrors {
+  const errors: ResetPasswordFormErrors = {};
   if (!otp.trim()) errors.otp = UI_MESSAGES.OTP_REQUIRED;
   else if (otp.trim().length !== 6) errors.otp = UI_MESSAGES.OTP_INCOMPLETE;
 
@@ -39,7 +34,7 @@ export default function ProviderResetPasswordPage() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [fieldErrors, setFieldErrors] = useState<FormErrors>({});
+  const [fieldErrors, setFieldErrors] = useState<ResetPasswordFormErrors>({});
 
   useEffect(() => {
     const saved = localStorage.getItem("provider_reset_email");

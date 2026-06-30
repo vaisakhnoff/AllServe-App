@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { MessageSquare, Search, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
 import { useSelector } from "react-redux";
-import { motion } from "framer-motion";
+
 import { RootState } from "@/store";
 import { messagingService } from "@/services/messaging";
 import { Conversation } from "@/types/messaging.types";

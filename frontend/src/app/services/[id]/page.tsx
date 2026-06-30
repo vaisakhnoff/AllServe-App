@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState, useCallback } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useSelector } from "react-redux";
-import { motion } from "framer-motion";
+
 import {
   ArrowLeft, Clock, MapPin, Tag as TagIcon, Loader2, CalendarDays,
   Image as ImageIcon, BadgeCheck, ChevronLeft, ChevronRight, CheckCircle2,
@@ -31,11 +31,11 @@ import {
   getBookingFlowDescription,
   getPaymentFlowDescription,
   getBookingCTA,
-  getSlotSectionTitle,
+  
   getServiceTypeBadgeClass,
   getServiceTypeLabel,
   getServiceTypeEmoji,
-  canBookThroughSlots,
+  
   requiresServiceRequest,
   requiresInspection,
 } from "@/utils/serviceType.utils";
@@ -58,8 +58,7 @@ function getNext7Days(): string[] {
   return days;
 }
 
-type BookingStep = "checkout" | "success";
-
+import { BookingStep } from "@/types/booking.types";
 export default function ServiceDetailPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();

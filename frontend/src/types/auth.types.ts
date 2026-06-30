@@ -62,3 +62,13 @@ export interface ApiResponse<T = unknown> {
   message: string;
   data: T;
 }
+
+export type LoginField = keyof LoginDto;
+export type LoginFieldErrors = Partial<Record<LoginField, string>>;
+export type LoginTouchedFields = Partial<Record<LoginField, boolean>>;
+export type OAuthErrorCode = "auth_failed" | "wrong_platform";
+export interface ResetPasswordFormErrors {
+  otp?: string;
+  newPassword?: string;
+  confirmPassword?: string;
+}

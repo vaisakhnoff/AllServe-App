@@ -1,10 +1,10 @@
-import { IProviderScheduleService, TimeWindow } from "../interfaces/provider-schedule/IProviderScheduleService";
-import { IProviderScheduleRepository } from "../interfaces/provider-schedule/IProviderScheduleRepository";
-import { IProviderLeaveRepository } from "../interfaces/provider-leave/IProviderLeaveRepository";
-import { IProviderSchedule } from "../models/providerSchedule.model";
-import { UpsertScheduleDto } from "../dto/provider-schedule/providerSchedule.dto";
-import { BookingModel } from "../models/booking.model";
-import { NotFoundError, BadRequestError } from "../shared/errors/HttpErrors";
+import { IProviderScheduleService, TimeWindow } from "../../interfaces/provider-schedule/IProviderScheduleService";
+import { IProviderScheduleRepository } from "../../interfaces/provider-schedule/IProviderScheduleRepository";
+import { IProviderLeaveRepository } from "../../interfaces/provider-leave/IProviderLeaveRepository";
+import { IProviderSchedule } from "../../models/providerSchedule.model";
+import { UpsertScheduleDto } from "../../dto/provider-schedule/providerSchedule.dto";
+import { BookingModel } from "../../models/booking.model";
+import { NotFoundError, BadRequestError } from "../../shared/errors/HttpErrors";
 
 /**
  * Convert "HH:mm" to total minutes since midnight.

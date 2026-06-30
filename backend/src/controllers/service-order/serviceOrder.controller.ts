@@ -2,8 +2,7 @@ import { Response, NextFunction } from "express";
 import { AuthRequest } from "../../shared/interfaces/AuthRequest";
 import { sendSuccess } from "../../shared/utils/response";
 import { StatusCodes } from "../../shared/constants/statusCodes";
-import { IDirectRequestService, IInspectionRequestService, ICustomRequestService, IServiceOrderQueryService } from "../../interfaces/service-order/IServiceOrderService";
-import { CustomOrderLifecycleService } from "../../services/customOrderLifecycle.service";
+import { IDirectRequestService, IInspectionRequestService, ICustomRequestService, ICustomOrderLifecycleService, IServiceOrderQueryService } from "../../interfaces/service-order/IServiceOrderService";
 import {
   createDirectInstantSchema,
   createDirectScheduledSchema,
@@ -19,9 +18,9 @@ export class ServiceOrderController {
     private readonly directService: IDirectRequestService,
     private readonly inspectionService: IInspectionRequestService,
     private readonly customService: ICustomRequestService,
-    private readonly customOrderLifecycleService: CustomOrderLifecycleService,
+    private readonly customOrderLifecycleService: ICustomOrderLifecycleService,
     private readonly queryService: IServiceOrderQueryService
-  ) {}
+  ) { }
 
   // ── Direct Instant ──────────────────────────────────────────────────────────
   async createDirectInstant(req: AuthRequest, res: Response, next: NextFunction) {

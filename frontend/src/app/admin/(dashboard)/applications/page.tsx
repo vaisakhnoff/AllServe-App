@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import {
   CheckCircle2, XCircle, FileText, Loader2,
   Archive, TrendingUp, AlertCircle, ShieldCheck,
-  Briefcase, X, Search, ChevronDown, MessageSquare,
+  Briefcase, X, Search,  MessageSquare,
 } from "lucide-react";
 import { adminService } from "@/services/admin";
 import { ProviderApplication } from "@/types/provider.types";
@@ -456,12 +456,12 @@ export default function AdminApplicationsPage() {
               )}
 
               {/* Show existing rejection details for already-rejected apps */}
-              {reviewApp.applicationStatus === "rejected" && (reviewApp as any).rejectionReason && (
+              {reviewApp.applicationStatus === "rejected" && (reviewApp as unknown).rejectionReason && (
                 <div className="rounded-2xl border border-red-200 bg-red-50 p-5">
                   <p className="text-xs font-bold uppercase tracking-wider text-red-500 mb-1">Rejection Decision</p>
-                  <p className="text-sm font-semibold text-red-800">{(reviewApp as any).rejectionReason}</p>
-                  {(reviewApp as any).adminRemarks && (
-                    <p className="mt-2 text-sm text-red-700 italic">&ldquo;{(reviewApp as any).adminRemarks}&rdquo;</p>
+                  <p className="text-sm font-semibold text-red-800">{(reviewApp as unknown).rejectionReason}</p>
+                  {(reviewApp as unknown).adminRemarks && (
+                    <p className="mt-2 text-sm text-red-700 italic">&ldquo;{(reviewApp as unknown).adminRemarks}&rdquo;</p>
                   )}
                 </div>
               )}

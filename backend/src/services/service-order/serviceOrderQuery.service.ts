@@ -1,8 +1,8 @@
-import { IServiceOrderQueryService } from "../interfaces/service-order/IServiceOrderService";
-import { IServiceOrderRepository, PaginatedOrders } from "../interfaces/service-order/IServiceOrderRepository";
-import { IServiceOrder } from "../models/serviceOrder.model";
-import { OrderQuery } from "../dto/service-order/serviceOrder.dto";
-import { NotFoundError, ForbiddenError, BadRequestError } from "../shared/errors/HttpErrors";
+import { IServiceOrderQueryService } from "../../interfaces/service-order/IServiceOrderService";
+import { IServiceOrderRepository, PaginatedOrders } from "../../interfaces/service-order/IServiceOrderRepository";
+import { IServiceOrder } from "../../models/serviceOrder.model";
+import { OrderQuery } from "../../dto/service-order/serviceOrder.dto";
+import { NotFoundError, ForbiddenError, BadRequestError } from "../../shared/errors/HttpErrors";
 
 export class ServiceOrderQueryService implements IServiceOrderQueryService {
   constructor(private readonly repo: IServiceOrderRepository) {}

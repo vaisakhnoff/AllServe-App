@@ -1,38 +1,37 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import { IProviderRepository } from "../interfaces/provider/IProviderRepository";
-import { Messages } from "../shared/constants/messages";
+import { IProviderRepository } from "../../interfaces/provider/IProviderRepository";
+import { Messages } from "../../shared/constants/messages";
 import {
   OTP_EXPIRY_MS,
   BCRYPT_SALT_ROUNDS,
   ACCESS_TOKEN_EXPIRY,
   REFRESH_TOKEN_EXPIRY,
   REFRESH_TOKEN_EXPIRY_MS,
-} from "../shared/constants/config";
-import { env } from "../config/env";
-import { generateOtp } from "../shared/utils/generateOtp";
-import { sendEmail } from "../shared/utils/sendEmail";
-import { logger } from "../shared/logger/logger";
-import { Role } from "../shared/enums/role.enum";
-import { AppError } from "../shared/errors/AppError";
-import { NotFoundError, BadRequestError, UnauthorizedError } from "../shared/errors/HttpErrors";
-import { ApplicationStatus } from "../shared/enums/application-status.enum";
-import { AuthUserPayload } from "../shared/interfaces/AuthRequest";
-import { OTPModel } from "../models/otp.model";
-import { TokenModel } from "../models/token.model";
-import { ProviderAccountModel } from "../models/providerAccount.model";
-import { ProviderSignupDto, ProviderLoginDto } from "../dto/provider/providerAuth.dto";
-import { IProviderAuthService } from "../interfaces/auth/IProviderAuthService";
+} from "../../shared/constants/config";
+import { env } from "../../config/env";
+import { generateOtp } from "../../shared/utils/generateOtp";
+import { sendEmail } from "../../shared/utils/sendEmail";
+import { logger } from "../../shared/logger/logger";
+import { Role } from "../../shared/enums/role.enum";
+import { AppError } from "../../shared/errors/AppError";
+import { NotFoundError, BadRequestError, UnauthorizedError } from "../../shared/errors/HttpErrors";
+import { ApplicationStatus } from "../../shared/enums/application-status.enum";
+import { AuthUserPayload } from "../../shared/interfaces/AuthRequest";
+import { OTPModel } from "../../models/otp.model";
+import { TokenModel } from "../../models/token.model";
+import { ProviderSignupDto, ProviderLoginDto } from "../../dto/provider/providerAuth.dto";
+import { IProviderAuthService } from "../../interfaces/auth/IProviderAuthService";
 
 export class ProviderAuthService implements IProviderAuthService {
   constructor(private readonly repo: IProviderRepository) {}
 
   async signup(dto: ProviderSignupDto) {
-    const existing = await ProviderAccountModel.findOne({ email: dto.email });
+    const existing = await this.repo.findByEmail(dto.email);
     if (existing) throw new BadRequestError(Messages.PROVIDER_ACCOUNT_EXISTS);
 
     const hashedPassword = await bcrypt.hash(dto.password, BCRYPT_SALT_ROUNDS);
-    await ProviderAccountModel.create({
+    await this.repo.createAccount({
       name: dto.name,
       email: dto.email,
       phone: dto.phone,
@@ -55,14 +54,14 @@ export class ProviderAuthService implements IProviderAuthService {
       throw new BadRequestError(Messages.OTP_INVALID_OR_EXPIRED);
     }
     await OTPModel.deleteMany({ email });
-    const account = await ProviderAccountModel.findOne({ email });
+    const account = await this.repo.findByEmail(email);
     if (!account) throw new NotFoundError(Messages.PROVIDER_ACCOUNT_NOT_FOUND);
-    await ProviderAccountModel.findByIdAndUpdate(account._id, { isVerified: true });
+    await this.repo.verifyEmail(email);
     return { message: Messages.VERIFIED_SUCCESSFULLY };
   }
 
   async resendOtp(email: string) {
-    const account = await ProviderAccountModel.findOne({ email });
+    const account = await this.repo.findByEmail(email);
     if (!account) throw new NotFoundError(Messages.PROVIDER_ACCOUNT_NOT_FOUND);
     await OTPModel.deleteMany({ email });
     const otp = generateOtp();
@@ -73,7 +72,7 @@ export class ProviderAuthService implements IProviderAuthService {
   }
 
   async login(dto: ProviderLoginDto) {
-    const account = await ProviderAccountModel.findOne({ email: dto.email });
+    const account = await this.repo.findByEmail(dto.email);
     if (!account) throw new UnauthorizedError(Messages.INVALID_CREDENTIALS);
     if (!account.isVerified) throw new UnauthorizedError(Messages.EMAIL_NOT_VERIFIED);
     const isMatch = await bcrypt.compare(dto.password, account.password);
@@ -107,7 +106,7 @@ export class ProviderAuthService implements IProviderAuthService {
   }
 
   async forgotPassword(email: string) {
-    const account = await ProviderAccountModel.findOne({ email });
+    const account = await this.repo.findByEmail(email);
     if (!account) throw new NotFoundError(Messages.PROVIDER_ACCOUNT_NOT_FOUND);
     const otp = generateOtp();
     const expiresAt = new Date(Date.now() + OTP_EXPIRY_MS);
@@ -121,9 +120,9 @@ export class ProviderAuthService implements IProviderAuthService {
     if (!record || record.expiresAt < new Date()) {
       throw new BadRequestError(Messages.OTP_INVALID_OR_EXPIRED);
     }
-    const account = await ProviderAccountModel.findOne({ email });
+    const account = await this.repo.findByEmail(email);
     if (!account) throw new NotFoundError(Messages.PROVIDER_ACCOUNT_NOT_FOUND);
-    await ProviderAccountModel.findByIdAndUpdate(account._id, {
+    await this.repo.updateAccount(String(account._id), {
       password: await bcrypt.hash(newPassword, BCRYPT_SALT_ROUNDS),
     });
     await OTPModel.deleteMany({ email });

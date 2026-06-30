@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Loader2, X, Plus, ImagePlus, Trash2, Lock, Info, GripVertical, ChevronDown } from "lucide-react";
+import { Loader2, X, Plus, ImagePlus, Trash2, Lock, Info} from "lucide-react";
 import {
   AvailabilityStatus,
   CreateServiceDto,

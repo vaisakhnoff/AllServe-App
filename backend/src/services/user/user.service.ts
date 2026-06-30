@@ -1,13 +1,13 @@
-import { IUserRepository } from "../interfaces/user/IUserRepository";
-import { IUserService } from "../interfaces/user/IUserService";
-import { UpdateUserDto, AddressDto, ChangePasswordDto } from "../dto/user/user.dto";
+import { IUserRepository } from "../../interfaces/user/IUserRepository";
+import { IUserService } from "../../interfaces/user/IUserService";
+import { UpdateUserDto, AddressDto, ChangePasswordDto } from "../../dto/user/user.dto";
 import bcrypt from "bcryptjs";
-import { logger } from "../shared/logger/logger";
-import { generateOtp } from "../shared/utils/generateOtp";
-import { Messages } from "../shared/constants/messages";
-import { OTP_EXPIRY_MS, BCRYPT_SALT_ROUNDS } from "../shared/constants/config";
-import { IUser } from "../models/user.model";
-import { NotFoundError, BadRequestError } from "../shared/errors/HttpErrors";
+import { logger } from "../../shared/logger/logger";
+import { generateOtp } from "../../shared/utils/generateOtp";
+import { Messages } from "../../shared/constants/messages";
+import { OTP_EXPIRY_MS, BCRYPT_SALT_ROUNDS } from "../../shared/constants/config";
+import { IUser } from "../../models/user.model";
+import { NotFoundError, BadRequestError } from "../../shared/errors/HttpErrors";
 
 // Strip password from any user document
 const withoutPassword = (user: IUser) => {

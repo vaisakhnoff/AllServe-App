@@ -1,11 +1,12 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import { IAuthRepository } from "../interfaces/auth/IAuthRepository";
-import { IAuthService } from "../interfaces/auth/IAuthService";
-import { SignupDto, LoginDto } from "../dto/auth/auth.dto";
-import { Messages } from "../shared/constants/messages";
-import { AppError } from "../shared/errors/AppError";
-import { NotFoundError, BadRequestError, UnauthorizedError, ForbiddenError } from "../shared/errors/HttpErrors";
+import crypto from "crypto";
+import { IAuthRepository } from "../../interfaces/auth/IAuthRepository";
+import { IAuthService } from "../../interfaces/auth/IAuthService";
+import { SignupDto, LoginDto } from "../../dto/auth/auth.dto";
+import { Messages } from "../../shared/constants/messages";
+import { AppError } from "../../shared/errors/AppError";
+import { NotFoundError, BadRequestError, UnauthorizedError, ForbiddenError } from "../../shared/errors/HttpErrors";
 
 import {
     OTP_EXPIRY_MS,
@@ -13,14 +14,14 @@ import {
     ACCESS_TOKEN_EXPIRY,
     REFRESH_TOKEN_EXPIRY,
     REFRESH_TOKEN_EXPIRY_MS,
-} from "../shared/constants/config";
+} from "../../shared/constants/config";
 
-import { env } from "../config/env";
-import { generateOtp } from "../shared/utils/generateOtp";
-import { sendEmail } from "../shared/utils/sendEmail";
-import { logger } from "../shared/logger/logger";
-import { Role } from "../shared/enums/role.enum";
-import { AuthUserPayload } from "../shared/interfaces/AuthRequest";
+import { env } from "../../config/env";
+import { generateOtp } from "../../shared/utils/generateOtp";
+import { sendEmail } from "../../shared/utils/sendEmail";
+import { logger } from "../../shared/logger/logger";
+import { Role } from "../../shared/enums/role.enum";
+import { AuthUserPayload } from "../../shared/interfaces/AuthRequest";
 
 export class AuthService implements IAuthService {
     constructor(private repo: IAuthRepository) { }
@@ -132,7 +133,7 @@ export class AuthService implements IAuthService {
             env.JWT_SECRET,
             { expiresIn: ACCESS_TOKEN_EXPIRY }
         );
-
+ 
         const refreshToken = jwt.sign(
             { id: user._id },
             env.REFRESH_SECRET,
@@ -216,5 +217,20 @@ export class AuthService implements IAuthService {
 
     async logout(token: string) {
         await this.repo.deleteRefreshToken(token);
+    }
+
+    async findOrCreateOAuthUser(email: string, displayName: string): Promise<any> {
+        let user = await this.repo.findByEmail(email);
+
+        if (!user) {
+            user = await this.repo.create({
+                name: displayName,
+                email: email,
+                password: crypto.randomBytes(16).toString("hex"),
+                isVerified: true,
+            });
+        }
+
+        return user;
     }
 }

@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Lock, Mail, ArrowLeft, CheckCircle2 } from "lucide-react";
-import { validateForgotPasswordEmail, validatePasswordStrength, doPasswordsMatch } from '@/utils/validation';
+
 import { UI_MESSAGES } from '@/shared/messages';
 
 export default function AdminForgotPasswordPage() {

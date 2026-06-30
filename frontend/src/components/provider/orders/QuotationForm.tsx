@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { DollarSign, Clock, MessageSquare, AlertCircle, Send, X } from "lucide-react";
+import { DollarSign, Clock, MessageSquare,  Send, X } from "lucide-react";
 import { WarningAlert } from "./WarningAlert";
 import toast from "react-hot-toast";
 

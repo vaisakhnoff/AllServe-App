@@ -1,9 +1,9 @@
-import { IQuotationService } from "../interfaces/quotation/IQuotationService";
-import { IQuotationRepository } from "../interfaces/quotation/IQuotationRepository";
-import { IServiceOrderRepository } from "../interfaces/service-order/IServiceOrderRepository";
-import { IQuotation } from "../models/quotation.model";
-import { CreateQuotationDto, ReviseQuotationDto, ModificationRequestDto } from "../dto/quotation/quotation.dto";
-import { NotFoundError, BadRequestError, ForbiddenError, ConflictError } from "../shared/errors/HttpErrors";
+import { IQuotationService } from "../../interfaces/quotation/IQuotationService";
+import { IQuotationRepository } from "../../interfaces/quotation/IQuotationRepository";
+import { IServiceOrderRepository } from "../../interfaces/service-order/IServiceOrderRepository";
+import { IQuotation } from "../../models/quotation.model";
+import { CreateQuotationDto, ReviseQuotationDto, ModificationRequestDto } from "../../dto/quotation/quotation.dto";
+import { NotFoundError, BadRequestError, ForbiddenError, ConflictError } from "../../shared/errors/HttpErrors";
 
 export class QuotationService implements IQuotationService {
   constructor(

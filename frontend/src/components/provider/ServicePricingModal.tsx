@@ -36,7 +36,7 @@ export const ServicePricingModal: React.FC<Props> = ({ service, onSave, onClose 
             label="Service Name" 
             placeholder="e.g. Basic Plumbing Repair" 
             value={form.name} 
-            onChange={(e: any) => setForm({ ...form, name: e.target.value })} 
+            onChange={(e: unknown) => setForm({ ...form, name: e.target.value })} 
           />
           
           <Input 
@@ -45,7 +45,7 @@ export const ServicePricingModal: React.FC<Props> = ({ service, onSave, onClose 
             type="number" 
             placeholder="e.g. 50" 
             value={form.price} 
-            onChange={(e: any) => setForm({ ...form, price: e.target.value })} 
+            onChange={(e: unknown) => setForm({ ...form, price: e.target.value })} 
           />
           
           <div className="flex flex-col gap-1.5">
@@ -55,7 +55,7 @@ export const ServicePricingModal: React.FC<Props> = ({ service, onSave, onClose 
               className="input min-h-[100px] resize-none" 
               placeholder="Describe what's included..." 
               value={form.description} 
-              onChange={(e: any) => setForm({ ...form, description: e.target.value })} 
+              onChange={(e: unknown) => setForm({ ...form, description: e.target.value })} 
             />
           </div>
 

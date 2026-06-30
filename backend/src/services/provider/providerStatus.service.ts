@@ -1,8 +1,8 @@
-import { IProviderStatusService, ProviderStatusResponse } from "../interfaces/provider-status/IProviderStatusService";
-import { IProviderRepository } from "../interfaces/provider/IProviderRepository";
-import { OnlineStatus } from "../models/providerAccount.model";
-import { NotFoundError } from "../shared/errors/HttpErrors";
-import { getIo } from "../socket/io";
+import { IProviderStatusService, ProviderStatusResponse } from "../../interfaces/provider-status/IProviderStatusService";
+import { IProviderRepository } from "../../interfaces/provider/IProviderRepository";
+import { OnlineStatus } from "../../models/providerAccount.model";
+import { NotFoundError } from "../../shared/errors/HttpErrors";
+import { getIo } from "../../socket/io";
 
 export class ProviderStatusService implements IProviderStatusService {
   constructor(private readonly providerRepo: IProviderRepository) {}
@@ -58,14 +58,7 @@ export class ProviderStatusService implements IProviderStatusService {
       engagementStatus: "busy",
       lastStatusChangeAt: new Date(),
     } as Record<string, unknown>);
-
-    try {
-      getIo().to(`provider:${providerId}`).emit("provider:status-changed", {
-        providerId,
-        onlineStatus: provider?.onlineStatus ?? "online",
-        engagementStatus: "busy",
-      });
-    } catch {}
+    this.emitStatusChange(providerId, provider?.onlineStatus ?? "online", "busy");
   }
 
   async setAvailable(providerId: string): Promise<void> {
@@ -74,13 +67,20 @@ export class ProviderStatusService implements IProviderStatusService {
       engagementStatus: "available",
       lastStatusChangeAt: new Date(),
     } as Record<string, unknown>);
+    this.emitStatusChange(providerId, provider?.onlineStatus ?? "online", "available");
+  }
 
+  private emitStatusChange(
+    providerId: string,
+    onlineStatus: string,
+    engagementStatus: string
+  ): void {
     try {
       getIo().to(`provider:${providerId}`).emit("provider:status-changed", {
         providerId,
-        onlineStatus: provider?.onlineStatus ?? "online",
-        engagementStatus: "available",
+        onlineStatus,
+        engagementStatus,
       });
-    } catch {}
+    } catch { /* socket not ready yet, skip */ }
   }
 }

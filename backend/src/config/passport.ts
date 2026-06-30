@@ -1,10 +1,7 @@
 import passport from "passport";
 import { Strategy as GoogleStrategy } from "passport-google-oauth20";
-import crypto from "crypto";
 import { env } from "./env";
-import { AuthRepository } from "../repositories/auth.repository";
-
-const repo = new AuthRepository();
+import { authService } from "../di";
 
 if (env.GOOGLE_CLIENT_ID && env.GOOGLE_SECRET) {
   passport.use(
@@ -16,16 +13,10 @@ if (env.GOOGLE_CLIENT_ID && env.GOOGLE_SECRET) {
       },
       async (_, __, profile, done) => {
         try {
-          let user = await repo.findByEmail(profile.emails?.[0].value || "");
-
-          if (!user) {
-            user = await repo.create({
-              name: profile.displayName,
-              email: profile.emails?.[0].value || "",
-              password: crypto.randomBytes(16).toString("hex"),
-              isVerified: true,
-            });
-          }
+          const user = await authService.findOrCreateOAuthUser(
+            profile.emails?.[0].value || "",
+            profile.displayName
+          );
 
           return done(null, (user ?? undefined) as unknown as Express.User | undefined);
         } catch (error) {

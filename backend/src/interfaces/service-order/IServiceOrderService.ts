@@ -35,6 +35,15 @@ export interface ICustomRequestService {
   createRequest(customerId: string, dto: CreateCustomDto): Promise<IServiceOrder>;
 }
 
+export interface ICustomOrderLifecycleService {
+  acceptCustom(orderId: string, providerId: string): Promise<IServiceOrder>;
+  rejectCustom(orderId: string, providerId: string): Promise<IServiceOrder>;
+  startWork(orderId: string, providerId: string): Promise<IServiceOrder>;
+  completeWork(orderId: string, providerId: string): Promise<IServiceOrder>;
+  dropByProvider(orderId: string, providerId: string, reason: string): Promise<IServiceOrder>;
+  dropByCustomer(orderId: string, customerId: string, reason: string): Promise<IServiceOrder>;
+}
+
 export interface IServiceOrderQueryService {
   getCustomerOrders(customerId: string, query: OrderQuery): Promise<PaginatedOrders>;
   getProviderOrders(providerId: string, query: OrderQuery): Promise<PaginatedOrders>;

@@ -107,11 +107,11 @@ export default function ProviderStatusPage() {
         setStatusData({
           status: (data.status as StatusKey) || "pending",
           rejectionReason: data.rejectionReason ?? null,
-          rejectionReasonCode: (data as any).rejectionReasonCode ?? null,
-          adminRemarks: (data as any).adminRemarks ?? null,
-          rejectedAt: (data as any).rejectedAt ?? null,
-          submittedAt: (data as any).submittedAt,
-          updatedAt: (data as any).updatedAt,
+          rejectionReasonCode: (data as unknown).rejectionReasonCode ?? null,
+          adminRemarks: (data as unknown).adminRemarks ?? null,
+          rejectedAt: (data as unknown).rejectedAt ?? null,
+          submittedAt: (data as unknown).submittedAt,
+          updatedAt: (data as unknown).updatedAt,
         });
       } catch (err) {
         toast.error(getErrorMessage(err) || "Failed to fetch status");

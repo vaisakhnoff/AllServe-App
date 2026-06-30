@@ -56,7 +56,7 @@ const authSlice = createSlice({
       }
 
       state.role = decoded.role as Role;
-      state.applicationStatus = (decoded as any).applicationStatus ?? null;
+      state.applicationStatus = (decoded as unknown).applicationStatus ?? null;
       state.isAuthenticated = true;
     },
 
@@ -69,7 +69,7 @@ const authSlice = createSlice({
       token.setTokens(accessToken, refreshToken, decoded?.role ?? user.role);
       state.user = user;
       state.role = (decoded?.role as Role) ?? user.role;
-      state.applicationStatus = (decoded as any)?.applicationStatus ?? user.applicationStatus ?? null;
+      state.applicationStatus = (decoded as unknown)?.applicationStatus ?? user.applicationStatus ?? null;
       state.isAuthenticated = true;
       state.isInitialized = true;
     },

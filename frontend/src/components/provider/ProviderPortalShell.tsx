@@ -17,9 +17,7 @@ import {
   Settings,
   Sparkles,
   UserRound,
-  Wrench,
-  FileText,
-} from "lucide-react";
+  Wrench} from "lucide-react";
 import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store";

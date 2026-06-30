@@ -4,7 +4,7 @@ import { ApiResponse } from "@/types/auth.types";
 import { ProviderApplicationDto, ProviderApplication, ProviderApplicationStatus, ProviderProfile, PublicProvider, PublicProviderDetails, UpdateProviderProfileDto, ProviderServiceDto, ProviderService as IProviderService } from "@/types/provider.types";
 
 export const providerService = {
-  getPublicProviders: (params?: Record<string, any>) =>
+  getPublicProviders: (params?: Record<string, unknown>) =>
     api.get<ApiResponse<PublicProvider[]>>(API_ENDPOINTS.PUBLIC_PROVIDERS, { params }),
 
   getPublicProviderById: (id: string) =>

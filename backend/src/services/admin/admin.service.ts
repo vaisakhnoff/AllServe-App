@@ -1,11 +1,11 @@
-import { IAdminRepository } from "../interfaces/admin/IAdminRepository";
-import { IAdminService } from "../interfaces/admin/IAdminService";
-import { Messages } from "../shared/constants/messages";
-import { Status } from "../shared/enums/status.enum";
-import { Role } from "../shared/enums/role.enum";
-import { ApplicationStatus } from "../shared/enums/application-status.enum";
-import { RejectionReasonCode, REJECTION_REASON_LABELS } from "../shared/enums/rejection-reason.enum";
-import { NotFoundError, BadRequestError, ForbiddenError } from "../shared/errors/HttpErrors";
+import { IAdminRepository } from "../../interfaces/admin/IAdminRepository";
+import { IAdminService } from "../../interfaces/admin/IAdminService";
+import { Messages } from "../../shared/constants/messages";
+import { Status } from "../../shared/enums/status.enum";
+import { Role } from "../../shared/enums/role.enum";
+import { ApplicationStatus } from "../../shared/enums/application-status.enum";
+import { RejectionReasonCode, REJECTION_REASON_LABELS } from "../../shared/enums/rejection-reason.enum";
+import { NotFoundError, BadRequestError, ForbiddenError } from "../../shared/errors/HttpErrors";
 
 export class AdminService implements IAdminService {
   constructor(private  repo: IAdminRepository) {}

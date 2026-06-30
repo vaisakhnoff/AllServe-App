@@ -4,19 +4,18 @@
  */
 
 import {
-  AlertCircle,
+  
   CheckCircle2,
   Clock,
   XCircle,
   Play,
   CheckSquare,
-  Pause,
+  
   Trash2,
   Eye,
   MessageSquare,
   DollarSign,
-  LucideIcon,
-} from "lucide-react";
+  LucideIcon} from "lucide-react";
 
 // ─────────────────────────────────────────────────────────────────────────
 // STATUS CONFIGURATION

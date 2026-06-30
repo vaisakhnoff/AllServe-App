@@ -1,15 +1,15 @@
-import { IServiceRepository } from "../interfaces/service/IServiceRepository";
-import { IServiceService, ServiceListResult } from "../interfaces/service/IServiceService";
+import { IServiceRepository } from "../../interfaces/service/IServiceRepository";
+import { IServiceService, ServiceListResult } from "../../interfaces/service/IServiceService";
 import {
   ServiceDto,
   UpdateServiceDto,
   ProviderServiceQuery,
   AdminServiceQuery,
   PublicServiceQuery,
-} from "../dto/service/service.dto";
-import { Messages } from "../shared/constants/messages";
-import { mapService } from "../mappers/service.mapper";
-import { NotFoundError, BadRequestError, ForbiddenError } from "../shared/errors/HttpErrors";
+} from "../../dto/service/service.dto";
+import { Messages } from "../../shared/constants/messages";
+import { mapService } from "../../mappers/service.mapper";
+import { NotFoundError, BadRequestError, ForbiddenError } from "../../shared/errors/HttpErrors";
 
 
 export class ServiceService implements IServiceService {

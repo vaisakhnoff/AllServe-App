@@ -1,20 +1,15 @@
-import { IInspectionRequestService } from "../interfaces/service-order/IServiceOrderService";
-import { IServiceOrderRepository } from "../interfaces/service-order/IServiceOrderRepository";
-import { IServiceOrder } from "../models/serviceOrder.model";
-import { ServiceModel } from "../models/service.model";
-import { CreateInspectionDto } from "../dto/service-order/serviceOrder.dto";
-import { NotFoundError, BadRequestError, ForbiddenError } from "../shared/errors/HttpErrors";
+import { IInspectionRequestService } from "../../interfaces/service-order/IServiceOrderService";
+import { IServiceOrderRepository } from "../../interfaces/service-order/IServiceOrderRepository";
+import { IServiceOrder } from "../../models/serviceOrder.model";
+import { ServiceModel } from "../../models/service.model";
+import { CreateInspectionDto } from "../../dto/service-order/serviceOrder.dto";
+import { NotFoundError, BadRequestError, ForbiddenError } from "../../shared/errors/HttpErrors";
 import { nanoid } from "nanoid";
 
-export class InspectionRequestService implements IInspectionRequestService {
-  constructor(private readonly orderRepo: IServiceOrderRepository) {}
+import { extractId } from "../../shared/utils/extractId";
 
-  private extractId(ref: unknown): string {
-    if (ref && typeof ref === "object" && "_id" in (ref as unknown as Record<string, unknown>)) {
-      return String((ref as unknown as { _id: unknown })._id);
-    }
-    return String(ref);
-  }
+export class InspectionRequestService implements IInspectionRequestService {
+  constructor(private readonly orderRepo: IServiceOrderRepository) { }
 
   async createRequest(customerId: string, dto: CreateInspectionDto): Promise<IServiceOrder> {
     const service = await ServiceModel.findById(dto.serviceId).lean();
@@ -50,7 +45,7 @@ export class InspectionRequestService implements IInspectionRequestService {
     const order = await this.orderRepo.findById(orderId);
     if (!order) throw new NotFoundError("Order not found");
     if (order.deliveryModel !== "inspection_required") throw new BadRequestError("Not an inspection order");
-    if (this.extractId(order.providerId) !== providerId) throw new ForbiddenError("Unauthorized");
+    if (extractId(order.providerId) !== providerId) throw new ForbiddenError("Unauthorized");
     if (order.status !== "awaiting_provider_response") throw new BadRequestError("Order cannot be accepted in current state");
 
     return (await this.orderRepo.updateStatus(orderId, "inspection_accepted", { respondedAt: new Date() }))!;
@@ -60,7 +55,7 @@ export class InspectionRequestService implements IInspectionRequestService {
     const order = await this.orderRepo.findById(orderId);
     if (!order) throw new NotFoundError("Order not found");
     if (order.deliveryModel !== "inspection_required") throw new BadRequestError("Not an inspection order");
-    if (this.extractId(order.providerId) !== providerId) throw new ForbiddenError("Unauthorized");
+    if (extractId(order.providerId) !== providerId) throw new ForbiddenError("Unauthorized");
     if (order.status !== "awaiting_provider_response") throw new BadRequestError("Order cannot be rejected in current state");
 
     return (await this.orderRepo.updateStatus(orderId, "rejected_by_provider", { respondedAt: new Date() }))!;
@@ -70,7 +65,7 @@ export class InspectionRequestService implements IInspectionRequestService {
     const order = await this.orderRepo.findById(orderId);
     if (!order) throw new NotFoundError("Order not found");
     if (order.deliveryModel !== "inspection_required") throw new BadRequestError("Not an inspection order");
-    if (this.extractId(order.providerId) !== providerId) throw new ForbiddenError("Unauthorized");
+    if (extractId(order.providerId) !== providerId) throw new ForbiddenError("Unauthorized");
     if (order.status !== "inspection_accepted") throw new BadRequestError("Must be in inspection_accepted state");
 
     return (await this.orderRepo.updateStatus(orderId, "inspection_completed"))!;
@@ -80,7 +75,7 @@ export class InspectionRequestService implements IInspectionRequestService {
     const order = await this.orderRepo.findById(orderId);
     if (!order) throw new NotFoundError("Order not found");
     if (order.deliveryModel !== "inspection_required") throw new BadRequestError("Not an inspection order");
-    if (this.extractId(order.providerId) !== providerId) throw new ForbiddenError("Unauthorized");
+    if (extractId(order.providerId) !== providerId) throw new ForbiddenError("Unauthorized");
     const droppableStatuses = ["inspection_accepted", "inspection_completed"];
     if (!droppableStatuses.includes(order.status)) throw new BadRequestError("Cannot drop in current state");
 
@@ -91,7 +86,7 @@ export class InspectionRequestService implements IInspectionRequestService {
     const order = await this.orderRepo.findById(orderId);
     if (!order) throw new NotFoundError("Order not found");
     if (order.deliveryModel !== "inspection_required") throw new BadRequestError("Not an inspection order");
-    if (this.extractId(order.customerId) !== customerId) throw new ForbiddenError("Unauthorized");
+    if (extractId(order.customerId) !== customerId) throw new ForbiddenError("Unauthorized");
     const droppableStatuses = ["awaiting_provider_response", "inspection_accepted", "inspection_completed", "quotation_submitted"];
     if (!droppableStatuses.includes(order.status)) throw new BadRequestError("Cannot drop in current state");
 
@@ -102,7 +97,7 @@ export class InspectionRequestService implements IInspectionRequestService {
     const order = await this.orderRepo.findById(orderId);
     if (!order) throw new NotFoundError("Order not found");
     if (order.deliveryModel !== "inspection_required") throw new BadRequestError("Not an inspection order");
-    if (this.extractId(order.providerId) !== providerId) throw new ForbiddenError("Unauthorized");
+    if (extractId(order.providerId) !== providerId) throw new ForbiddenError("Unauthorized");
     if (order.status !== "quotation_accepted") throw new BadRequestError("Quotation must be accepted before starting work");
 
     return (await this.orderRepo.updateStatus(orderId, "in_progress"))!;
@@ -112,7 +107,7 @@ export class InspectionRequestService implements IInspectionRequestService {
     const order = await this.orderRepo.findById(orderId);
     if (!order) throw new NotFoundError("Order not found");
     if (order.deliveryModel !== "inspection_required") throw new BadRequestError("Not an inspection order");
-    if (this.extractId(order.providerId) !== providerId) throw new ForbiddenError("Unauthorized");
+    if (extractId(order.providerId) !== providerId) throw new ForbiddenError("Unauthorized");
     if (order.status !== "in_progress") throw new BadRequestError("Work must be in progress");
 
     return (await this.orderRepo.updateStatus(orderId, "work_completed"))!;
