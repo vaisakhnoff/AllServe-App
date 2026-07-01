@@ -57,8 +57,6 @@ export default function ProvidersListPage() {
     return () => { cancelled = true; clearTimeout(t); };
   }, [search, categoryId, location.latitude, location.longitude, location.isSet]);
 
-  const featured = providers[0];
-  const rest = providers.slice(1);
 
   return (
     <div className="space-y-8 pb-12">
@@ -110,66 +108,15 @@ export default function ProvidersListPage() {
         </div>
       ) : (
         <>
-          {/* Featured card — first provider gets a large hero-style card */}
-          {featured && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-            >
-              <Link href={`/providers/${featured.id}`}>
-                <div className="group relative grid overflow-hidden rounded-[28px] bg-[#141414] text-white lg:grid-cols-[1fr_1.2fr]">
-                  {/* Left: info */}
-                  <div className="relative z-10 flex flex-col justify-between p-8 lg:p-10">
-                    <div>
-                      <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide backdrop-blur-sm">
-                        <Star size={12} fill="#fbbf24" strokeWidth={0} className="text-yellow-400" />
-                        Top Rated
-                      </span>
-                      <h2 className="mt-5 text-[clamp(1.5rem,3vw,2.25rem)] font-[800] tracking-tight leading-tight">
-                        {featured.name}
-                      </h2>
-                      <div className="mt-3 flex items-center gap-4 text-sm text-white/60">
-                        <span className="flex items-center gap-1"><BadgeCheck size={14} /> Verified</span>
-                        <span className="flex items-center gap-1"><Star size={13} fill="currentColor" /> {featured.rating?.toFixed(1) || "New"}</span>
-                      </div>
-                    </div>
-                    <div className="mt-8 flex items-center justify-between">
-                      <div>
-                        <p className="text-[11px] uppercase tracking-wider text-white/40">Starting from</p>
-                        <p className="text-2xl font-[800]">{featured.price !== null ? `₹${featured.price}` : "Quote"}</p>
-                      </div>
-                      <span className="flex h-12 w-12 items-center justify-center rounded-full bg-white text-[#141414] transition-transform group-hover:rotate-[-45deg]">
-                        <ArrowUpRight size={20} />
-                      </span>
-                    </div>
-                  </div>
-                  {/* Right: avatar / gradient */}
-                  <div className="relative hidden h-full min-h-[280px] lg:block">
-                    <div className="absolute inset-0 bg-gradient-to-l from-transparent via-[#141414]/40 to-[#141414] z-10" />
-                    {featured.profileImage ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={featured.profileImage} alt="" className="h-full w-full object-cover" />
-                    ) : (
-                      <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[var(--primary)]/20 to-[var(--accent)]/20">
-                        <span className="text-[6rem] font-[900] text-white/20">{featured.name[0]}</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </Link>
-            </motion.div>
-          )}
-
-          {/* Grid — remaining providers in a tight 3-column */}
-          {rest.length > 0 && (
+          {/* Grid — all providers */}
+          {providers.length > 0 && (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.15, duration: 0.4 }}
-              className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3"
+              className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
             >
-              {rest.map((p, i) => (
+              {providers.map((p, i) => (
                 <motion.div
                   key={p.id}
                   initial={{ opacity: 0, y: 16 }}

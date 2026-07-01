@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import {
   Bell, CalendarCheck, Home, LogOut, MessageSquare,
   Sparkles, User, Zap, Menu, X,
-  ChevronDown, Heart,
+  Heart,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
@@ -19,7 +19,7 @@ import { LocationPicker } from "./LocationPicker";
 const navItems = [
   { label: "Dashboard", href: ROUTES.DASHBOARD, icon: Home },
   { label: "My Bookings", href: "/bookings", icon: CalendarCheck },
-  { label: "Messages", href: "/messages", icon: MessageSquare, badge: 3 },
+  { label: "Messages", href: "/messages", icon: MessageSquare },
   { label: "Favourites", href: "/favourites", icon: Heart },
   { label: "Profile", href: ROUTES.PROFILE, icon: User },
   { label: "Notifications", href: "/notifications", icon: Bell },
@@ -31,7 +31,6 @@ export function UserShell({ children }: { children: React.ReactNode }) {
   const { user } = useSelector((state: RootState) => state.auth);
   const [profileImage, setProfileImage] = useState<string | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [profileOpen, setProfileOpen] = useState(false);
 
   useEffect(() => {
     userService.getProfile()
@@ -39,7 +38,7 @@ export function UserShell({ children }: { children: React.ReactNode }) {
       .catch(() => {});
   }, []);
 
-  useEffect(() => { setMobileMenuOpen(false); setProfileOpen(false); }, [pathname]);
+  useEffect(() => { setMobileMenuOpen(false); }, [pathname]);
 
   return (
     <div className="marketplace-shell flex min-h-screen">
@@ -78,17 +77,7 @@ export function UserShell({ children }: { children: React.ReactNode }) {
             })}
           </nav>
 
-          {/* Promo card */}
-          <div className="mx-3 mb-3 mt-2 rounded-[var(--radius)] bg-[var(--primary-light)] p-4 text-center">
-            <div className="mx-auto mb-2.5 flex h-9 w-9 items-center justify-center rounded-xl bg-white text-[var(--primary)] ring-1 ring-[var(--primary)]/10">
-              <Sparkles size={16} />
-            </div>
-            <p className="text-[0.8125rem] font-bold text-slate-900">AllServe Premium</p>
-            <p className="mt-1 text-[11px] leading-[1.5] text-slate-500">Unlock priority support, exclusive offers &amp; more.</p>
-            <button className="mt-3 w-full rounded-xl bg-[#141414] py-2 text-[12px] font-bold text-white transition hover:bg-black">
-              Upgrade Now
-            </button>
-          </div>
+        
 
           {/* Sign out */}
           <div className="border-t border-slate-100 px-3 py-3">
@@ -136,10 +125,10 @@ export function UserShell({ children }: { children: React.ReactNode }) {
 
               <span className="mx-0.5 hidden h-7 w-px bg-slate-200/80 sm:block" />
 
-              {/* Profile dropdown */}
+              {/* Profile Chip */}
               <div className="relative">
-                <button
-                  onClick={() => setProfileOpen((v) => !v)}
+                <Link
+                  href={ROUTES.PROFILE}
                   className="flex items-center gap-2.5 rounded-full border border-slate-200/80 bg-white py-1.5 pl-1.5 pr-2.5 shadow-sm transition-all duration-200 hover:shadow-md hover:border-purple-200/60"
                 >
                   <div className="h-9 w-9 overflow-hidden rounded-full bg-gradient-to-br from-purple-100 to-violet-100 flex items-center justify-center text-[var(--primary)] font-bold text-sm border-2 border-white shadow-inner">
@@ -150,66 +139,11 @@ export function UserShell({ children }: { children: React.ReactNode }) {
                       <User size={15} />
                     )}
                   </div>
-                  <div className="hidden text-left sm:block">
+                  <div className="hidden text-left sm:block pr-2">
                     <p className="text-sm font-bold leading-none text-slate-900">{user?.name?.split(" ")[0] || "User"}</p>
                     <p className="mt-0.5 text-[11px] font-medium text-slate-400">Customer</p>
                   </div>
-                  <ChevronDown size={15} className={`hidden text-slate-400 transition-transform sm:block ${profileOpen ? "rotate-180" : ""}`} />
-                </button>
-
-                <AnimatePresence>
-                  {profileOpen && (
-                    <>
-                      <div className="fixed inset-0 z-40" onClick={() => setProfileOpen(false)} />
-                      <motion.div
-                        initial={{ opacity: 0, y: -8, scale: 0.97 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: -8, scale: 0.97 }}
-                        transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
-                        className="absolute right-0 z-50 mt-2 w-64 overflow-hidden rounded-2xl border border-slate-100 bg-white/95 backdrop-blur-xl shadow-[0_16px_50px_-12px_rgba(0,0,0,0.18)]"
-                      >
-                        <div className="flex items-center gap-3 border-b border-slate-100 px-4 py-3.5">
-                          <div className="h-11 w-11 overflow-hidden rounded-full bg-gradient-to-br from-purple-100 to-violet-100 flex items-center justify-center text-[var(--primary)] font-bold border-2 border-white shadow-inner">
-                            {profileImage ? (
-                              // eslint-disable-next-line @next/next/no-img-element
-                              <img src={profileImage} className="h-full w-full object-cover" alt="" />
-                            ) : (
-                              <User size={18} />
-                            )}
-                          </div>
-                          <div className="min-w-0">
-                            <p className="truncate text-sm font-bold text-slate-900">{user?.name || "User"}</p>
-                            <p className="truncate text-[12px] text-slate-400">{user?.email || "Customer account"}</p>
-                          </div>
-                        </div>
-                        <div className="p-1.5">
-                          {[
-                            { label: "My profile", icon: User, href: ROUTES.PROFILE },
-                            { label: "My bookings", icon: CalendarCheck, href: "/bookings" },
-                            { label: "Messages", icon: MessageSquare, href: "/messages" },
-                          ].map((item) => (
-                            <Link
-                              key={item.label}
-                              href={item.href}
-                              onClick={() => setProfileOpen(false)}
-                              className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-600 transition-colors hover:bg-purple-50 hover:text-[var(--primary)]"
-                            >
-                              <item.icon size={16} /> {item.label}
-                            </Link>
-                          ))}
-                        </div>
-                        <div className="border-t border-slate-100 p-1.5">
-                          <button
-                            onClick={() => { setProfileOpen(false); logout(); }}
-                            className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-red-500 transition-colors hover:bg-red-50"
-                          >
-                            <LogOut size={16} /> Sign out
-                          </button>
-                        </div>
-                      </motion.div>
-                    </>
-                  )}
-                </AnimatePresence>
+                </Link>
               </div>
             </div>
           </div>

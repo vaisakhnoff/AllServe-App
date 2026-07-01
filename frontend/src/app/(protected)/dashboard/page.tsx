@@ -349,7 +349,7 @@ export default function DashboardPage() {
           <div>
             <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[var(--primary)]">Need urgent help?</p>
             <h3 className="mt-2 max-w-lg text-2xl font-bold tracking-tight text-[var(--text-primary)] sm:text-3xl">
-              Book emergency service in just 2 minutes
+              Book Instantly and get  professional service in just 30 minutes
             </h3>
           </div>
           <Link href="/categories">

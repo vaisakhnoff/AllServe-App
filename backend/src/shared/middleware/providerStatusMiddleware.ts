@@ -4,14 +4,8 @@ import { AppError } from "../errors/AppError";
 import { StatusCodes } from "../constants/statusCodes";
 import { ApplicationStatus } from "../enums/application-status.enum";
 
-/**
- * Middleware factory that restricts provider routes based on applicationStatus.
- * Reads the status from the JWT payload (set during provider login).
- *
- * Usage:
- *   requireProviderStatus(ApplicationStatus.APPROVED)
- *   requireProviderStatus(ApplicationStatus.REJECTED, ApplicationStatus.APPROVED)
- */
+
+
 export const requireProviderStatus = (...allowed: ApplicationStatus[]) => {
   return (req: AuthRequest, _res: Response, next: NextFunction) => {
     const status = req.user?.applicationStatus;

@@ -10,6 +10,8 @@ import {
 } from "../../dto/provider/provider.dto";
 import { IProviderAccount } from "../../models/providerAccount.model";
 import { ApplicationStatus } from "../../shared/enums/application-status.enum";
+import { CategoryModel } from "../../models/category.model";
+import { ServiceModel } from "../../models/service.model";
 import { escapeRegex } from "../../shared/utils/search";
 import { Messages } from "../../shared/constants/messages";
 import { mapProviderListItem, mapProviderDetails, mapApplication, mapProviderProfile, resolveLocation } from "../../mappers/provider.mapper";
@@ -112,12 +114,23 @@ export class ProviderService implements IProviderService {
       if (query.search) {
         const filter: Record<string, unknown> = {};
         if (query.categoryId && Types.ObjectId.isValid(query.categoryId)) filter.categoryId = query.categoryId;
+        
         const searchRegex = { $regex: escapeRegex(query.search), $options: "i" };
+        const [matchingCats, matchingServices] = await Promise.all([
+          CategoryModel.find({ name: searchRegex }).select("_id").lean(),
+          ServiceModel.find({ $or: [{ name: searchRegex }, { description: searchRegex }] }).select("providerId").lean()
+        ]);
+        const catIds = matchingCats.map((c) => c._id);
+        const pIds = matchingServices.map((s) => s.providerId);
+        
         filter.$or = [
           { name: searchRegex }, { businessName: searchRegex }, { "services.name": searchRegex },
           { city: searchRegex }, { district: searchRegex }, { state: searchRegex },
           { pincode: searchRegex }, { fullAddress: searchRegex }, { serviceArea: searchRegex }, { serviceAreas: searchRegex },
         ];
+        if (catIds.length > 0) filter.$or.push({ categoryId: { $in: catIds } });
+        if (pIds.length > 0) filter.$or.push({ _id: { $in: pIds } });
+
         const fallback = await this.repo.findApprovedProviders(filter, limit);
         return fallback.map(mapProviderListItem);
       }
@@ -130,11 +143,21 @@ export class ProviderService implements IProviderService {
     }
     if (query.search) {
       const searchRegex = { $regex: escapeRegex(query.search), $options: "i" };
+      
+      const [matchingCats, matchingServices] = await Promise.all([
+        CategoryModel.find({ name: searchRegex }).select("_id").lean(),
+        ServiceModel.find({ $or: [{ name: searchRegex }, { description: searchRegex }] }).select("providerId").lean()
+      ]);
+      const catIds = matchingCats.map((c) => c._id);
+      const pIds = matchingServices.map((s) => s.providerId);
+
       filter.$or = [
         { name: searchRegex }, { businessName: searchRegex }, { "services.name": searchRegex },
         { city: searchRegex }, { district: searchRegex }, { state: searchRegex },
         { pincode: searchRegex }, { fullAddress: searchRegex }, { serviceArea: searchRegex }, { serviceAreas: searchRegex },
       ];
+      if (catIds.length > 0) filter.$or.push({ categoryId: { $in: catIds } });
+      if (pIds.length > 0) filter.$or.push({ _id: { $in: pIds } });
     }
     const providers = await this.repo.findApprovedProviders(filter, limit);
     return providers.map(mapProviderListItem);
