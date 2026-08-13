@@ -7,17 +7,13 @@ import { logger } from "../shared/logger/logger";
 import { IMessagingService } from "../interfaces/messaging/IMessagingService";
 import { IConversationRepository } from "../interfaces/messaging/IMessagingRepository";
 import { SenderRole } from "../dto/messaging/messaging.dto";
+import { AccessTokenPayload } from "../shared/interfaces/AuthRequest";
 
 type AuthenticatedSocket = Socket & {
   data: {
     userId: string;
     userRole: SenderRole;
   };
-};
-
-type AuthTokenPayload = {
-  id?: string;
-  role?: string;
 };
 
 const onlineUsers = new Map<string, Set<string>>(); // userId -> socketIds
@@ -64,7 +60,7 @@ export function setupSocket(
     const token = socket.handshake.auth.token;
     if (!token) return next(new Error("Authentication required"));
     try {
-      const decoded = jwt.verify(token, env.JWT_SECRET) as AuthTokenPayload;
+      const decoded = jwt.verify(token, env.JWT_SECRET) as AccessTokenPayload;
       const userRole = toSenderRole(decoded.role);
       if (!decoded.id || !userRole) return next(new Error("Invalid token payload"));
       socket.data.userId = decoded.id;

@@ -21,4 +21,4 @@ export interface IAuthRepository extends IBaseRepository<IUser> {
 
   // User mutation
   updateUser(id: string, data: Partial<IUser>): Promise<IUser | null>;
-}
+}  

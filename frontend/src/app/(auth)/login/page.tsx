@@ -26,7 +26,7 @@ const getOAuthErrorMessage = (code: string | null) => {
 function LoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const redirectUrl = searchParams.get("redirect") || undefined;
+  const redirectUrl = searchParams.get("redirect") || searchParams.get("next") || undefined;
   const oauthError = getOAuthErrorMessage(searchParams.get("oauthError"));
   const { login } = useAuth();
   const [form, setForm] = useState<LoginDto>({ email: "", password: "" });

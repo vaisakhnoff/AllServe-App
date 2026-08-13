@@ -6,11 +6,12 @@ import { Messages } from "../../shared/constants/messages";
 import { StatusCodes } from "../../shared/constants/statusCodes";
 
 export class CategoryController {
-  constructor(private readonly service: ICategoryService) { }
+  constructor(private readonly service: ICategoryService ) { }
 
   async create(req: Request, res: Response, next: NextFunction) {
     try {
       const dto = categorySchema.parse(req.body);
+
       const data = await this.service.createCategory(dto);
       sendSuccess(res, data, Messages.CATEGORY_CREATED, StatusCodes.CREATED);
     } catch (err) {

@@ -3,20 +3,20 @@
 import { useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { initializeAuth, setUser } from "@/features/auth";
+import { initializeAuth, setUser, setApplicationStatus } from "@/features/auth";
+import { providerService } from "@/services/provider";
 import { userService } from "@/services/user";
 import { Role } from "@/enums/role.enum";
 
 export function AuthInitializer({ children }: { children: React.ReactNode }) {
   const dispatch = useAppDispatch();
   const pathname = usePathname();
-  const { isAuthenticated, role, user } = useAppSelector((state) => state.auth);
+  const { isAuthenticated, role, user, applicationStatus } = useAppSelector((state) => state.auth);
 
   useEffect(() => {
     dispatch(initializeAuth({ pathname }));
   }, [dispatch, pathname]);
 
-  // Fetch user profile if authenticated but user data is missing (e.g. after page refresh)
   useEffect(() => {
     if (isAuthenticated && !user && role === Role.USER) {
       userService.getProfile().then((res) => {
@@ -32,6 +32,17 @@ export function AuthInitializer({ children }: { children: React.ReactNode }) {
       }).catch(() => {});
     }
   }, [isAuthenticated, user, role, dispatch]);
+
+  useEffect(() => {
+    if (isAuthenticated && role === Role.PROVIDER && !applicationStatus) {
+      providerService.getApplicationStatus().then((res) => {
+        const status = res.data.data?.status;
+        if (status) {
+          dispatch(setApplicationStatus(status));
+        }
+      }).catch(() => {});
+    }
+  }, [isAuthenticated, applicationStatus, role, dispatch]);
 
   return <>{children}</>;
 }

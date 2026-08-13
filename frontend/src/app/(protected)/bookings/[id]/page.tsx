@@ -79,88 +79,163 @@ export default function BookingDetailPage() {
   const statusCfg = STATUS_CONFIG[order.status] || { label: order.status, dot: "bg-slate-300", bg: "bg-slate-50 text-slate-600" };
 
   return (
-    <div className="pb-12">
-      <button onClick={() => router.push("/bookings")} className="group mb-6 inline-flex items-center gap-1.5 text-sm font-semibold text-[var(--text-muted)] hover:text-[var(--primary)]">
-        <ArrowLeft size={15} className="transition-transform group-hover:-translate-x-0.5" /> Back to bookings
+    <div className="pb-12 max-w-5xl mx-auto">
+      <button
+        onClick={() => router.push("/bookings")}
+        className="group mb-6 inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 py-1.5 text-xs font-bold text-slate-600 shadow-2xs hover:bg-slate-50 transition"
+      >
+        <ArrowLeft size={14} className="transition-transform group-hover:-translate-x-0.5" />
+        Back to bookings
       </button>
 
-      <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
-        {/* Main */}
-        <div className="space-y-5">
-          {/* Order header */}
+      <div className="grid gap-6 lg:grid-cols-[1fr_340px]">
+        {/* Main Content Area */}
+        <div className="space-y-6">
+          {/* Order Header Card */}
           <motion.section
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
-            className="rounded-[22px] border border-[var(--border)] bg-white p-6"
+            className="rounded-2xl border border-slate-100 bg-white p-6 shadow-2xs"
           >
-            <div className="flex items-start justify-between gap-4 mb-4">
+            <div className="flex flex-wrap items-start justify-between gap-4 mb-4">
               <div className="min-w-0">
-                <p className="text-[12px] font-bold text-[var(--primary)] tracking-wide">{order.orderId}</p>
-                <h1 className="mt-1 text-xl font-[800] text-[var(--text-primary)] leading-tight">{order.title || order.description.slice(0, 80)}</h1>
+                <span className="text-[10px] font-mono font-bold text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">
+                  {order.orderId}
+                </span>
+                <h1 className="mt-2 text-xl font-extrabold text-slate-900 leading-tight">
+                  {order.title || order.description.slice(0, 80)}
+                </h1>
               </div>
-              <span className={`shrink-0 rounded-full px-3 py-1.5 text-[11px] font-bold ${statusCfg.bg}`}>{statusCfg.label}</span>
+              <span className={`shrink-0 rounded-full px-3 py-1 text-[11px] font-bold ${statusCfg.bg} flex items-center gap-1.5`}>
+                <span className={`h-1.5 w-1.5 rounded-full ${statusCfg.dot}`} />
+                {statusCfg.label}
+              </span>
             </div>
-            <p className="text-[14px] leading-relaxed text-[var(--text-secondary)]">{order.description}</p>
+            
+            <p className="text-sm leading-relaxed text-slate-600 border-t border-slate-50 pt-4">{order.description}</p>
+            
             {order.intakeResponses && Object.keys(order.intakeResponses).length > 0 && (
-              <div className="mt-4 rounded-2xl border border-purple-100 bg-purple-50/60 p-4">
-                <p className="text-[12px] font-bold text-purple-800 mb-3">📋 Your Requirements</p>
-                <dl className="space-y-2">
+              <div className="mt-6 rounded-2xl border border-slate-100 bg-slate-50/50 p-5">
+                <h4 className="text-xs font-bold text-slate-900 mb-3 uppercase tracking-wider flex items-center gap-1.5">
+                  <FileText size={13} className="text-[#00B761]" /> Custom Requirements
+                </h4>
+                <dl className="grid gap-3 sm:grid-cols-2">
                   {Object.entries(order.intakeResponses).map(([key, val]) => (
-                    <div key={key}>
-                      <dt className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">{key.replace(/_/g, " ")}</dt>
-                      <dd className="text-[13px] text-slate-800">{val}</dd>
+                    <div key={key} className="bg-white p-3 rounded-xl border border-slate-100 shadow-2xs">
+                      <dt className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{key.replace(/_/g, " ")}</dt>
+                      <dd className="mt-1 text-sm font-semibold text-slate-800">{val}</dd>
                     </div>
                   ))}
                 </dl>
               </div>
             )}
-            <div className="mt-4 flex flex-wrap gap-4 text-[12px] text-[var(--text-muted)]">
-              <span className="flex items-center gap-1"><MapPin size={12} /> {order.address.city}, {order.address.state}</span>
-              {order.preferredDate && <span className="flex items-center gap-1"><Calendar size={12} /> {order.preferredDate} {order.preferredTime}</span>}
-              <span className="flex items-center gap-1"><Clock size={12} /> {new Date(order.createdAt).toLocaleDateString("en-IN")}</span>
+            
+            <div className="mt-6 flex flex-wrap gap-4 text-xs font-medium text-slate-500 border-t border-slate-100 pt-4">
+              <span className="flex items-center gap-1.5"><MapPin size={13} className="text-slate-400" /> {order.address.city}, {order.address.state}</span>
+              {order.preferredDate && <span className="flex items-center gap-1.5"><Calendar size={13} className="text-slate-400" /> {order.preferredDate} {order.preferredTime}</span>}
+              <span className="flex items-center gap-1.5"><Clock size={13} className="text-slate-400" /> {new Date(order.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</span>
             </div>
           </motion.section>
 
-          {/* Quotations */}
+          {/* Quotations Section */}
           {quotations.length > 0 && (
-            <section className="rounded-[22px] border border-[var(--border)] bg-white p-6">
-              <h2 className="flex items-center gap-2 text-[17px] font-[800] text-[var(--text-primary)] mb-5">
-                <FileText size={17} className="text-[var(--primary)]" /> Quotations
-                <span className="ml-auto text-[12px] font-semibold text-[var(--text-muted)]">{quotations.length} received</span>
+            <section className="rounded-2xl border border-slate-100 bg-white p-6 shadow-2xs">
+              <h2 className="flex items-center gap-2 text-base font-extrabold text-slate-900 mb-5">
+                <FileText size={16} className="text-[#00B761]" /> Quotations
+                <span className="ml-auto text-xs font-semibold text-slate-400 bg-slate-50 px-2 py-0.5 rounded-lg">{quotations.length} received</span>
               </h2>
               <div className="space-y-4">
                 {quotations.map((q) => (
-                  <div key={q._id} className={`rounded-2xl border p-5 ${q.status === "accepted" ? "border-emerald-200 bg-emerald-50/40" : q.status === "submitted" ? "border-blue-200 bg-blue-50/30" : "border-[var(--border)]"}`}>
-                    <div className="flex items-center justify-between mb-3">
+                  <div key={q._id} className={`rounded-xl border p-5 transition-all ${q.status === "accepted" ? "border-emerald-200 bg-emerald-50/10" : q.status === "submitted" ? "border-blue-200 bg-blue-50/10" : "border-slate-100"}`}>
+                    <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
                       <div className="flex items-center gap-2.5">
-                        <span className="text-[14px] font-bold text-[var(--text-primary)]">
-                          {typeof q.providerId === "object" ? (q.providerId.businessName || q.providerId.name) : "Provider"}
-                        </span>
-                        <span className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold ${q.status === "accepted" ? "bg-emerald-100 text-emerald-700" : q.status === "submitted" ? "bg-blue-100 text-blue-700" : q.status === "rejected" ? "bg-red-100 text-red-600" : "bg-amber-100 text-amber-700"}`}>
-                          {q.status.replace(/_/g, " ")}
-                        </span>
+                        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-50 border border-slate-100 font-bold text-slate-600 text-sm">
+                          {typeof q.providerId === "object" ? (q.providerId.businessName || q.providerId.name)?.[0]?.toUpperCase() : "P"}
+                        </div>
+                        <div>
+                          <span className="block text-sm font-bold text-slate-900">
+                            {typeof q.providerId === "object" ? (q.providerId.businessName || q.providerId.name) : "Provider"}
+                          </span>
+                          <span className={`inline-block rounded-md px-2 py-0.5 text-[10px] font-bold mt-0.5 ${
+                            q.status === "accepted" ? "bg-emerald-100 text-emerald-700" : q.status === "submitted" ? "bg-blue-100 text-blue-700" : q.status === "rejected" ? "bg-red-100 text-red-600" : "bg-amber-100 text-amber-700"
+                          }`}>
+                            {q.status.replace(/_/g, " ")}
+                          </span>
+                        </div>
                       </div>
-                      <span className="text-xl font-[800] text-[var(--text-primary)]">₹{q.totalAmount.toLocaleString("en-IN")}</span>
+                      <span className="text-lg font-black text-slate-900">₹{q.totalAmount.toLocaleString("en-IN")}</span>
                     </div>
-                    <div className="grid gap-2 sm:grid-cols-3 text-[12px] text-[var(--text-muted)] mb-3">
-                      <span>Labour: ₹{q.currentRevision.labourCharge.toLocaleString("en-IN")}</span>
-                      <span>Material: ₹{q.currentRevision.materialCost.toLocaleString("en-IN")}</span>
-                      <span>{q.currentRevision.estimatedDurationDays} days est.</span>
+
+                    <div className="grid gap-3 grid-cols-3 text-xs bg-slate-50/50 p-3 rounded-lg border border-slate-100 mb-4 text-center">
+                      <div>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Labour</p>
+                        <p className="mt-0.5 font-bold text-slate-700">₹{q.currentRevision.labourCharge.toLocaleString("en-IN")}</p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Material</p>
+                        <p className="mt-0.5 font-bold text-slate-700">₹{q.currentRevision.materialCost.toLocaleString("en-IN")}</p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Duration</p>
+                        <p className="mt-0.5 font-bold text-slate-700">{q.currentRevision.estimatedDurationDays} Days</p>
+                      </div>
                     </div>
-                    {q.currentRevision.notes && <p className="text-[12px] italic text-[var(--text-muted)] mb-3">&ldquo;{q.currentRevision.notes}&rdquo;</p>}
-                    {q.status === "submitted" && (
-                      <div className="flex flex-wrap gap-2 pt-3 border-t border-[var(--border-light)]">
-                        <button onClick={() => handleAcceptQuote(q._id)} disabled={actionLoading} className="inline-flex items-center gap-1.5 rounded-full bg-emerald-600 px-4 py-2 text-[12px] font-bold text-white disabled:opacity-50"><CheckCircle2 size={12} /> Accept</button>
-                        <button onClick={() => handleRejectQuote(q._id)} disabled={actionLoading} className="inline-flex items-center gap-1.5 rounded-full border border-red-200 bg-red-50 px-4 py-2 text-[12px] font-bold text-red-600 disabled:opacity-50"><XCircle size={12} /> Reject</button>
-                        <button onClick={() => setShowModForm(showModForm === q._id ? null : q._id)} className="inline-flex items-center gap-1.5 rounded-full border border-amber-200 bg-amber-50 px-4 py-2 text-[12px] font-bold text-amber-700"><Edit3 size={12} /> Request Changes</button>
+
+                    {q.currentRevision.notes && (
+                      <div className="relative pl-3 border-l-2 border-slate-200 text-xs italic text-slate-500 my-4 py-0.5">
+                        &ldquo;{q.currentRevision.notes}&rdquo;
                       </div>
                     )}
+
+                    {q.status === "submitted" && (
+                      <div className="flex flex-wrap gap-2 pt-4 border-t border-slate-100">
+                        <button
+                          onClick={() => handleAcceptQuote(q._id)}
+                          disabled={actionLoading}
+                          className="inline-flex items-center gap-1.5 rounded-xl bg-[#00B761] hover:bg-[#009E52] px-4 py-2 text-xs font-bold text-white shadow-xs transition disabled:opacity-50 cursor-pointer"
+                        >
+                          <CheckCircle2 size={12} /> Accept
+                        </button>
+                        <button
+                          onClick={() => handleRejectQuote(q._id)}
+                          disabled={actionLoading}
+                          className="inline-flex items-center gap-1.5 rounded-xl border border-red-200 bg-red-50 hover:bg-red-100 px-4 py-2 text-xs font-bold text-red-600 transition disabled:opacity-50 cursor-pointer"
+                        >
+                          <XCircle size={12} /> Reject
+                        </button>
+                        <button
+                          onClick={() => setShowModForm(showModForm === q._id ? null : q._id)}
+                          className="inline-flex items-center gap-1.5 rounded-xl border border-amber-200 bg-amber-50 hover:bg-amber-100 px-4 py-2 text-xs font-bold text-amber-700 transition cursor-pointer"
+                        >
+                          <Edit3 size={12} /> Request Changes
+                        </button>
+                      </div>
+                    )}
+
                     {showModForm === q._id && (
-                      <div className="mt-3 pt-3 border-t border-[var(--border-light)]">
-                        <textarea value={modComment} onChange={(e) => setModComment(e.target.value)} rows={2} className="w-full rounded-xl border border-[var(--border)] px-3 py-2.5 text-sm outline-none resize-none focus:border-[var(--primary)] mb-2" placeholder="Describe what changes..." />
+                      <div className="mt-4 pt-4 border-t border-slate-100">
+                        <textarea
+                          value={modComment}
+                          onChange={(e) => setModComment(e.target.value)}
+                          rows={2}
+                          className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-xs outline-none resize-none focus:border-[#00B761] focus:ring-1 focus:ring-[#00B761] transition mb-3"
+                          placeholder="Describe the changes you want..."
+                        />
                         <div className="flex gap-2">
-                          <button onClick={() => handleRequestMod(q._id)} disabled={actionLoading} className="rounded-full bg-[#141414] px-4 py-2 text-[12px] font-bold text-white">{actionLoading ? <Loader2 size={12} className="animate-spin" /> : <MessageSquare size={12} />} Send</button>
-                          <button onClick={() => { setShowModForm(null); setModComment(""); }} className="rounded-full border border-[var(--border)] px-4 py-2 text-[12px] font-bold text-[var(--text-secondary)]">Cancel</button>
+                          <button
+                            onClick={() => handleRequestMod(q._id)}
+                            disabled={actionLoading}
+                            className="rounded-xl bg-slate-900 hover:bg-slate-800 px-4 py-2 text-xs font-bold text-white transition flex items-center gap-1.5 cursor-pointer"
+                          >
+                            {actionLoading ? <Loader2 size={12} className="animate-spin" /> : <MessageSquare size={12} />}
+                            Send Request
+                          </button>
+                          <button
+                            onClick={() => { setShowModForm(null); setModComment(""); }}
+                            className="rounded-xl border border-slate-200 px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50 transition cursor-pointer"
+                          >
+                            Cancel
+                          </button>
                         </div>
                       </div>
                     )}
@@ -170,87 +245,129 @@ export default function BookingDetailPage() {
             </section>
           )}
 
-          {/* Invoice */}
+          {/* Invoice Section - Redesigned Stripe-like Digital Receipt */}
           {invoice && (
-            <section className="rounded-[22px] border border-[var(--border)] bg-white p-6">
+            <section className="rounded-2xl border border-slate-100 bg-white p-6 shadow-2xs">
               <div className="flex items-center justify-between mb-5">
-                <h2 className="flex items-center gap-2 text-[17px] font-[800] text-[var(--text-primary)]">
-                  <IndianRupee size={17} className="text-[var(--primary)]" /> Invoice
+                <h2 className="flex items-center gap-2 text-base font-extrabold text-slate-900">
+                  <IndianRupee size={16} className="text-[#00B761]" /> Invoice Receipt
                 </h2>
-                <span className={`rounded-full px-3 py-1.5 text-[11px] font-bold ${invoice.paymentStatus === "pending" ? "bg-amber-50 text-amber-700" : "bg-emerald-50 text-emerald-700"}`}>
+                <span className={`rounded-full px-3 py-1 text-[11px] font-bold ${
+                  invoice.paymentStatus === "pending" ? "bg-amber-50 text-amber-700" : "bg-emerald-50 text-emerald-700"
+                }`}>
                   {invoice.paymentStatus === "pending" ? "Payment Due" : "Paid"}
                 </span>
               </div>
-              <div className="grid gap-3 sm:grid-cols-2 mb-4">
-                {[
-                  { label: "Labour", value: invoice.labourCharge },
-                  { label: "Material", value: invoice.materialCost },
-                  { label: "Additional", value: invoice.additionalCharges },
-                  { label: "Discount", value: -invoice.discount, green: true },
-                ].map((item) => (
-                  <div key={item.label} className="rounded-xl bg-[var(--surface-3)] p-3.5">
-                    <p className="text-[11px] font-bold text-[var(--text-muted)] uppercase">{item.label}</p>
-                    <p className={`mt-0.5 text-lg font-[800] ${item.green ? "text-emerald-600" : "text-[var(--text-primary)]"}`}>
-                      {item.green ? "-" : ""}₹{Math.abs(item.value).toLocaleString("en-IN")}
-                    </p>
+
+              {/* Receipt Body */}
+              <div className="rounded-xl border border-slate-100 bg-slate-50/30 p-5 font-sans">
+                <div className="space-y-3.5">
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="text-slate-400 font-medium">Labour Charge</span>
+                    <span className="text-slate-700 font-bold">₹{invoice.labourCharge.toLocaleString("en-IN")}</span>
                   </div>
-                ))}
-              </div>
-              <div className="rounded-2xl bg-[#141414] p-5 flex items-center justify-between text-white mb-4">
-                <span className="text-[14px] font-bold">Total Amount</span>
-                <span className="text-2xl font-[900]">₹{invoice.total.toLocaleString("en-IN")}</span>
-              </div>
-              {invoice.paymentStatus === "pending" ? (
-                <button onClick={handlePayOnline} disabled={actionLoading} className="w-full flex items-center justify-center gap-2 rounded-2xl bg-[var(--primary)] py-3.5 text-[14px] font-bold text-white transition hover:opacity-90 disabled:opacity-50">
-                  {actionLoading ? <Loader2 size={16} className="animate-spin" /> : <CreditCard size={16} />} Pay ₹{invoice.total.toLocaleString("en-IN")}
-                </button>
-              ) : (
-                <div className="flex items-center justify-center gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
-                  <CheckCircle2 size={18} className="text-emerald-600" />
-                  <span className="text-[13px] font-bold text-emerald-700">Paid via {invoice.settlementMethod === "cash" ? "cash" : "online"}</span>
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="text-slate-400 font-medium">Material Cost</span>
+                    <span className="text-slate-700 font-bold">₹{invoice.materialCost.toLocaleString("en-IN")}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="text-slate-400 font-medium">Additional Charges</span>
+                    <span className="text-slate-700 font-bold">₹{invoice.additionalCharges.toLocaleString("en-IN")}</span>
+                  </div>
+                  {invoice.discount > 0 && (
+                    <div className="flex justify-between items-center text-xs">
+                      <span className="text-slate-400 font-medium">Discount Applied</span>
+                      <span className="text-emerald-600 font-bold">-₹{invoice.discount.toLocaleString("en-IN")}</span>
+                    </div>
+                  )}
                 </div>
-              )}
+
+                {/* Receipt Dashed Divider */}
+                <div className="border-t border-dashed border-slate-200 my-4" />
+
+                {/* Receipt Total */}
+                <div className="flex justify-between items-center">
+                  <div>
+                    <span className="block text-xs font-bold text-slate-400 uppercase tracking-wider">Total Amount</span>
+                    <span className="text-[10px] text-slate-400 mt-0.5">Inclusive of platform commission</span>
+                  </div>
+                  <span className="text-2xl font-black text-slate-900">₹{invoice.total.toLocaleString("en-IN")}</span>
+                </div>
+              </div>
+
+              {/* Receipt Footer Action */}
+              <div className="mt-5">
+                {invoice.paymentStatus === "pending" ? (
+                  <button
+                    onClick={handlePayOnline}
+                    disabled={actionLoading}
+                    className="w-full flex items-center justify-center gap-2 rounded-xl bg-[#00B761] hover:bg-[#009E52] py-3 text-sm font-bold text-white transition-all shadow-md shadow-[#00B761]/10 hover:shadow-lg disabled:opacity-50 cursor-pointer"
+                  >
+                    {actionLoading ? <Loader2 size={15} className="animate-spin" /> : <CreditCard size={15} />}
+                    Pay Online (₹{invoice.total.toLocaleString("en-IN")})
+                  </button>
+                ) : (
+                  <div className="flex items-center justify-center gap-2 rounded-xl border border-emerald-100 bg-emerald-50/30 p-3.5">
+                    <CheckCircle2 size={16} className="text-[#00B761]" />
+                    <span className="text-xs font-bold text-[#00B761]">
+                      Paid via {invoice.settlementMethod === "cash" ? "Cash" : "Online Checkout"}
+                    </span>
+                  </div>
+                )}
+              </div>
             </section>
           )}
         </div>
 
-        {/* Sidebar — timeline + meta */}
-        <aside className="space-y-5">
-          {/* Timeline */}
-          {order.statusHistory.length > 1 && (
-            <section className="rounded-[22px] border border-[var(--border)] bg-white p-5">
-              <h3 className="text-[14px] font-[800] text-[var(--text-primary)] mb-4">Timeline</h3>
-              <div className="relative space-y-4 pl-5 before:absolute before:left-[7px] before:top-2 before:bottom-2 before:w-[2px] before:bg-[var(--border-light)] before:rounded-full">
+        {/* Sidebar Info & Timeline */}
+        <aside className="space-y-6">
+          {/* Order Details */}
+          <section className="rounded-2xl border border-slate-100 bg-white p-5 shadow-2xs space-y-4">
+            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Order Details</h3>
+            <div className="space-y-4">
+              {[
+                { icon: MapPin, label: "Location", value: `${order.address.street ? order.address.street + ', ' : ''}${order.address.city}` },
+                ...(order.preferredDate ? [{ icon: Calendar, label: "Preferred Date", value: `${order.preferredDate} ${order.preferredTime || ""}` }] : []),
+                { icon: Clock, label: "Created Date", value: new Date(order.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" }) },
+              ].map((item, idx) => (
+                <div key={idx} className="flex gap-3">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-slate-50 text-slate-500 border border-slate-100">
+                    <item.icon size={13} className="text-[#00B761]" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{item.label}</p>
+                    <p className="mt-0.5 text-xs font-bold text-slate-800 line-clamp-2">{item.value}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {/* Timeline History */}
+          {order.statusHistory.length > 0 && (
+            <section className="rounded-2xl border border-slate-100 bg-white p-5 shadow-2xs">
+              <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">Activity Timeline</h3>
+              <div className="relative space-y-5 pl-5 before:absolute before:left-[6px] before:top-2 before:bottom-2 before:w-[1.5px] before:bg-slate-100">
                 {order.statusHistory.slice(-6).reverse().map((entry, i) => (
                   <div key={i} className="relative">
-                    <span className={`absolute -left-5 top-1 h-3 w-3 rounded-full ring-3 ring-white ${i === 0 ? "bg-[var(--primary)]" : "bg-[var(--border)]"}`} />
-                    <p className="text-[13px] font-semibold text-[var(--text-primary)] capitalize">{entry.status.replace(/_/g, " ")}</p>
-                    <p className="text-[11px] text-[var(--text-muted)]">{new Date(entry.at).toLocaleString("en-IN", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</p>
+                    {i === 0 ? (
+                      <span className="absolute -left-5 top-1 h-3.5 w-3.5 rounded-full bg-white ring-4 ring-[#E6F7F0] flex items-center justify-center">
+                        <span className="h-2 w-2 rounded-full bg-[#00B761] animate-pulse" />
+                      </span>
+                    ) : (
+                      <span className="absolute -left-5 top-1.5 h-2 w-2 rounded-full bg-slate-200 ring-4 ring-white" />
+                    )}
+                    <p className={`text-xs font-bold capitalize ${i === 0 ? "text-[#00B761]" : "text-slate-700"}`}>
+                      {entry.status.replace(/_/g, " ")}
+                    </p>
+                    <p className="text-[10px] text-slate-400 mt-0.5">
+                      {new Date(entry.at).toLocaleString("en-IN", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
+                    </p>
                   </div>
                 ))}
               </div>
             </section>
           )}
-
-          {/* Quick info */}
-          <section className="rounded-[22px] border border-[var(--border)] bg-white p-5 space-y-3.5">
-            <h3 className="text-[14px] font-[800] text-[var(--text-primary)]">Details</h3>
-            {[
-              { icon: MapPin, label: "Location", value: `${order.address.street}, ${order.address.city}` },
-              ...(order.preferredDate ? [{ icon: Calendar, label: "Date", value: `${order.preferredDate} ${order.preferredTime || ""}` }] : []),
-              { icon: Clock, label: "Created", value: new Date(order.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" }) },
-            ].map((item) => (
-              <div key={item.label} className="flex items-start gap-3">
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[var(--surface-3)]">
-                  <item.icon size={14} className="text-[var(--primary)]" />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-[11px] font-bold text-[var(--text-muted)] uppercase">{item.label}</p>
-                  <p className="text-[13px] font-semibold text-[var(--text-primary)] truncate">{item.value}</p>
-                </div>
-              </div>
-            ))}
-          </section>
         </aside>
       </div>
     </div>

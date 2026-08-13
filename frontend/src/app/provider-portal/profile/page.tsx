@@ -11,6 +11,7 @@ import { PasswordStrength } from "@/components/common/PasswordStrength";
 import { validatePasswordStrength } from "@/utils/validation";
 import { UI_MESSAGES } from "@/shared/messages";
 import { Camera, Mail, Phone, MapPin, Shield, CheckCircle2, Pencil, Eye, EyeOff, UserRound, Briefcase } from "lucide-react";
+import { getErrorMessage } from "@/utils/errorHandler";
 import toast from "react-hot-toast";
 
 export default function ProviderProfilePage() {
@@ -81,7 +82,7 @@ export default function ProviderProfilePage() {
       showSuccess(UI_MESSAGES.PASSWORD_UPDATED);
       toast.success(UI_MESSAGES.PASSWORD_UPDATED);
     } catch (err: unknown) {
-      toast.error(err?.response?.data?.message || "Failed to update password");
+      toast.error(getErrorMessage(err) || "Failed to update password");
     }
   };
 

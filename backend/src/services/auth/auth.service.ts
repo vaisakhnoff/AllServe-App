@@ -21,11 +21,11 @@ import { generateOtp } from "../../shared/utils/generateOtp";
 import { sendEmail } from "../../shared/utils/sendEmail";
 import { logger } from "../../shared/logger/logger";
 import { Role } from "../../shared/enums/role.enum";
-import { AuthUserPayload } from "../../shared/interfaces/AuthRequest";
+import { RefreshTokenPayload } from "../../shared/interfaces/AuthRequest";
 
 export class AuthService implements IAuthService {
     constructor(private repo: IAuthRepository) { }
-
+ 
     async signup(dto: SignupDto) {
         const existing = await this.repo.findByEmail(dto.email);
 
@@ -105,6 +105,7 @@ export class AuthService implements IAuthService {
 
     async login(dto: LoginDto, isOAuth: boolean = false, expectedRole: Role = Role.USER) {
         const user = await this.repo.findByEmail(dto.email);
+
         if (!user) {
             throw new UnauthorizedError(Messages.INVALID_CREDENTIALS);
         }
@@ -198,7 +199,7 @@ export class AuthService implements IAuthService {
             const tokenDoc = await this.repo.findRefreshToken(token);
             if (!tokenDoc) throw new UnauthorizedError(Messages.INVALID_TOKEN);
 
-            const decoded = jwt.verify(token, env.REFRESH_SECRET) as AuthUserPayload;
+            const decoded = jwt.verify(token, env.REFRESH_SECRET) as RefreshTokenPayload;
             const user = await this.repo.findById(decoded.id);
             if (!user) throw new NotFoundError(Messages.USER_NOT_FOUND);
 
@@ -207,6 +208,8 @@ export class AuthService implements IAuthService {
                 env.JWT_SECRET,
                 { expiresIn: ACCESS_TOKEN_EXPIRY }
             );
+
+        
 
             return { accessToken: newAccessToken };
         } catch (err) {
@@ -219,7 +222,7 @@ export class AuthService implements IAuthService {
         await this.repo.deleteRefreshToken(token);
     }
 
-    async findOrCreateOAuthUser(email: string, displayName: string): Promise<any> {
+    async findOrCreateOAuthUser(email: string, displayName: string) {
         let user = await this.repo.findByEmail(email);
 
         if (!user) {

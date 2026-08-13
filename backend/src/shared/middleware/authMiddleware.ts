@@ -1,7 +1,7 @@
 import jwt from "jsonwebtoken";
 import { NextFunction, Response } from "express";
 import { env } from "../../config/env";
-import { AuthRequest, AuthUserPayload } from "../interfaces/AuthRequest";
+import { AccessTokenPayload, AuthRequest } from "../interfaces/AuthRequest";
 import { AppError } from "../errors/AppError";
 import { Messages } from "../constants/messages";
 import { StatusCodes } from "../constants/statusCodes";
@@ -15,7 +15,7 @@ export const authMiddleware = async (req: AuthRequest, _res: Response, next: Nex
   if (!token) return next(new AppError(Messages.UNAUTHORIZED, StatusCodes.UNAUTHORIZED));
 
   try {
-    const decoded = jwt.verify(token, env.JWT_SECRET) as AuthUserPayload;
+    const decoded = jwt.verify(token, env.JWT_SECRET) as AccessTokenPayload;
 
     if (decoded.role === Role.PROVIDER) {
       const account = await ProviderAccountModel.findById(decoded.id).select("applicationStatus").lean();

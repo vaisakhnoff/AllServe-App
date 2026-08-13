@@ -456,12 +456,12 @@ export default function AdminApplicationsPage() {
               )}
 
               {/* Show existing rejection details for already-rejected apps */}
-              {reviewApp.applicationStatus === "rejected" && (reviewApp as unknown).rejectionReason && (
+              {reviewApp.applicationStatus === "rejected" && Boolean((reviewApp as unknown as Record<string, unknown>).rejectionReason) && (
                 <div className="rounded-2xl border border-red-200 bg-red-50 p-5">
                   <p className="text-xs font-bold uppercase tracking-wider text-red-500 mb-1">Rejection Decision</p>
-                  <p className="text-sm font-semibold text-red-800">{(reviewApp as unknown).rejectionReason}</p>
-                  {(reviewApp as unknown).adminRemarks && (
-                    <p className="mt-2 text-sm text-red-700 italic">&ldquo;{(reviewApp as unknown).adminRemarks}&rdquo;</p>
+                  <p className="text-sm font-semibold text-red-800">{String((reviewApp as unknown as Record<string, unknown>).rejectionReason)}</p>
+                  {Boolean((reviewApp as unknown as Record<string, unknown>).adminRemarks) && (
+                    <p className="mt-2 text-sm text-red-700 italic">&ldquo;{String((reviewApp as unknown as Record<string, unknown>).adminRemarks)}&rdquo;</p>
                   )}
                 </div>
               )}

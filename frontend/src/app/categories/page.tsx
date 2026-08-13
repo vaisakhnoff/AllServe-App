@@ -2,46 +2,29 @@
 
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { ArrowLeft, Search, ChevronLeft, ChevronRight } from "lucide-react";
+import { Search, ChevronLeft, ChevronRight, Layers, ArrowRight } from "lucide-react";
 import { categoryService } from "@/services/category";
 import { Category } from "@/types/category.types";
-
-const categoryGradients = [
-  "from-blue-500 to-cyan-400",
-  "from-violet-500 to-purple-400",
-  "from-amber-500 to-orange-400",
-  "from-emerald-500 to-teal-400",
-  "from-rose-500 to-pink-400",
-  "from-indigo-500 to-blue-400",
-];
-
+import { UserShell } from "@/components/layout/UserShell";
+import { useSelector } from "react-redux";
+import { RootState } from "@/store";
 const LIMIT = 20;
 
-const renderCategoryIcon = (category: Category) => {
-  if (!category.icon) return category.name.charAt(0).toUpperCase();
-  if (category.icon.startsWith("http") || category.icon.startsWith("/")) {
-    // eslint-disable-next-line @next/next/no-img-element
-    return <img src={category.icon} alt="" className="w-8 h-8 object-contain" />;
-  }
-  return category.icon;
-};
-
 export default function CategoriesPage() {
-  const router = useRouter();
   const [categories, setCategories] = useState<Category[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [loading, setLoading]       = useState(true);
+  const [searchQuery, setSearchQuery]   = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
-  const [page, setPage] = useState(1);
+  const [page, setPage]   = useState(1);
   const [total, setTotal] = useState(0);
+   const { isAuthenticated, isInitialized, role } = useSelector((state: RootState) => state.auth);
 
   const totalPages = Math.ceil(total / LIMIT);
 
   const fetchCategories = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await categoryService.getWithPagination(debouncedSearch || undefined, page, LIMIT);
+      const res  = await categoryService.getWithPagination(debouncedSearch || undefined, page, LIMIT);
       const data = res.data.data;
       setCategories(data.items);
       setTotal(data.total);
@@ -54,115 +37,275 @@ export default function CategoriesPage() {
   }, [debouncedSearch, page]);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setPage(1);
-      setDebouncedSearch(searchQuery.trim());
-    }, 300);
-    return () => clearTimeout(timer);
+    const t = setTimeout(() => { setPage(1); setDebouncedSearch(searchQuery.trim()); }, 300);
+    return () => clearTimeout(t);
   }, [searchQuery]);
 
-  useEffect(() => {
-    fetchCategories();
-  }, [fetchCategories]);
-
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-  };
+  useEffect(() => { fetchCategories(); }, [fetchCategories]);
 
   return (
-    <div className="min-h-screen bg-[var(--surface-2)]">
-      {/* Premium Hero Banner */}
-      <section className="relative overflow-hidden border-b border-slate-200/40">
-        <div className="absolute inset-0 bg-gradient-to-br from-purple-50/90 via-white to-violet-50/70" />
-        <div className="absolute top-[-100px] right-[-80px] w-[450px] h-[450px] bg-gradient-to-bl from-purple-200/25 to-transparent rounded-full blur-3xl" />
-        <div className="absolute bottom-[-40px] left-[-40px] w-[300px] h-[300px] bg-gradient-to-tr from-violet-200/20 to-transparent rounded-full blur-3xl" />
+    <UserShell>
+    <div style={{ display: "flex", flexDirection: "column", gap: 18, paddingBottom: 40, width: "100%" }}>
 
-        <div className="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <button onClick={() => router.back()} className="mb-4 inline-flex items-center gap-1.5 text-sm font-semibold text-slate-500 hover:text-[var(--primary)] transition-colors">
-            <ArrowLeft size={15} /> Back
-          </button>
+      {/* Breadcrumb */}
+      <nav style={{ display: "flex", alignItems: "center", gap: 5 }}>
+        <Link href={isAuthenticated ? "/dashboard" : "/"} style={{ fontSize: 11, fontWeight: 600, color: "#94A3B8", textDecoration: "none" }}>
+          Home
+        </Link>
+        <ChevronRight size={10} color="#CBD5E1" />
+        <span style={{ fontSize: 11, fontWeight: 700, color: "#1E293B" }}>All Categories</span>
+      </nav>
 
-          <h1 className="text-[clamp(1.75rem,4vw,2.5rem)] font-extrabold text-slate-900 leading-tight tracking-tight">
-            Explore <span className="bg-gradient-to-r from-[#6D28FF] to-[#A855F7] bg-clip-text text-transparent">every service</span>
+      {/* Header Banner */}
+      <section style={{
+        background: "#ffffff",
+        border: "1px solid #E9EFF6",
+        borderRadius: 16,
+        boxShadow: "0 1px 4px rgba(0,0,0,0.04), 0 4px 16px rgba(0,0,0,0.04)",
+        padding: "20px 24px",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        gap: 20,
+      }}>
+        <div>
+          <h1 style={{ fontSize: 22, fontWeight: 900, color: "#0F172A", letterSpacing: "-0.03em", margin: 0, lineHeight: 1.1 }}>
+            Explore All Categories
           </h1>
-          <p className="mt-2 text-slate-500 max-w-lg text-sm sm:text-base">{total} categories available • Pick a category to discover trusted professionals for the job.</p>
+          <p style={{ fontSize: 13, color: "#64748B", fontWeight: 500, marginTop: 6, lineHeight: 1.45 }}>
+            Discover verified professionals across all home, repair, and lifestyle service categories.
+          </p>
 
           {/* Search */}
-          <form onSubmit={handleSearch} className="mt-5 max-w-md">
-            <div className="relative">
-              <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search categories..."
-                className="w-full rounded-2xl border border-slate-200/80 bg-white pl-12 pr-4 py-3 text-sm font-medium outline-none focus:border-purple-400 focus:ring-4 focus:ring-purple-500/8 shadow-sm transition-all"
-              />
-            </div>
-          </form>
+          <div style={{ position: "relative", marginTop: 14, maxWidth: 320 }}>
+            <Search
+              size={14}
+              color="#94A3B8"
+              style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", pointerEvents: "none" }}
+            />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search categories..."
+              style={{
+                width: "100%",
+                paddingLeft: 34,
+                paddingRight: 14,
+                paddingTop: 8,
+                paddingBottom: 8,
+                fontSize: 12,
+                fontWeight: 500,
+                color: "#334155",
+                background: "#F8FAFC",
+                border: "1px solid #E2E8F0",
+                borderRadius: 999,
+                outline: "none",
+                fontFamily: "inherit",
+              }}
+            />
+          </div>
+        </div>
+
+        {/* Right icon */}
+        <div style={{
+          width: 72,
+          height: 72,
+          borderRadius: 14,
+          background: "#F0FDF4",
+          color: "#059669",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          flexShrink: 0,
+        }}>
+          <Layers size={32} />
         </div>
       </section>
 
       {/* Grid */}
-      <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <section>
         {loading ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-            {Array.from({ length: 10 }).map((_, i) => (
-              <div key={i} className="bg-white rounded-[16px] border border-slate-100 p-5 flex flex-col items-center gap-3">
-                <div className="w-14 h-14 rounded-2xl skeleton" />
-                <div className="w-20 h-3.5 rounded-lg skeleton" />
+          /* Skeleton */
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0,1fr))", gap: 12 }}>
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div
+                key={i}
+                style={{
+                  background: "#ffffff",
+                  border: "1px solid #EEF2F7",
+                  borderRadius: 12,
+                  padding: "14px",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 10,
+                }}
+              >
+                <div className="skeleton" style={{ width: 38, height: 38, borderRadius: 10 }} />
+                <div className="skeleton" style={{ width: "60%", height: 13, borderRadius: 6 }} />
+                <div className="skeleton" style={{ width: "85%", height: 11, borderRadius: 6 }} />
               </div>
             ))}
           </div>
         ) : categories.length === 0 ? (
-          <div className="rounded-[18px] border-2 border-dashed border-slate-200 bg-white p-10 text-center">
-            <div className="w-16 h-16 rounded-2xl bg-purple-50 flex items-center justify-center mx-auto mb-4">
-              <Search size={24} className="text-purple-400" />
-            </div>
-            <p className="font-bold text-slate-600 text-lg">No categories found</p>
-            <p className="text-sm text-slate-400 mt-1">Try a different search term</p>
+          <div style={{
+            background: "#ffffff",
+            border: "1px dashed #CBD5E1",
+            borderRadius: 16,
+            padding: "48px 24px",
+            textAlign: "center",
+          }}>
+            <Search size={28} color="#CBD5E1" style={{ margin: "0 auto 8px" }} />
+            <p style={{ fontSize: 14, fontWeight: 700, color: "#475569", margin: 0 }}>No categories found</p>
+            <p style={{ fontSize: 12, color: "#94A3B8", marginTop: 4 }}>
+              Try searching for &quot;Plumbing&quot;, &quot;Electrician&quot; or &quot;Cleaning&quot;
+            </p>
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 stagger">
-              {categories.map((category, i) => (
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0,1fr))", gap: 12 }}>
+              {categories.map((cat) => (
                 <Link
-                  key={category._id}
-                  href={`/categories/${category._id}`}
-                  className="group bg-white rounded-[16px] border border-slate-100/80 p-5 flex flex-col items-center gap-3 hover:shadow-[0_20px_60px_rgba(109,40,255,0.08)] hover:-translate-y-1 hover:border-purple-200/60 transition-all duration-300"
+                  key={cat._id}
+                  href={`/categories/${cat._id}`}
+                  style={{ textDecoration: "none", color: "inherit", display: "flex" }}
                 >
-                  <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${categoryGradients[i % categoryGradients.length]} flex items-center justify-center text-white text-xl font-extrabold shadow-lg group-hover:scale-110 group-hover:shadow-xl transition-all duration-300`}>
-                    {renderCategoryIcon(category)}
+                  <div
+                    style={{
+                      background: "#ffffff",
+                      border: "1px solid #EEF2F7",
+                      borderRadius: 12,
+                      padding: "14px 14px 12px",
+                      display: "flex",
+                      flexDirection: "column",
+                      justifyContent: "space-between",
+                      width: "100%",
+                      boxShadow: "0 1px 3px rgba(0,0,0,0.03)",
+                      cursor: "pointer",
+                      transition: "transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform = "translateY(-3px)";
+                      e.currentTarget.style.boxShadow = "0 6px 20px rgba(0,0,0,0.07)";
+                      e.currentTarget.style.borderColor = "#D1FAE5";
+                      const name = e.currentTarget.querySelector(".cat-name") as HTMLElement;
+                      if (name) name.style.color = "#059669";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = "";
+                      e.currentTarget.style.boxShadow = "0 1px 3px rgba(0,0,0,0.03)";
+                      e.currentTarget.style.borderColor = "#EEF2F7";
+                      const name = e.currentTarget.querySelector(".cat-name") as HTMLElement;
+                      if (name) name.style.color = "#0F172A";
+                    }}
+                  >
+                    <div>
+                      {/* Icon box */}
+                      <div style={{
+                        width: 38,
+                        height: 38,
+                        borderRadius: 10,
+                        background: "#F0FDF4",
+                        color: "#059669",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        marginBottom: 10,
+                        overflow: "hidden",
+                        padding: cat.icon && (cat.icon.startsWith("http") || cat.icon.startsWith("/")) ? 4 : 0,
+                      }}>
+                        {cat.icon && (cat.icon.startsWith("http") || cat.icon.startsWith("/")) ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={cat.icon} alt={cat.name} style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+                        ) : (
+                          <Layers size={18} />
+                        )}
+                      </div>
+
+                      <h3
+                        className="cat-name"
+                        style={{
+                          fontSize: 13,
+                          fontWeight: 700,
+                          color: "#0F172A",
+                          lineHeight: 1.3,
+                          margin: 0,
+                          transition: "color 0.15s ease",
+                        }}
+                      >
+                        {cat.name}
+                      </h3>
+                      <p style={{
+                        fontSize: 11.5,
+                        color: "#94A3B8",
+                        fontWeight: 500,
+                        marginTop: 4,
+                        lineHeight: 1.4,
+                        overflow: "hidden",
+                        display: "-webkit-box",
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: "vertical",
+                      }}>
+                        {cat.description || "Professional service providers available"}
+                      </p>
+                    </div>
+
+                    {/* Footer */}
+                    <div style={{
+                      marginTop: 10,
+                      paddingTop: 9,
+                      borderTop: "1px solid #F1F5F9",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                    }}>
+                      <span style={{ fontSize: 11, fontWeight: 600, color: "#94A3B8" }}>
+                        {cat.subcategories?.length || 0} subcategories
+                      </span>
+                      <ArrowRight size={12} color="#10B981" />
+                    </div>
                   </div>
-                  <span className="text-sm font-bold text-slate-800 text-center leading-snug group-hover:text-[var(--primary)] transition-colors">
-                    {category.name}
-                  </span>
-                  {category.subcategories && category.subcategories.length > 0 && (
-                    <span className="text-[11px] font-semibold text-slate-400 bg-slate-50 px-2.5 py-0.5 rounded-full">{category.subcategories.length} services</span>
-                  )}
                 </Link>
               ))}
             </div>
 
             {/* Pagination */}
             {totalPages > 1 && (
-              <div className="mt-8 flex items-center justify-center gap-3">
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 12, marginTop: 24 }}>
                 <button
                   onClick={() => setPage(Math.max(1, page - 1))}
                   disabled={page === 1}
-                  className="p-2 rounded-lg border border-slate-200 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50 transition"
+                  style={{
+                    padding: "6px 10px",
+                    border: "1px solid #E2E8F0",
+                    borderRadius: 8,
+                    background: "#fff",
+                    cursor: page === 1 ? "not-allowed" : "pointer",
+                    opacity: page === 1 ? 0.4 : 1,
+                    display: "flex",
+                    alignItems: "center",
+                  }}
                 >
-                  <ChevronLeft size={18} />
+                  <ChevronLeft size={15} color="#475569" />
                 </button>
-                <span className="text-sm font-medium text-slate-600">
+                <span style={{ fontSize: 12, fontWeight: 700, color: "#475569" }}>
                   Page {page} of {totalPages}
                 </span>
                 <button
                   onClick={() => setPage(Math.min(totalPages, page + 1))}
                   disabled={page === totalPages}
-                  className="p-2 rounded-lg border border-slate-200 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50 transition"
+                  style={{
+                    padding: "6px 10px",
+                    border: "1px solid #E2E8F0",
+                    borderRadius: 8,
+                    background: "#fff",
+                    cursor: page === totalPages ? "not-allowed" : "pointer",
+                    opacity: page === totalPages ? 0.4 : 1,
+                    display: "flex",
+                    alignItems: "center",
+                  }}
                 >
-                  <ChevronRight size={18} />
+                  <ChevronRight size={15} color="#475569" />
                 </button>
               </div>
             )}
@@ -170,5 +313,6 @@ export default function CategoriesPage() {
         )}
       </section>
     </div>
+  </UserShell>
   );
 }

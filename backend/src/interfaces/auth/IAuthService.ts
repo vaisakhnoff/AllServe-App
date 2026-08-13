@@ -11,6 +11,8 @@ export interface IUserSafe {
   isVerified: boolean;
 }
 
+
+
 export interface IAuthService {
   signup(dto: SignupDto): Promise<{ message: string }>;
   verifyOtp(email: string, otp: string, phone?: string, phoneOtp?: string): Promise<{ message: string }>;

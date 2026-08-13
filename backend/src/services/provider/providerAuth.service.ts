@@ -17,7 +17,7 @@ import { Role } from "../../shared/enums/role.enum";
 import { AppError } from "../../shared/errors/AppError";
 import { NotFoundError, BadRequestError, UnauthorizedError } from "../../shared/errors/HttpErrors";
 import { ApplicationStatus } from "../../shared/enums/application-status.enum";
-import { AuthUserPayload } from "../../shared/interfaces/AuthRequest";
+import { RefreshTokenPayload } from "../../shared/interfaces/AuthRequest";
 import { OTPModel } from "../../models/otp.model";
 import { TokenModel } from "../../models/token.model";
 import { ProviderSignupDto, ProviderLoginDto } from "../../dto/provider/providerAuth.dto";
@@ -133,7 +133,7 @@ export class ProviderAuthService implements IProviderAuthService {
     try {
       const tokenDoc = await TokenModel.findOne({ token });
       if (!tokenDoc) throw new UnauthorizedError(Messages.INVALID_TOKEN);
-      const decoded = jwt.verify(token, env.REFRESH_SECRET) as AuthUserPayload;
+      const decoded = jwt.verify(token, env.REFRESH_SECRET) as RefreshTokenPayload;
       const account = await this.repo.findById(decoded.id);
       if (!account) throw new NotFoundError(Messages.PROVIDER_ACCOUNT_NOT_FOUND);
       const newAccessToken = jwt.sign(

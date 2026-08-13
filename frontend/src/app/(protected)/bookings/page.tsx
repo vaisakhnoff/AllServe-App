@@ -1,16 +1,18 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import {
   Loader2, Calendar, MapPin, Clock, ArrowUpRight, Package, Zap,
-  ChevronRight, Ban, X,
+  ChevronRight, Ban, X, Search, Filter, MessageSquare, CheckCircle2,
+  AlertCircle, ShieldCheck, CreditCard, Sparkles, User, RefreshCw,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { orderService } from "@/services/order";
 import { ServiceOrder, OrderDeliveryModel } from "@/types/order.types";
 import { getErrorMessage } from "@/utils/errorHandler";
+import { UserShell } from "@/components/layout/UserShell";
 
 // ── Drop Reason Modal ─────────────────────────────────────────────────────────
 function DropModal({
@@ -27,17 +29,17 @@ function DropModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm px-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs px-4"
       onClick={onClose}
     >
       <div
-        className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl"
+        className="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl border border-slate-100"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-start justify-between mb-4">
           <div>
-            <h3 className="text-lg font-[800] text-slate-900">Drop Service</h3>
-            <p className="mt-1 text-sm text-slate-500">Please tell us why you&apos;re dropping this service.</p>
+            <h3 className="text-lg font-black text-slate-950">Cancel & Drop Service</h3>
+            <p className="mt-1 text-xs text-slate-500">Please provide a reason for cancelling this request.</p>
           </div>
           <button
             onClick={onClose}
@@ -52,18 +54,18 @@ function DropModal({
           value={reason}
           onChange={(e) => { setReason(e.target.value); setError(""); }}
           rows={3}
-          placeholder="Why do you want to drop this service?"
-          className={`w-full rounded-xl border px-4 py-3 text-sm outline-none resize-none transition focus:ring-2 focus:ring-red-100 ${
-            error ? "border-red-300 bg-red-50" : "border-slate-200 focus:border-red-400"
+          placeholder="Briefly state your reason..."
+          className={`w-full rounded-2xl border px-4 py-3 text-xs outline-none resize-none transition focus:ring-2 focus:ring-rose-100 ${
+            error ? "border-rose-300 bg-rose-50" : "border-slate-200 focus:border-rose-400"
           }`}
         />
-        {error && <p className="mt-1 text-xs font-medium text-red-500">{error}</p>}
+        {error && <p className="mt-1 text-xs font-medium text-rose-500">{error}</p>}
 
-        <div className="flex gap-3 mt-4">
+        <div className="flex gap-3 mt-5">
           <button
             onClick={onClose}
             disabled={loading}
-            className="flex-1 rounded-xl border border-slate-200 py-2.5 text-sm font-bold text-slate-600 hover:bg-slate-50 disabled:opacity-50"
+            className="flex-1 rounded-xl border border-slate-200 py-3 text-xs font-extrabold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
           >
             Cancel
           </button>
@@ -73,10 +75,10 @@ function DropModal({
               onConfirm(reason.trim());
             }}
             disabled={loading}
-            className="flex-1 rounded-xl bg-red-600 py-2.5 text-sm font-bold text-white hover:bg-red-700 disabled:opacity-50 flex items-center justify-center gap-2"
+            className="flex-1 rounded-xl bg-rose-600 py-3 text-xs font-extrabold text-white hover:bg-rose-700 disabled:opacity-50 flex items-center justify-center gap-2 shadow-md shadow-rose-600/20"
           >
             {loading && <Loader2 size={14} className="animate-spin" />}
-            Drop Service
+            Confirm Drop
           </button>
         </div>
       </div>
@@ -84,57 +86,42 @@ function DropModal({
   );
 }
 
-// ── Status & model config ─────────────────────────────────────────────────────
+// ── Status Config ─────────────────────────────────────────────────────────────
 const STATUS_CONFIG: Record<string, { label: string; dot: string; bg: string }> = {
-  awaiting_provider_response: { label: "Waiting for provider", dot: "bg-amber-400", bg: "bg-amber-50 text-amber-700" },
-  accepted: { label: "Accepted", dot: "bg-emerald-400", bg: "bg-emerald-50 text-emerald-700" },
-  in_progress: { label: "In progress", dot: "bg-blue-500", bg: "bg-blue-50 text-blue-700" },
-  work_completed: { label: "Work done", dot: "bg-violet-400", bg: "bg-violet-50 text-violet-700" },
-  rejected_by_provider: { label: "Rejected", dot: "bg-red-400", bg: "bg-red-50 text-red-600" },
-  provider_unresponsive: { label: "No response", dot: "bg-slate-400", bg: "bg-slate-100 text-slate-600" },
-  awaiting_payment: { label: "Invoice ready", dot: "bg-blue-400", bg: "bg-blue-50 text-blue-700" },
-  completed: { label: "Completed", dot: "bg-emerald-400", bg: "bg-emerald-50 text-emerald-700" },
-  cancelled: { label: "Cancelled", dot: "bg-slate-300", bg: "bg-slate-100 text-slate-500" },
-  cancelled_with_refund: { label: "Refunded", dot: "bg-slate-300", bg: "bg-slate-100 text-slate-500" },
-  inspection_accepted: { label: "Inspection scheduled", dot: "bg-sky-400", bg: "bg-sky-50 text-sky-700" },
-  inspection_completed: { label: "Inspection done", dot: "bg-teal-400", bg: "bg-teal-50 text-teal-700" },
-  quotation_submitted: { label: "Quote received", dot: "bg-indigo-400", bg: "bg-indigo-50 text-indigo-700" },
-  quotation_accepted: { label: "Quote accepted", dot: "bg-emerald-400", bg: "bg-emerald-50 text-emerald-700" },
-  dropped_by_provider: { label: "Dropped by provider", dot: "bg-red-300", bg: "bg-red-50 text-red-600" },
-  dropped_by_customer: { label: "Dropped", dot: "bg-slate-300", bg: "bg-slate-100 text-slate-500" },
-  awaiting_advance: { label: "Advance pending", dot: "bg-amber-400", bg: "bg-amber-50 text-amber-700" },
-  awaiting_final_payment: { label: "Payment pending", dot: "bg-indigo-400", bg: "bg-indigo-50 text-indigo-700" },
-  expired: { label: "Expired", dot: "bg-slate-300", bg: "bg-slate-100 text-slate-500" },
+  awaiting_provider_response: { label: "Waiting for provider", dot: "bg-amber-400 animate-pulse", bg: "bg-amber-50 text-amber-800 border border-amber-200" },
+  accepted: { label: "Provider Accepted", dot: "bg-emerald-500", bg: "bg-emerald-50 text-emerald-800 border border-emerald-200" },
+  in_progress: { label: "Work In Progress", dot: "bg-indigo-500 animate-pulse", bg: "bg-indigo-50 text-indigo-800 border border-indigo-200" },
+  work_completed: { label: "Work Done - Pending Invoice", dot: "bg-violet-500", bg: "bg-violet-50 text-violet-800 border border-violet-200" },
+  rejected_by_provider: { label: "Request Declined", dot: "bg-rose-500", bg: "bg-rose-50 text-rose-700 border border-rose-200" },
+  provider_unresponsive: { label: "No Provider Response", dot: "bg-slate-400", bg: "bg-slate-100 text-slate-700 border border-slate-200" },
+  awaiting_payment: { label: "Payment Invoice Ready", dot: "bg-emerald-500 animate-bounce", bg: "bg-emerald-100 text-emerald-900 border border-emerald-300" },
+  completed: { label: "Completed & Paid", dot: "bg-emerald-500", bg: "bg-emerald-50 text-emerald-800 border border-emerald-200" },
+  cancelled: { label: "Cancelled", dot: "bg-slate-300", bg: "bg-slate-100 text-slate-600" },
+  cancelled_with_refund: { label: "Cancelled (Refunded)", dot: "bg-slate-300", bg: "bg-slate-100 text-slate-600" },
+  inspection_accepted: { label: "Inspection Scheduled", dot: "bg-sky-500", bg: "bg-sky-50 text-sky-800 border border-sky-200" },
+  inspection_completed: { label: "Inspection Completed", dot: "bg-teal-500", bg: "bg-teal-50 text-teal-800 border border-teal-200" },
+  quotation_submitted: { label: "Quotation Received", dot: "bg-indigo-500", bg: "bg-indigo-50 text-indigo-800 border border-indigo-200" },
+  quotation_accepted: { label: "Quote Accepted", dot: "bg-emerald-500", bg: "bg-emerald-50 text-emerald-800 border border-emerald-200" },
+  dropped_by_provider: { label: "Dropped by Provider", dot: "bg-rose-400", bg: "bg-rose-50 text-rose-700 border border-rose-200" },
+  dropped_by_customer: { label: "Cancelled by You", dot: "bg-slate-300", bg: "bg-slate-100 text-slate-600" },
 };
 
-const MODEL_LABELS: Record<OrderDeliveryModel, { label: string; emoji: string }> = {
-  direct: { label: "Direct", emoji: "⚡" },
-  inspection_required: { label: "Inspection", emoji: "🔍" },
-  custom: { label: "Custom", emoji: "📋" },
-};
-
-const STATUS_FILTERS = [
-  { value: "", label: "All" },
-  { value: "awaiting_provider_response,accepted,inspection_accepted,inspection_completed,quotation_submitted,quotation_accepted", label: "Waiting" },
+const STATUS_TABS = [
+  { value: "", label: "All Bookings" },
+  { value: "awaiting_provider_response,accepted,inspection_accepted,inspection_completed,quotation_submitted,quotation_accepted", label: "Waiting / Accepted" },
   { value: "in_progress", label: "In Progress" },
-  { value: "work_completed,awaiting_payment", label: "Pay Now" },
+  { value: "work_completed,awaiting_payment", label: "Ready for Payment" },
   { value: "completed", label: "Completed" },
   { value: "cancelled,cancelled_with_refund,dropped_by_provider,dropped_by_customer,rejected_by_provider,provider_unresponsive", label: "Cancelled" },
 ];
 
-const MODEL_FILTERS: { value: OrderDeliveryModel | ""; label: string; emoji: string }[] = [
-  { value: "", label: "All Types", emoji: "📦" },
-  { value: "direct", label: "Direct", emoji: "⚡" },
-  { value: "inspection_required", label: "Inspection", emoji: "🔍" },
-  { value: "custom", label: "Custom", emoji: "📋" },
-];
-
-export default function BookingsPage() {
+export default function CustomerBookingsPage() {
   const [orders, setOrders] = useState<ServiceOrder[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState("");
   const [modelFilter, setModelFilter] = useState<OrderDeliveryModel | "">("");
+  const [searchTerm, setSearchTerm] = useState("");
   const [page, setPage] = useState(1);
 
   // Drop modal state
@@ -150,14 +137,28 @@ export default function BookingsPage() {
         page,
         limit: 20,
       });
-      setOrders(res.data.data.items);
+
+      let items = res.data.data.items || [];
+
+      if (searchTerm.trim()) {
+        const term = searchTerm.toLowerCase();
+        items = items.filter(
+          (o) =>
+            o.title?.toLowerCase().includes(term) ||
+            o.description.toLowerCase().includes(term) ||
+            o.orderId.toLowerCase().includes(term) ||
+            o.address?.city?.toLowerCase().includes(term)
+        );
+      }
+
+      setOrders(items);
       setTotal(res.data.data.total);
     } catch (err) {
       toast.error(getErrorMessage(err) || "Failed to load bookings");
     } finally {
       setLoading(false);
     }
-  }, [statusFilter, modelFilter, page]);
+  }, [statusFilter, modelFilter, searchTerm, page]);
 
   useEffect(() => { fetchOrders(); }, [fetchOrders]);
 
@@ -166,7 +167,7 @@ export default function BookingsPage() {
     setDropLoading(true);
     try {
       await orderService.dropByCustomer(dropOrderId, reason);
-      toast.success("Service dropped");
+      toast.success("Service request cancelled");
       setDropOrderId(null);
       fetchOrders();
     } catch (err) {
@@ -177,179 +178,229 @@ export default function BookingsPage() {
   };
 
   return (
-    <div className="pb-12">
-      {/* Header */}
-      <div className="mb-7 flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h1 className="text-[2rem] font-[800] tracking-[-0.03em] text-[var(--text-primary)]">My Bookings</h1>
-          <p className="mt-1 text-[15px] text-[var(--text-secondary)]">{total} orders</p>
-        </div>
-        <Link
-          href="/dashboard"
-          className="group inline-flex items-center gap-2 rounded-full bg-[#141414] py-2.5 pl-5 pr-2.5 text-sm font-bold text-white transition hover:bg-black"
-        >
-          <Zap size={14} /> New booking
-          <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[var(--primary)] text-white transition group-hover:rotate-[-45deg]">
-            <ArrowUpRight size={13} />
-          </span>
-        </Link>
-      </div>
-
-      {/* Status filter pills */}
-      <div className="mb-3 flex flex-wrap gap-2">
-        {STATUS_FILTERS.map((s) => (
-          <button
-            key={s.value || "all"}
-            onClick={() => { setStatusFilter(s.value); setPage(1); }}
-            className={`rounded-full px-4 py-2 text-[13px] font-semibold transition ${
-              statusFilter === s.value
-                ? "bg-[#141414] text-white shadow-sm"
-                : "bg-white border border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--text-muted)]"
-            }`}
-          >
-            {s.label}
-          </button>
-        ))}
-      </div>
-
-      {/* Delivery model filter pills */}
-      <div className="mb-6 flex flex-wrap gap-2">
-        {MODEL_FILTERS.map((m) => (
-          <button
-            key={m.value || "all"}
-            onClick={() => { setModelFilter(m.value); setPage(1); }}
-            className={`rounded-full px-4 py-2 text-[13px] font-semibold transition ${
-              modelFilter === m.value
-                ? "bg-indigo-600 text-white shadow-sm"
-                : "bg-white border border-[var(--border)] text-[var(--text-secondary)] hover:border-indigo-200"
-            }`}
-          >
-            {m.emoji} {m.label}
-          </button>
-        ))}
-      </div>
-
-      {/* Content */}
-      {loading ? (
-        <div className="flex h-60 items-center justify-center">
-          <Loader2 size={28} className="animate-spin text-[var(--primary)]" />
-        </div>
-      ) : orders.length === 0 ? (
-        <div className="flex flex-col items-center py-20 text-center">
-          <div className="mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-[var(--surface-3)]">
-            <Package size={32} className="text-[var(--text-muted)]" />
+    <UserShell>
+      <div className="pb-16 max-w-5xl mx-auto">
+        {/* ── Page Header ─────────────────────────────────────────────── */}
+        <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <p className="text-xs font-extrabold uppercase tracking-wider text-emerald-600">
+              Customer Portal
+            </p>
+            <h1 className="mt-1 text-3xl font-black tracking-tight text-slate-950">
+              My Bookings & Orders
+            </h1>
+            <p className="mt-1 text-sm text-slate-500">
+              Track status, pay invoices, and communicate with service professionals.
+            </p>
           </div>
-          <p className="text-xl font-bold text-[var(--text-primary)]">No bookings yet</p>
-          <p className="mt-1.5 max-w-sm text-sm text-[var(--text-muted)]">Browse services to make your first request</p>
-          <Link href="/dashboard" className="mt-5 inline-flex rounded-full bg-[#141414] px-6 py-3 text-sm font-bold text-white hover:bg-black">
-            Browse Services
+
+          <Link
+            href="/dashboard"
+            className="group inline-flex items-center gap-2 rounded-2xl bg-emerald-600 hover:bg-emerald-700 px-5 py-3 text-xs font-black text-white shadow-lg shadow-emerald-600/20 transition-all"
+          >
+            <Zap size={15} />
+            Book New Service
+            <ArrowUpRight size={14} className="transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
           </Link>
         </div>
-      ) : (
-        <div className="space-y-3">
-          {orders.map((order, i) => {
-            const statusCfg = STATUS_CONFIG[order.status] || { label: order.status, dot: "bg-slate-300", bg: "bg-slate-50 text-slate-600" };
-            const model = MODEL_LABELS[order.deliveryModel];
-            const needsChoice = ["rejected_by_provider", "provider_unresponsive"].includes(order.status);
-            const canDrop = ["awaiting_provider_response", "inspection_accepted", "inspection_completed", "quotation_submitted"].includes(order.status) && order.deliveryModel === "inspection_required";
-            const hasPayment = order.status === "awaiting_payment";
 
-            return (
-              <motion.div
-                key={order._id}
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.03 * i, duration: 0.25 }}
-              >
-                <Link href={`/bookings/${order._id}`} className="block">
-                  <div className={`group rounded-2xl border bg-white p-5 transition-all hover:-translate-y-0.5 hover:shadow-lg ${
-                    needsChoice ? "border-amber-200 bg-amber-50/30" : hasPayment ? "border-indigo-200 bg-indigo-50/20" : "border-[var(--border)]"
-                  }`}>
-                    {/* Top row */}
-                    <div className="flex items-start justify-between gap-3 mb-3">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="text-[11px] font-mono text-[var(--text-muted)]">{order.orderId}</span>
-                        <span className="text-[11px] font-bold text-slate-500">{model.emoji} {model.label}</span>
+        {/* ── Filter Tabs & Search ───────────────────────────────────── */}
+        <div className="mb-6 space-y-4">
+          {/* Status Tabs */}
+          <div className="flex items-center gap-1 overflow-x-auto pb-1">
+            {STATUS_TABS.map((s) => {
+              const active = statusFilter === s.value;
+              return (
+                <button
+                  key={s.value || "all"}
+                  onClick={() => { setStatusFilter(s.value); setPage(1); }}
+                  className={`shrink-0 rounded-2xl px-4 py-2.5 text-xs font-extrabold transition-all ${
+                    active
+                      ? "bg-slate-950 text-white shadow-md"
+                      : "bg-white border border-slate-200 text-slate-600 hover:border-slate-300 hover:bg-slate-50"
+                  }`}
+                >
+                  {s.label}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Search bar */}
+          <div className="relative">
+            <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Search by service title, order ID, or city..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full rounded-2xl border border-slate-200 bg-white py-3 pl-11 pr-4 text-xs font-semibold outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 shadow-2xs"
+            />
+          </div>
+        </div>
+
+        {/* ── Bookings List Content ───────────────────────────────────── */}
+        {loading ? (
+          <div className="flex h-64 items-center justify-center rounded-3xl border border-slate-100 bg-white shadow-2xs">
+            <Loader2 size={32} className="animate-spin text-emerald-600" />
+          </div>
+        ) : orders.length === 0 ? (
+          <div className="rounded-3xl border border-dashed border-slate-200 bg-white p-12 text-center shadow-xs">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600 mb-4">
+              <Package size={32} />
+            </div>
+            <h3 className="text-lg font-black text-slate-950">No Bookings Found</h3>
+            <p className="mt-1 text-xs text-slate-500 max-w-sm mx-auto">
+              You don&apos;t have any active bookings matching this filter.
+            </p>
+            <Link
+              href="/dashboard"
+              className="mt-5 inline-flex items-center gap-2 rounded-2xl bg-slate-950 hover:bg-slate-800 px-5 py-3 text-xs font-extrabold text-white shadow-md"
+            >
+              Explore Available Services
+            </Link>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {orders.map((order, i) => {
+              const statusCfg = STATUS_CONFIG[order.status] || {
+                label: order.status,
+                dot: "bg-slate-300",
+                bg: "bg-slate-50 text-slate-700",
+              };
+
+              const isPayable = order.status === "awaiting_payment";
+              const canDrop = ["awaiting_provider_response", "inspection_accepted", "inspection_completed", "quotation_submitted"].includes(order.status);
+              const providerName = typeof order.providerId === "object" ? order.providerId.name : null;
+
+              return (
+                <motion.div
+                  key={order._id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.03 * i, duration: 0.2 }}
+                  className={`rounded-3xl border bg-white p-5 sm:p-6 transition-all duration-200 hover:shadow-lg ${
+                    isPayable
+                      ? "border-emerald-300 ring-2 ring-emerald-400/20 bg-gradient-to-r from-emerald-50/40 via-white to-white"
+                      : "border-slate-200/80"
+                  }`}
+                >
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    {/* Main details */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex flex-wrap items-center gap-2 mb-2">
+                        <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-extrabold ${statusCfg.bg}`}>
+                          <span className={`h-2 w-2 rounded-full ${statusCfg.dot}`} />
+                          {statusCfg.label}
+                        </span>
+                        <span className="text-[11px] font-mono font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded-md">
+                          #{order.orderId || order._id.slice(-6)}
+                        </span>
                       </div>
-                      <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-bold ${statusCfg.bg}`}>
-                        <span className={`h-1.5 w-1.5 rounded-full ${statusCfg.dot}`} />
-                        {statusCfg.label}
-                      </span>
+
+                      <Link href={`/bookings/${order._id}`} className="group block">
+                        <h3 className="text-base font-black text-slate-950 group-hover:text-emerald-600 transition-colors leading-snug">
+                          {order.title || order.description.slice(0, 90)}
+                        </h3>
+                      </Link>
+
+                      <p className="mt-1 text-xs text-slate-500 line-clamp-2 leading-relaxed">
+                        {order.description}
+                      </p>
+
+                      {/* Metas */}
+                      <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs font-semibold text-slate-600 pt-3 border-t border-slate-100">
+                        {providerName && (
+                          <span className="flex items-center gap-1.5 text-slate-900 font-bold">
+                            <User size={13} className="text-emerald-600" />
+                            {providerName}
+                          </span>
+                        )}
+
+                        {order.address && (
+                          <span className="flex items-center gap-1 text-slate-500">
+                            <MapPin size={13} className="text-slate-400" />
+                            {order.address.city}, {order.address.state}
+                          </span>
+                        )}
+
+                        {order.preferredDate && (
+                          <span className="flex items-center gap-1 text-slate-700 font-bold">
+                            <Calendar size={13} className="text-indigo-600" />
+                            {order.preferredDate} {order.preferredTime ? `(${order.preferredTime})` : ""}
+                          </span>
+                        )}
+                      </div>
                     </div>
 
-                    {/* Title */}
-                    <h3 className="text-[15px] font-bold text-[var(--text-primary)] line-clamp-1 group-hover:text-[var(--primary)] transition-colors">
-                      {order.title || order.description.slice(0, 80)}
-                    </h3>
+                    {/* Actions */}
+                    <div className="flex flex-row md:flex-col items-center md:items-end justify-between gap-3 pt-3 md:pt-0 border-t md:border-t-0 border-slate-100 shrink-0">
+                      {isPayable && (
+                        <Link
+                          href={`/bookings/${order._id}`}
+                          className="flex items-center gap-1.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 px-4 py-2.5 text-xs font-black text-white shadow-lg shadow-emerald-600/20 transition-all animate-pulse"
+                        >
+                          <CreditCard size={14} /> Pay Invoice <ChevronRight size={13} />
+                        </Link>
+                      )}
 
-                    {/* Meta */}
-                    <div className="mt-2 flex flex-wrap items-center gap-4 text-[11px] text-[var(--text-muted)]">
-                      <span className="flex items-center gap-1"><MapPin size={11} /> {order.address.city}, {order.address.state}</span>
-                      {order.preferredDate && <span className="flex items-center gap-1"><Calendar size={11} /> {order.preferredDate}</span>}
-                      <span className="flex items-center gap-1"><Clock size={11} /> {new Date(order.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</span>
+                      <div className="flex items-center gap-2">
+                        {canDrop && (
+                          <button
+                            onClick={() => setDropOrderId(order._id)}
+                            className="flex items-center gap-1 rounded-xl border border-rose-200 bg-rose-50 hover:bg-rose-100 px-3 py-2 text-xs font-bold text-rose-600 transition-all"
+                          >
+                            <Ban size={13} /> Drop Request
+                          </button>
+                        )}
+
+                        <Link
+                          href={`/bookings/${order._id}`}
+                          className="flex items-center gap-1 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 px-3.5 py-2 text-xs font-bold text-slate-800 transition-all"
+                        >
+                          View Order <ChevronRight size={13} />
+                        </Link>
+                      </div>
                     </div>
-
-                    {/* Action hints */}
-                    {needsChoice && (
-                      <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 p-3 text-[12px] font-semibold text-amber-700">
-                        Provider didn&apos;t respond — tap to choose another provider or cancel
-                      </div>
-                    )}
-                    {hasPayment && (
-                      <div className="mt-3 rounded-xl border border-indigo-200 bg-indigo-50 p-3 text-[12px] font-semibold text-indigo-700 flex items-center justify-between">
-                        <span>Invoice ready — tap to pay</span>
-                        <ChevronRight size={14} />
-                      </div>
-                    )}
                   </div>
-                </Link>
+                </motion.div>
+              );
+            })}
+          </div>
+        )}
 
-                {/* Drop button (outside the Link, opens modal) */}
-                {canDrop && (
-                  <div className="mt-1 px-5">
-                    <button
-                      onClick={() => setDropOrderId(order._id)}
-                      className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-red-500 hover:text-red-700 transition"
-                    >
-                      <Ban size={11} /> Drop this service
-                    </button>
-                  </div>
-                )}
-              </motion.div>
-            );
-          })}
-        </div>
-      )}
+        {/* ── Pagination ──────────────────────────────────────────────── */}
+        {total > 20 && (
+          <div className="mt-8 flex items-center justify-center gap-3">
+            <button
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page === 1}
+              className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-extrabold text-slate-700 disabled:opacity-40 hover:bg-slate-50"
+            >
+              Previous
+            </button>
+            <span className="text-xs font-bold text-slate-500">
+              Page {page} of {Math.ceil(total / 20)}
+            </span>
+            <button
+              onClick={() => setPage((p) => p + 1)}
+              disabled={page >= Math.ceil(total / 20)}
+              className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-extrabold text-slate-700 disabled:opacity-40 hover:bg-slate-50"
+            >
+              Next
+            </button>
+          </div>
+        )}
 
-      {/* Pagination */}
-      {total > 20 && (
-        <div className="mt-8 flex items-center justify-center gap-3">
-          <button
-            onClick={() => setPage((p) => Math.max(1, p - 1))}
-            disabled={page === 1}
-            className="rounded-xl border border-[var(--border)] px-4 py-2.5 text-sm font-semibold text-[var(--text-secondary)] disabled:opacity-40 hover:bg-[var(--surface-2)] transition"
-          >
-            Previous
-          </button>
-          <span className="text-sm font-medium text-[var(--text-muted)]">Page {page} of {Math.ceil(total / 20)}</span>
-          <button
-            onClick={() => setPage((p) => p + 1)}
-            disabled={page >= Math.ceil(total / 20)}
-            className="rounded-xl border border-[var(--border)] px-4 py-2.5 text-sm font-semibold text-[var(--text-secondary)] disabled:opacity-40 hover:bg-[var(--surface-2)] transition"
-          >
-            Next
-          </button>
-        </div>
-      )}
-
-      {/* Drop Modal */}
-      {dropOrderId && (
-        <DropModal
-          onConfirm={handleDrop}
-          onClose={() => setDropOrderId(null)}
-          loading={dropLoading}
-        />
-      )}
-    </div>
+        {/* Drop Modal */}
+        {dropOrderId && (
+          <DropModal
+            onConfirm={handleDrop}
+            onClose={() => setDropOrderId(null)}
+            loading={dropLoading}
+          />
+        )}
+      </div>
+    </UserShell>
   );
 }

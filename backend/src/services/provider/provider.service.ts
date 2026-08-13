@@ -17,7 +17,9 @@ import { Messages } from "../../shared/constants/messages";
 import { mapProviderListItem, mapProviderDetails, mapApplication, mapProviderProfile, resolveLocation } from "../../mappers/provider.mapper";
 import { NotFoundError, BadRequestError } from "../../shared/errors/HttpErrors";
 
-
+type ProviderFilter = Record<string, unknown> & {
+  $or?: Record<string, unknown>[];
+};
 
 export class ProviderService implements IProviderService {
   constructor(
@@ -112,7 +114,7 @@ export class ProviderService implements IProviderService {
       const providers = await this.repo.findNearbyProviders(query.longitude, query.latitude, radius * 1000, query.categoryId, query.search, limit);
       if (providers.length > 0) return providers.map(mapProviderListItem);
       if (query.search) {
-        const filter: Record<string, unknown> = {};
+        const filter: ProviderFilter = {};
         if (query.categoryId && Types.ObjectId.isValid(query.categoryId)) filter.categoryId = query.categoryId;
         
         const searchRegex = { $regex: escapeRegex(query.search), $options: "i" };
@@ -136,7 +138,7 @@ export class ProviderService implements IProviderService {
       }
       return [];
     }
-    const filter: Record<string, unknown> = {};
+    const filter: ProviderFilter = {};
     if (query.categoryId) {
       if (!Types.ObjectId.isValid(query.categoryId)) return [];
       filter.categoryId = query.categoryId;

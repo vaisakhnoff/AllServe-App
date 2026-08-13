@@ -120,12 +120,14 @@ export default function ProviderReapplyPage() {
         // Guard: only rejected applications can reapply
         if (status.status !== "rejected") {
           toast.error("You can only reapply if your application was rejected.");
-          router.replace("/provider-portal/dashboard");
+          router.replace("/provider-portal");
           return;
         }
 
         setRejectionReason(status.rejectionReason);
-
+            const docs = Array.isArray(status.documents) ? status.documents : [];  
+            const headshotUrl =status.headshot && status.headshot != "photo.jpg" ? status.headshot : "";
+            
         // Pre-populate form with previously submitted data so provider only fixes issues
         const catId = typeof status.category === "object" && status.category
           ? (status.category as { _id: string })._id
@@ -141,10 +143,9 @@ export default function ProviderReapplyPage() {
           street: status.address?.street || "",
           city: status.address?.city || "",
           zip: status.address?.zip || "",
-          // Pre-populate headshot URL from stored data so provider sees their previous photo
-          photoUrl: (status.headshot && !status.headshot.startsWith("data:") && status.headshot !== "photo.jpg")
-            ? status.headshot
-            : "",
+          photoUrl: headshotUrl,
+  idFrontUrl: docs[0] || "",
+  idBackUrl: docs[1] || "",
         }));
 
         // Pre-fill structured location state from previous application
@@ -203,7 +204,6 @@ export default function ProviderReapplyPage() {
     setLoading(true);
     try {
       await providerService.reapply({
-        // Use the stored personal details from the original application
         fullName: applicationStatus.fullName || "",
         email: applicationStatus.email || "",
         phone: applicationStatus.phone || "",
@@ -215,8 +215,11 @@ export default function ProviderReapplyPage() {
         serviceArea,
         description: form.description,
         documentType: form.documentType,
-        headshot: form.photo || "",
-        documents: [form.idFront, form.idBack].filter((d): d is string => Boolean(d)),
+          headshot: form.photo || form.photoUrl || "photo.jpg",
+         documents: [
+    form.idFront || form.idFrontUrl,
+    form.idBack || form.idBackUrl,
+  ].filter((d): d is string => Boolean(d)),
         // Structured location for geospatial indexing
         state: location.state,
         district: location.district,

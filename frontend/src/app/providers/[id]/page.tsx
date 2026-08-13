@@ -18,14 +18,14 @@ import { getErrorMessage } from "@/utils/errorHandler";
 import { Role } from "@/enums/role.enum";
 import { LoginRequiredPrompt } from "@/components/auth/LoginRequiredPrompt";
 import { useProviderStatus } from "@/hooks/useProviderStatus";
-
+import { UserShell } from "@/components/layout/UserShell";
 
 export default function ProviderDetailPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
   const id = params?.id ?? "";
   const { user, isAuthenticated, isInitialized, role } = useSelector((state: RootState) => state.auth);
-  const canViewDetails = isInitialized && isAuthenticated && role === Role.USER;
+ 
 
   const [provider, setProvider] = useState<PublicProviderDetails | null>(null);
   const [loading, setLoading] = useState(true);
@@ -39,7 +39,7 @@ export default function ProviderDetailPage() {
 
 
   useEffect(() => {
-    if (!id || !canViewDetails) return;
+    if (!id) return;
     let c = false;
     setLoading(true);
     providerService.getPublicProviderById(id)
@@ -47,7 +47,7 @@ export default function ProviderDetailPage() {
       .catch((err) => { if (!c) toast.error(getErrorMessage(err) || "Failed to load provider"); })
       .finally(() => { if (!c) setLoading(false); });
     return () => { c = true; };
-  }, [id, canViewDetails]);
+  }, [id]);
 
 
 const filteredServices = useMemo(() => {
@@ -57,16 +57,15 @@ const filteredServices = useMemo(() => {
 }, [provider, activeSubCategory]);
 
   const startConversation = async () => {
-    if (!user || !provider) { router.push("/login"); return; }
+    if (!user || !provider || !isAuthenticated) { router.push(`/login?redirect=/providers/${id}`); return; }
     try {
       await messagingService.getOrCreateConversation({ providerId: provider.id });
       router.push("/messages");
     } catch { toast.error("Failed to start conversation"); }
   };
 
-  if (isInitialized && !canViewDetails) {
-    return <LoginRequiredPrompt title="Login to view provider" message="Please login or sign up to view provider details." />;
-  }
+  
+  
 
   if (loading) {
     return <div className="flex min-h-[60vh] items-center justify-center"><Loader2 size={28} className="animate-spin text-[var(--primary)]" /></div>;
@@ -82,6 +81,7 @@ const filteredServices = useMemo(() => {
   }
 
   return (
+    <UserShell>
     <div className="pb-12">
       {/* Breadcrumb */}
       <button onClick={() => router.back()} className="group mb-6 inline-flex items-center gap-1.5 text-sm font-semibold text-[var(--text-muted)] hover:text-[var(--primary)]">
@@ -199,41 +199,85 @@ const filteredServices = useMemo(() => {
 )}
 
 {filteredServices.length > 0 && (
-  <section className="rounded-[22px] border border-[var(--border)] bg-white overflow-hidden">
-    <div className="flex items-center justify-between px-6 py-5 border-b border-[var(--border-light)]">
+  <section className="rounded-[22px] border border-[var(--border)] bg-white p-6 space-y-4">
+    <div className="flex items-center justify-between">
       <h2 className="text-[17px] font-[800] text-[var(--text-primary)]">Services</h2>
-      <span className="text-[12px] font-bold text-[var(--text-muted)]">{filteredServices.length} available</span>
+      <span className="text-[12px] font-bold text-[#00B761] bg-[#E6F7F0] px-3 py-1 rounded-full">
+        {filteredServices.length} available
+      </span>
     </div>
-    <div className="divide-y divide-[var(--border-light)]">
-      {filteredServices.map((s) =>
-        (liveStatus.onlineStatus === "offline" || liveStatus.engagementStatus === "busy") ? (
-          <div key={s.id} className="flex items-center justify-between px-6 py-4 opacity-60 cursor-not-allowed">
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-[14px] font-semibold text-[var(--text-primary)]">{s.name}</p>
-              <p className="mt-0.5 line-clamp-1 text-[12px] text-[var(--text-muted)]">{s.description}</p>
+
+    {/* Services Grid (Cards) */}
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      {filteredServices.map((s) => {
+        const isUnavailable = liveStatus.onlineStatus === "offline" || liveStatus.engagementStatus === "busy";
+
+        if (isUnavailable) {
+          return (
+            <div
+              key={s.id}
+              className="flex flex-col justify-between rounded-2xl border border-slate-200 bg-slate-50/70 p-4.5 opacity-60 cursor-not-allowed"
+            >
+              <div>
+                <div className="flex items-center justify-between gap-2">
+                  <h3 className="text-sm font-bold text-slate-800 truncate">{s.name}</h3>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-200 text-slate-600 shrink-0">
+                    {liveStatus.onlineStatus === "offline" ? "Offline" : "Busy"}
+                  </span>
+                </div>
+                {s.description && (
+                  <p className="mt-1.5 text-xs text-slate-500 line-clamp-2 leading-relaxed">
+                    {s.description}
+                  </p>
+                )}
+              </div>
+
+              <div className="mt-4 flex items-center justify-between border-t border-slate-200/80 pt-3">
+                <span className="text-base font-extrabold text-slate-800">
+                  &#8377;{s.price.toFixed(0)}
+                </span>
+                <span className="text-xs font-semibold text-slate-400">Unavailable</span>
+              </div>
             </div>
-            <div className="flex items-center gap-3 pl-4">
-              <span className="text-[15px] font-[800] text-[var(--text-primary)]">&#8377;{s.price.toFixed(0)}</span>
-              <span className="text-[11px] font-bold text-slate-400">
-                {liveStatus.onlineStatus === "offline" ? "Offline" : "Busy"}
-              </span>
+          );
+        }
+
+        return (
+          <Link
+            key={s.id}
+            href={`/services/${s.id}`}
+            className="group flex flex-col justify-between rounded-2xl border border-slate-200/90 bg-white p-4.5 shadow-sm transition-all duration-200 hover:border-[#00B761] hover:shadow-md hover:-translate-y-0.5"
+          >
+            <div>
+              <div className="flex items-center justify-between gap-2">
+                <h3 className="text-sm font-bold text-slate-900 group-hover:text-[#00B761] transition-colors truncate">
+                  {s.name}
+                </h3>
+                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#E6F7F0] text-[#00B761] transition-transform group-hover:scale-110 group-hover:rotate-[-45deg] shrink-0">
+                  <ArrowUpRight size={13} />
+                </span>
+              </div>
+              {s.description && (
+                <p className="mt-1.5 text-xs text-slate-500 line-clamp-2 leading-relaxed">
+                  {s.description}
+                </p>
+              )}
             </div>
-          </div>
-        ) : (
-          <Link key={s.id} href={`/services/${s.id}`} className="group flex items-center justify-between px-6 py-4 transition hover:bg-[var(--surface-2)]">
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-[14px] font-semibold text-[var(--text-primary)] group-hover:text-[var(--primary)]">{s.name}</p>
-              <p className="mt-0.5 line-clamp-1 text-[12px] text-[var(--text-muted)]">{s.description}</p>
-            </div>
-            <div className="flex items-center gap-3 pl-4">
-              <span className="text-[15px] font-[800] text-[var(--text-primary)]">&#8377;{s.price.toFixed(0)}</span>
-              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[var(--surface-3)] text-[var(--text-muted)] transition group-hover:bg-[var(--primary)] group-hover:text-white group-hover:rotate-[-45deg]">
-                <ArrowUpRight size={13} />
+
+            <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-3">
+              <div>
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Price</span>
+                <span className="text-base font-extrabold text-slate-900">
+                  &#8377;{s.price.toFixed(0)}
+                </span>
+              </div>
+              <span className="inline-flex items-center gap-1 text-xs font-bold text-[#00B761] bg-[#E6F7F0] group-hover:bg-[#00B761] group-hover:text-white px-3 py-1.5 rounded-xl transition-all shadow-sm">
+                Book Service
               </span>
             </div>
           </Link>
-        )
-      )}
+        );
+      })}
     </div>
   </section>
 )}
@@ -257,5 +301,6 @@ const filteredServices = useMemo(() => {
         </motion.div>
       </div>
     </div>
+    </UserShell>
   );
 }

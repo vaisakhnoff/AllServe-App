@@ -25,10 +25,7 @@ const authSlice = createSlice({
   name: "auth",
   initialState,
   reducers: {
-    /**
-     * Called on app mount. Receives the current pathname from the component
-     * (via usePathname()) to avoid reading window.location inside the reducer.
-     */
+   
     initializeAuth: (state, action: PayloadAction<{ pathname: string }>) => {
       state.isInitialized = true;
 
@@ -69,7 +66,7 @@ const authSlice = createSlice({
       token.setTokens(accessToken, refreshToken, decoded?.role ?? user.role);
       state.user = user;
       state.role = (decoded?.role as Role) ?? user.role;
-      state.applicationStatus = (decoded as unknown)?.applicationStatus ?? user.applicationStatus ?? null;
+      state.applicationStatus =  user.applicationStatus ?? null;
       state.isAuthenticated = true;
       state.isInitialized = true;
     },
@@ -78,17 +75,15 @@ const authSlice = createSlice({
       state.user = action.payload;
     },
 
-    /**
-     * Update only the applicationStatus in redux without touching tokens.
-     * Used after apply/reapply succeed and when refetching live status from
-     * the server (so admin-side approve/reject changes show up without
-     * forcing the provider to log out and back in).
-     */
+   
     setApplicationStatus: (
       state,
       action: PayloadAction<"not_applied" | "pending" | "approved" | "rejected" | "suspended" | null>
     ) => {
       state.applicationStatus = action.payload;
+      if (state.user) {
+        state.user.applicationStatus = action.payload as any;
+      }
     },
 
     logout: (state, action: PayloadAction<Role | string | null | undefined>) => {

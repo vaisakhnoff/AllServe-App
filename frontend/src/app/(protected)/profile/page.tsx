@@ -342,10 +342,7 @@ export default function ProfilePage() {
             </form>
           </section>
 
-          {/* Sign out */}
-          <button onClick={logout} className="flex w-full items-center justify-center gap-2 rounded-2xl border border-red-100 bg-red-50 py-3.5 text-[14px] font-bold text-red-600 transition hover:bg-red-100">
-            <LogOut size={16} /> Sign out
-          </button>
+          
         </aside>
       </div>
 

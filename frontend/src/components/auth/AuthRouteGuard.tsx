@@ -44,6 +44,10 @@ const AUTH_PUBLIC_ROUTES = [
   "/forgot-password",
   "/reset-password",
   "/verify-otp",
+  "/categories",
+  "/provider",
+  "/services/public"
+  
 ];
 
 const getRedirectTarget = (pathname: string, applicationStatus?: string | null) => {
@@ -63,29 +67,30 @@ const getRedirectTarget = (pathname: string, applicationStatus?: string | null) 
 
   // ── Provider applicant routes (need auth, any status) ──
   if (PROVIDER_APPLICANT_ROUTES.includes(pathname)) {
+    
     if (!token.hasValidRole(Role.PROVIDER)) return "/provider-portal/login";
     // Block /apply if already submitted
     if (pathname === "/provider-portal/apply" && applicationStatus && applicationStatus !== "not_applied") {
       return "/provider-portal";
     }
     // Block /reapply if not rejected
-    if (pathname === "/provider-portal/reapply" && applicationStatus !== "rejected") {
-      return "/provider-portal";
-    }
+    // if (pathname === "/provider-portal/reapply" && applicationStatus !== "rejected") {
+    //   return "/provider-portal";
+    // }
     return null;
   }
 
   // ── Provider approved-only routes ──
   if (PROVIDER_APPROVED_ROUTES.includes(pathname)) {
     if (!token.hasValidRole(Role.PROVIDER)) return "/provider-portal/login";
-    if (applicationStatus !== "approved") return "/provider-portal";
+    if (applicationStatus && applicationStatus !== "approved") return "/provider-portal";
     return null;
   }
 
   // ── Guest routes: redirect authenticated users away from login/signup ──
-  if (AUTH_PUBLIC_ROUTES.includes(pathname) && token.hasValidRole(Role.USER)) {
-    return "/dashboard";
-  }
+  // if (AUTH_PUBLIC_ROUTES.includes(pathname) && token.hasValidRole(Role.USER)) {
+  //   return "/dashboard";
+  // }
   if (ADMIN_PUBLIC_ROUTES.includes(pathname) && token.hasValidRole(Role.ADMIN)) {
     return "/admin/dashboard";
   }

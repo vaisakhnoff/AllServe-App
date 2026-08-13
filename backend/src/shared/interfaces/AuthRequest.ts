@@ -2,10 +2,16 @@ import { Request } from "express";
 import { Role } from "../enums/role.enum";
 import { ApplicationStatus } from "../enums/application-status.enum";
 
-export interface AuthUserPayload {
+export interface AccessTokenPayload {
   id: string;
   role: Role;
   applicationStatus?: ApplicationStatus;
+  iat?: number;
+  exp?: number;
+}
+
+export interface RefreshTokenPayload {
+  id: string;
   iat?: number;
   exp?: number;
 }

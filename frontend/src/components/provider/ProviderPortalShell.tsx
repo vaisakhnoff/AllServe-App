@@ -19,8 +19,9 @@ import {
   UserRound,
   Wrench} from "lucide-react";
 import { useEffect, useState } from "react";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "@/store";
+import { setApplicationStatus } from "@/features/auth";
 import { useAuth } from "@/hooks/useAuth";
 
 const navItems = [
@@ -40,6 +41,7 @@ import { ProviderProfile } from "@/types/provider.types";
 export function ProviderPortalShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
+  const dispatch = useDispatch();
   const { logout } = useAuth();
   const { isAuthenticated, isInitialized, role } = useSelector((state: RootState) => state.auth);
   const [profile, setProfile] = useState<ProviderProfile | null>(null);
@@ -50,11 +52,17 @@ export function ProviderPortalShell({ children }: { children: React.ReactNode })
         router.replace("/provider-portal/login");
       } else {
         providerService.getProfile()
-          .then((res) => setProfile(res.data.data))
+          .then((res) => {
+            const profileData = res.data.data;
+            setProfile(profileData);
+            if (profileData?.applicationStatus) {
+              dispatch(setApplicationStatus(profileData.applicationStatus));
+            }
+          })
           .catch(() => {});
       }
     }
-  }, [isInitialized, isAuthenticated, role, router]);
+  }, [isInitialized, isAuthenticated, role, router, dispatch]);
 
   if (!isInitialized || !isAuthenticated || role !== "provider") {
     return <div className="flex items-center justify-center min-h-screen font-bold text-slate-500">Authenticating session...</div>;

@@ -51,7 +51,9 @@ export class CategoryService implements ICategoryService {
   }
 
   async deleteCategory(id: string): Promise<void> {
+     
     const deleted = await this.repo.deleteCategory(id);
+     
     if (!deleted) throw new NotFoundError(Messages.CATEGORY_NOT_FOUND);
   }
 }

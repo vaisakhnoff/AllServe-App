@@ -13,7 +13,7 @@ const changePasswordSchema = z.object({
   newPassword: z.string().min(8),
 });
 
-export class ProviderController {
+export class ProviderController {  
   constructor(
     private readonly service: IProviderService
   ) { }

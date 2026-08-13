@@ -80,7 +80,8 @@ api.interceptors.response.use(
 
     if (error.response?.status === 403 && !isLoginRequest(originalRequest.url)) {
       const message = error.response?.data?.message || "";
-      // Only clear tokens and redirect for auth-related 403s (access denied due to role/status)
+      
+      // Only clear tokens and redirect for auth-related 403s
       const isAuthForbidden =
         message.includes("Access denied") ||
         message.includes("Required application status") ||
